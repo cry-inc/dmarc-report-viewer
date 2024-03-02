@@ -4,18 +4,21 @@ use anyhow::{Context, Result};
 use clap::Parser;
 use config::Configuration;
 use dmarc_aggregate_parser::aggregate_report::feedback;
-use native_tls::TlsConnector;
-use std::io::Cursor;
+use imap::Client;
+use rustls_connector::RustlsConnector;
+use std::{io::Cursor, net::TcpStream};
 use zip::ZipArchive;
 
 fn get_mails(config: &Configuration) -> Result<Vec<Vec<u8>>> {
     let mut mails = Vec::new();
-    let tls = TlsConnector::builder()
-        .build()
-        .context("Failed to build TLS connector")?;
     let addr = (config.imap_host.as_str(), config.imap_port);
-    let client =
-        imap::connect(addr, &config.imap_host, &tls).context("Failed to connect to IMAP server")?;
+    let stream = TcpStream::connect(addr).context("Failed to connect to IMAP server")?;
+    let connector =
+        RustlsConnector::new_with_native_certs().expect("Failed to create Rust TLS connector");
+    let tls_stream = connector
+        .connect(&config.imap_host, stream)
+        .context("Failed to set up TLS stream")?;
+    let client = Client::new(tls_stream);
     let mut session = client
         .login(&config.imap_user, &config.imap_password)
         .expect("Failed to log in");
