@@ -5,9 +5,9 @@ edition = "2021"
 
 [dependencies]
 imap = "2"
-clap = { version = "4", features = ["derive", "env"] }
-piz = "0.5"
 anyhow = "1"
 native-tls = "0.2"
 mailparse = "0.14"
 dmarc_aggregate_parser = "0.1"
+clap = { version = "4", features = ["derive", "env"] }
+zip = { version = "0.6", default-features = false, features = ["deflate"] }

@@ -5,7 +5,8 @@ use clap::Parser;
 use config::Configuration;
 use dmarc_aggregate_parser::aggregate_report::feedback;
 use native_tls::TlsConnector;
-use piz::ZipArchive;
+use std::io::Cursor;
+use zip::ZipArchive;
 
 fn get_mails(config: &Configuration) -> Result<Vec<Vec<u8>>> {
     let mut mails = Vec::new();
@@ -38,16 +39,18 @@ fn extract_reports(mail: &[u8]) -> Result<Vec<feedback>> {
     let zip_bytes = parsed
         .get_body_raw()
         .context("Failed to get raw body of the message")?;
-    let archive = ZipArchive::new(&zip_bytes).context("Failed to open body as ZIP")?;
+    let cursor = Cursor::new(zip_bytes);
+    let mut archive = ZipArchive::new(cursor).context("Failed to open body as ZIP")?;
     let mut reports = Vec::new();
-    for file in archive.entries() {
-        println!("File Name: -{}-", file.path);
-        if !file.path.to_string().ends_with(".xml") {
+    for i in 0..archive.len() {
+        let mut file = archive.by_index(i).context("Unable to get file from ZIP")?;
+
+        println!("File Name: -{}-", file.name());
+        if !file.name().ends_with(".xml") {
             println!("Not an XML file, skipping...");
             continue;
         }
-        let mut reader = archive.read(file).context("Failed to read file from ZIP")?;
-        let report = dmarc_aggregate_parser::parse_reader(&mut reader)
+        let report = dmarc_aggregate_parser::parse_reader(&mut file)
             .context("Failed to parse XML as DMARC report")?;
         reports.push(report);
     }
