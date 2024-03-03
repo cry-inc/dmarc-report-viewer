@@ -5,8 +5,10 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1"
+tracing = "0.1"
 mailparse = "0.14"
 rustls-connector = "0.19"
+tracing-subscriber = "0.3"
 dmarc_aggregate_parser = "0.1"
 imap = { version = "2", default-features = false }
 clap = { version = "4", features = ["derive", "env"] }

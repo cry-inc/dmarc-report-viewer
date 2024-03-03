@@ -7,6 +7,7 @@ use dmarc_aggregate_parser::aggregate_report::feedback;
 use imap::Client;
 use rustls_connector::RustlsConnector;
 use std::{io::Cursor, net::TcpStream};
+use tracing::{info, warn};
 use zip::ZipArchive;
 
 fn get_mails(config: &Configuration) -> Result<Vec<Vec<u8>>> {
@@ -47,10 +48,8 @@ fn extract_reports(mail: &[u8]) -> Result<Vec<feedback>> {
     let mut reports = Vec::new();
     for i in 0..archive.len() {
         let mut file = archive.by_index(i).context("Unable to get file from ZIP")?;
-
-        println!("File Name: -{}-", file.name());
         if !file.name().ends_with(".xml") {
-            println!("Not an XML file, skipping...");
+            warn!("{} is not an XML file, skipping...", file.name());
             continue;
         }
         let report = dmarc_aggregate_parser::parse_reader(&mut file)
@@ -63,15 +62,29 @@ fn extract_reports(mail: &[u8]) -> Result<Vec<feedback>> {
 fn main() -> Result<()> {
     let config = Configuration::parse();
 
-    let mails = get_mails(&config).context("Failed to get mails")?;
-    println!("Downloaded {} mails", mails.len());
+    let subscriber = tracing_subscriber::fmt()
+        .compact()
+        .with_target(false)
+        .with_ansi(false)
+        .finish();
+    tracing::subscriber::set_global_default(subscriber)
+        .expect("Failed to set up default tracing subscriber");
 
+    info!("DMARC Report Analyzer");
+
+    info!("Downloading mails...");
+    let mails = get_mails(&config).context("Failed to get mails")?;
+    info!("Downloaded {} mails", mails.len());
+
+    info!("Parsing mails...");
     for mail in mails {
         let reports = extract_reports(&mail).context("Failed to extract reports")?;
         for report in reports {
-            println!("Report: {report:#?}");
+            info!("Report: {report:#?}");
         }
     }
+    info!("Finished parsing all mails");
 
+    info!("Shutting down...");
     Ok(())
 }
