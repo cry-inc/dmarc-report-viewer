@@ -3,6 +3,7 @@ use anyhow::{Context, Result};
 use imap::Client;
 use rustls_connector::RustlsConnector;
 use std::net::TcpStream;
+use tracing::warn;
 
 pub fn get_mails(config: &Configuration) -> Result<Vec<Vec<u8>>> {
     let mut mails = Vec::new();
@@ -23,10 +24,12 @@ pub fn get_mails(config: &Configuration) -> Result<Vec<Vec<u8>>> {
         let sequence = format!("1:{}", mailbox.exists);
         let messages = session
             .fetch(sequence, "RFC822")
-            .context("Failed to fetch first message")?;
+            .context("Failed to fetch messages")?;
         for message in messages.iter() {
-            let body = message.body().context("Message did not have a body!")?;
-            mails.push(body.to_vec());
+            match message.body() {
+                Some(body) => mails.push(body.to_vec()),
+                None => warn!("Email message did not have a body!"),
+            }
         }
     }
     session.logout().context("Failed to log out")?;

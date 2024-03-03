@@ -17,7 +17,7 @@ use std::time::Duration;
 use tokio::sync::mpsc::channel;
 use tokio::sync::mpsc::Receiver;
 use tokio::task::JoinHandle;
-use tracing::{error, info};
+use tracing::{error, info, warn};
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -89,19 +89,19 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
 
     info!("Downloading mails...");
     let mails = get_mails(config).context("Failed to get mails")?;
-    info!("Downloaded {} mails from IMAP inbox", mails.len());
     state.lock().expect("Failed to lock app state").mails = mails.len();
+    info!("Downloaded {} mails from IMAP inbox", mails.len());
 
     info!("Parsing mails...");
     let mut reports = Vec::new();
     for mail in mails {
-        let mut mail_reports = extract_reports(&mail).context("Failed to extract reports")?;
-        reports.append(&mut mail_reports);
+        match extract_reports(&mail) {
+            Ok(mut mail_reports) => reports.append(&mut mail_reports),
+            Err(err) => warn!("Failed to extract reports from mail: {err}"),
+        }
     }
-    info!(
-        "Finished parsing mails and extracted {} reports",
-        reports.len()
-    );
+    let report_count = reports.len();
     state.lock().expect("Failed to lock app state").reports = reports;
+    info!("Finished parsing mails and extracted {report_count} reports",);
     Ok(())
 }
