@@ -1,6 +1,6 @@
 use clap::Parser;
 
-#[derive(Parser)]
+#[derive(Parser, Clone)]
 #[command(version, about, long_about = None)]
 /// DMARC Report Analyzer
 pub struct Configuration {
@@ -20,6 +20,10 @@ pub struct Configuration {
     #[arg(long, env, default_value = "993")]
     pub imap_port: u16,
 
+    /// Interval between checking for new reports in IMAP inbox in seconds
+    #[arg(long, env, default_value = "300")]
+    pub imap_check_interval: u64,
+
     /// Embedded HTTP server port for web UI
     #[arg(long, env, default_value = "8080")]
     pub http_server_port: u16,
@@ -27,4 +31,10 @@ pub struct Configuration {
     /// Embedded HTTP server binding for web UI
     #[arg(long, env, default_value = "0.0.0.0")]
     pub http_server_binding: String,
+}
+
+impl Configuration {
+    pub fn new() -> Self {
+        Configuration::parse()
+    }
 }
