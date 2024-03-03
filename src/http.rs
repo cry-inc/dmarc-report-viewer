@@ -4,6 +4,7 @@ use anyhow::{Context, Result};
 use axum::{extract::State, routing::get, Router};
 use std::sync::{Arc, Mutex};
 use tokio::net::TcpListener;
+use tokio::signal;
 use tracing::info;
 
 pub async fn run_http_server(config: &Configuration, state: Arc<Mutex<AppState>>) -> Result<()> {
@@ -18,8 +19,33 @@ pub async fn run_http_server(config: &Configuration, state: Arc<Mutex<AppState>>
         .await
         .context("Failed to create TCP listener")?;
     axum::serve(listener, app)
+        .with_graceful_shutdown(shutdown_signal())
         .await
         .context("Failed to serve HTTP with axum")
+}
+
+async fn shutdown_signal() {
+    let ctrlc = async {
+        signal::ctrl_c()
+            .await
+            .expect("Failed to install Ctrl + C handler");
+    };
+
+    #[cfg(unix)]
+    let terminate = async {
+        signal::unix::signal(signal::unix::SignalKind::terminate())
+            .expect("Failed to install signal handler")
+            .recv()
+            .await;
+    };
+
+    #[cfg(not(unix))]
+    let terminate = std::future::pending::<()>();
+
+    tokio::select! {
+        _ = ctrlc => {},
+        _ = terminate => {},
+    }
 }
 
 async fn root(State(state): State<Arc<Mutex<AppState>>>) -> String {
