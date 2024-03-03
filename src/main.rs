@@ -85,17 +85,23 @@ fn start_bg_task(
 }
 
 async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Result<()> {
+    info!("Starting background update cycle");
+
     info!("Downloading mails...");
-    let mails = get_mails(&config).context("Failed to get mails")?;
+    let mails = get_mails(config).context("Failed to get mails")?;
+    info!("Downloaded {} mails from IMAP inbox", mails.len());
     state.lock().expect("Failed to lock app state").mails = mails.len();
-    info!("Downloaded {} mails", mails.len());
+
     info!("Parsing mails...");
+    let mut reports = Vec::new();
     for mail in mails {
-        let reports = extract_reports(&mail).context("Failed to extract reports")?;
-        for report in reports {
-            info!("Report: {report:#?}");
-        }
+        let mut mail_reports = extract_reports(&mail).context("Failed to extract reports")?;
+        reports.append(&mut mail_reports);
     }
-    info!("Finished parsing all mails");
+    info!(
+        "Finished parsing mails and extracted {} reports",
+        reports.len()
+    );
+    state.lock().expect("Failed to lock app state").reports = reports;
     Ok(())
 }
