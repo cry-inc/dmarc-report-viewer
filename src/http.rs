@@ -49,6 +49,6 @@ async fn shutdown_signal() {
 }
 
 async fn root(State(state): State<Arc<Mutex<AppState>>>) -> String {
-    let mails = state.lock().expect("Failed to get app state lock").mails;
+    let mails = state.lock().expect("Failed to lock app state").mails;
     format!("Hello World, we have {mails} mails")
 }
