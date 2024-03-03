@@ -31,6 +31,15 @@ pub struct Configuration {
     /// Embedded HTTP server binding for web UI
     #[arg(long, env, default_value = "0.0.0.0")]
     pub http_server_binding: String,
+
+    /// Username for the HTTP server basic auth login
+    #[arg(short = 'l', long, env, default_value = "dmarc")]
+    pub http_server_user: String,
+
+    /// Password for the HTTP server basic auth login.
+    /// Use empty string to disable (not recommended).
+    #[arg(short = 'a', long, env)]
+    pub http_server_password: String,
 }
 
 impl Configuration {
