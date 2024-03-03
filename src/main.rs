@@ -1,4 +1,5 @@
 mod config;
+mod http;
 
 use anyhow::{Context, Result};
 use clap::Parser;
@@ -9,6 +10,8 @@ use rustls_connector::RustlsConnector;
 use std::{io::Cursor, net::TcpStream};
 use tracing::{info, warn};
 use zip::ZipArchive;
+
+use crate::http::run_http_server;
 
 fn get_mails(config: &Configuration) -> Result<Vec<Vec<u8>>> {
     let mut mails = Vec::new();
@@ -59,7 +62,8 @@ fn extract_reports(mail: &[u8]) -> Result<Vec<feedback>> {
     Ok(reports)
 }
 
-fn main() -> Result<()> {
+#[tokio::main]
+async fn main() -> Result<()> {
     let config = Configuration::parse();
 
     let subscriber = tracing_subscriber::fmt()
@@ -84,6 +88,10 @@ fn main() -> Result<()> {
         }
     }
     info!("Finished parsing all mails");
+
+    run_http_server(&config)
+        .await
+        .context("Failed to start HTTP server")?;
 
     info!("Shutting down...");
     Ok(())

@@ -19,4 +19,12 @@ pub struct Configuration {
     /// TLS encrypted port of the IMAP server
     #[arg(long, env, default_value = "993")]
     pub imap_port: u16,
+
+    /// Embedded HTTP server port for web UI
+    #[arg(long, env, default_value = "8080")]
+    pub http_server_port: u16,
+
+    /// Embedded HTTP server binding for web UI
+    #[arg(long, env, default_value = "0.0.0.0")]
+    pub http_server_binding: String,
 }
