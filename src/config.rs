@@ -5,18 +5,18 @@ use clap::Parser;
 /// DMARC Report Analyzer
 pub struct Configuration {
     /// Host name or domain of the IMAP server with the DMARC reports inbox
-    #[arg(short = 's', long)]
+    #[arg(short = 's', long, env)]
     pub imap_host: String,
 
     /// User name of the IMAP inbox with the DMARC reports
-    #[arg(short = 'u', long)]
+    #[arg(short = 'u', long, env)]
     pub imap_user: String,
 
     /// Password of the IMAP inbox with the DMARC reports
-    #[arg(short = 'p', long)]
+    #[arg(short = 'p', long, env)]
     pub imap_password: String,
 
     /// TLS encrypted port of the IMAP server
-    #[arg(long, default_value = "993")]
+    #[arg(long, env, default_value = "993")]
     pub imap_port: u16,
 }
