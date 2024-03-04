@@ -10,6 +10,7 @@ edition = "2021"
 [dependencies]
 axum = "0.7"
 anyhow = "1"
+flate2 = "1"
 tracing = "0.1"
 base64 = "0.22"
 mailparse = "0.14"

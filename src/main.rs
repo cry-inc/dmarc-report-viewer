@@ -1,14 +1,14 @@
 #![forbid(unsafe_code)]
 
 mod config;
-mod dmarc;
 mod http;
 mod imap;
+mod parser;
 mod state;
 
-use crate::dmarc::extract_reports;
 use crate::http::run_http_server;
 use crate::imap::get_mails;
+use crate::parser::extract_reports;
 use crate::state::AppState;
 use anyhow::{Context, Result};
 use config::Configuration;
@@ -97,7 +97,7 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
     for mail in mails {
         match extract_reports(&mail) {
             Ok(mut mail_reports) => reports.append(&mut mail_reports),
-            Err(err) => warn!("Failed to extract reports from mail: {err}"),
+            Err(err) => warn!("Failed to extract reports from mail: {err:#}"),
         }
     }
     let report_count = reports.len();

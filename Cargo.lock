@@ -391,6 +391,7 @@ dependencies = [
  "base64 0.22.0",
  "clap",
  "dmarc_aggregate_parser",
+ "flate2",
  "imap",
  "mailparse",
  "rustls-connector",
