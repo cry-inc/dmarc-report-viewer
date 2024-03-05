@@ -8,7 +8,7 @@ mod state;
 
 use crate::http::run_http_server;
 use crate::imap::get_mails;
-use crate::parser::extract_reports;
+use crate::parser::parse_reports_from_mail;
 use crate::state::AppState;
 use anyhow::{Context, Result};
 use config::Configuration;
@@ -95,7 +95,7 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
     info!("Parsing mails...");
     let mut reports = Vec::new();
     for mail in mails {
-        match extract_reports(&mail) {
+        match parse_reports_from_mail(&mail) {
             Ok(mut mail_reports) => reports.append(&mut mail_reports),
             Err(err) => warn!("Failed to extract reports from mail: {err:#}"),
         }
