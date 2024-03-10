@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feedback xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' 
+    xmlns:ns1='http://dmarc.org/dmarc-xml/0.1' xsi:schemaLocation='http://dmarc.org/dmarc-xml/0.1 dmarc_agg_report.xsd'>
+    <report_metadata>
+        <org_name>AOL</org_name>
+        <email>postmaster@aol.com</email>
+        <report_id>website.com_1504828800</report_id>
+        <date_range>
+            <begin>1504742400</begin>
+            <end>1504828800</end>
+        </date_range>
+    </report_metadata>
+    <policy_published>
+        <domain>website.com</domain>
+        <adkim>r</adkim>
+        <aspf>r</aspf>
+        <p>reject</p>
+        <sp>reject</sp>
+        <pct>100</pct>
+    </policy_published>
+    <record>
+        <row>
+            <source_ip>125.125.125.125</source_ip>
+            <count>1</count>
+            <policy_evaluated>
+                <disposition>none</disposition>
+                <dkim>pass</dkim>
+                <spf>pass</spf>
+            </policy_evaluated>
+        </row>
+        <identifiers>
+            <header_from>website.com</header_from>
+        </identifiers>
+        <auth_results>
+            <dkim>
+                <domain>website.com</domain>
+                <result>pass</result>
+            </dkim>
+            <spf>
+                <domain>website.com</domain>
+                <scope>mfrom</scope>
+                <result>pass</result>
+            </spf>
+        </auth_results>
+    </record>
+</feedback>
