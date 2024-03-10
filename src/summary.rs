@@ -1,6 +1,4 @@
-use dmarc_aggregate_parser::aggregate_report::{
-    feedback, DKIMResultType, DMARCResultType, SPFResultType,
-};
+use crate::dmarc_report::{feedback, DKIMResultType, DMARCResultType, SPFResultType};
 use serde::Serialize;
 use std::collections::HashMap;
 
@@ -61,12 +59,14 @@ impl Summary {
                         .row
                         .policy_evaluated
                         .dkim
-                        .map(|r| PolicyResult::from(&r)),
+                        .as_ref()
+                        .map(PolicyResult::from),
                     spf_policy: record
                         .row
                         .policy_evaluated
                         .spf
-                        .map(|r| PolicyResult::from(&r)),
+                        .as_ref()
+                        .map(PolicyResult::from),
                     auth_dkim,
                     auth_spf,
                 };

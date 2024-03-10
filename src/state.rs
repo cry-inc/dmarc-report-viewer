@@ -1,5 +1,5 @@
+use crate::dmarc_report::feedback;
 use crate::summary::Summary;
-use dmarc_aggregate_parser::aggregate_report::feedback;
 
 /// Shared state between the different parts of the application.
 /// Connects the background task that collects mails via IMAP,

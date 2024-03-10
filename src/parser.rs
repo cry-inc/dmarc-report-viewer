@@ -1,5 +1,5 @@
+use crate::dmarc_report::feedback;
 use anyhow::{Context, Result};
-use dmarc_aggregate_parser::aggregate_report::feedback;
 use flate2::read::GzDecoder;
 use mailparse::MailHeaderMap;
 use std::io::{Cursor, Read};
@@ -74,5 +74,5 @@ pub fn extract_xml_files(mail: &[u8]) -> Result<Vec<Vec<u8>>> {
 
 pub fn parse_xml_file(xml_file: &[u8]) -> Result<feedback> {
     let mut cursor = Cursor::new(xml_file);
-    dmarc_aggregate_parser::parse_reader(&mut cursor).context("Failed to parse XML as DMARC report")
+    serde_xml_rs::from_reader(&mut cursor).context("Failed to parse XML as DMARC report")
 }

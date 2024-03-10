@@ -1,6 +1,7 @@
 #![forbid(unsafe_code)]
 
 mod config;
+mod dmarc_report;
 mod http;
 mod imap;
 mod parser;
