@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<feedback>
+  <report_metadata>
+    <org_name>acme.com</org_name>
+    <email>noreply-dmarc-support@acme.com</email>
+    <extra_contact_info>http://acme.com/dmarc/support</extra_contact_info>
+    <report_id>9391651994964116463</report_id>
+    <error>There was a sample error.</error>
+    <date_range>
+      <begin>1335571200</begin>
+      <end>1335657599</end>
+    </date_range>
+  </report_metadata>
+  <policy_published>
+    <domain>example.com</domain>
+    <adkim>r</adkim>
+    <aspf>r</aspf>
+    <p>none</p>
+    <sp>none</sp>
+    <pct>100</pct>
+    <fo>1</fo>
+  </policy_published>
+  <record>
+    <row>
+      <source_ip>72.150.241.94</source_ip>
+      <count>2</count>
+      <policy_evaluated>
+        <disposition>none</disposition>
+        <dkim>fail</dkim>
+        <spf>pass</spf>
+        <reason>
+          <type>other</type>
+          <comment>DMARC Policy overridden for incoherent example.</comment>
+		    </reason>
+      </policy_evaluated>
+    </row>
+    <identifiers>
+      <header_from>example.com</header_from>
+      <envelope_from>example.com</envelope_from>
+      <envelope_to>acme.com</envelope_to>
+    </identifiers>
+    <auth_results>
+      <dkim>
+        <domain>example.com</domain>
+        <selector>ExamplesSelector</selector>
+        <result>fail</result>
+        <human_result>Incoherent example</human_result>
+      </dkim>
+      <spf>
+        <domain>example.com</domain>
+        <scope>helo</scope>
+        <result>pass</result>
+      </spf>
+    </auth_results>
+  </record>
+</feedback>

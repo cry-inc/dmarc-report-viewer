@@ -60,7 +60,7 @@ pub enum DMARCResultType {
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, PartialEq)]
 pub enum PolicyOverrideType {
     forwarded,
     sampled_out,
@@ -70,7 +70,7 @@ pub enum PolicyOverrideType {
     other,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, PartialEq)]
 pub struct PolicyOverrideReason {
     pub r#type: PolicyOverrideType,
     pub comment: Option<String>,
@@ -172,7 +172,7 @@ mod tests {
     use std::fs::File;
 
     #[test]
-    fn test_aol_report() {
+    fn aol_report() {
         let reader = File::open("testdata/dmarc-reports/aol.xml").unwrap();
         let report: feedback = serde_xml_rs::from_reader(reader).unwrap();
 
@@ -220,6 +220,150 @@ mod tests {
             vec![SPFAuthResultType {
                 domain: String::from("website.com"),
                 scope: Some(SPFDomainScope::mfrom),
+                result: SPFResultType::pass,
+            }]
+        );
+    }
+
+    #[test]
+    fn acme_report() {
+        let reader = File::open("testdata/dmarc-reports/acme.xml").unwrap();
+        let report: feedback = serde_xml_rs::from_reader(reader).unwrap();
+
+        // Check metadata
+        assert_eq!(report.report_metadata.org_name, "acme.com");
+        assert_eq!(
+            report.report_metadata.email,
+            "noreply-dmarc-support@acme.com"
+        );
+        assert_eq!(
+            report.report_metadata.extra_contact_info.as_deref(),
+            Some("http://acme.com/dmarc/support")
+        );
+        assert_eq!(report.report_metadata.report_id, "9391651994964116463");
+        assert_eq!(
+            report.report_metadata.error,
+            Some(vec![String::from("There was a sample error.")])
+        );
+        assert_eq!(report.report_metadata.date_range.begin, 1335571200);
+        assert_eq!(report.report_metadata.date_range.end, 1335657599);
+
+        // Check policy
+        assert_eq!(report.policy_published.domain, "example.com");
+        assert_eq!(report.policy_published.adkim, Some(AlignmentType::r));
+        assert_eq!(report.policy_published.aspf, Some(AlignmentType::r));
+        assert_eq!(report.policy_published.p, DispositionType::none);
+        assert_eq!(report.policy_published.sp, Some(DispositionType::none));
+        assert_eq!(report.policy_published.pct, 100);
+        assert_eq!(report.policy_published.fo, Some(String::from("1")));
+
+        // Check record
+        assert_eq!(report.record.len(), 1);
+        let record = report.record.first().unwrap();
+        assert_eq!(record.row.source_ip.to_string(), "72.150.241.94");
+        assert_eq!(record.row.count, 2);
+        assert_eq!(
+            record.row.policy_evaluated.disposition,
+            DispositionType::none
+        );
+        assert_eq!(
+            record.row.policy_evaluated.dkim,
+            Some(DMARCResultType::fail)
+        );
+        assert_eq!(record.row.policy_evaluated.spf, Some(DMARCResultType::pass));
+        assert_eq!(
+            record.row.policy_evaluated.reason,
+            Some(vec![PolicyOverrideReason {
+                r#type: PolicyOverrideType::other,
+                comment: Some(String::from(
+                    "DMARC Policy overridden for incoherent example."
+                ))
+            }])
+        );
+        assert_eq!(record.identifiers.header_from, "example.com");
+        assert_eq!(
+            record.identifiers.envelope_from,
+            Some(String::from("example.com"))
+        );
+        assert_eq!(
+            record.identifiers.envelope_to,
+            Some(String::from("acme.com"))
+        );
+        assert_eq!(
+            record.auth_results.dkim,
+            Some(vec![DKIMAuthResultType {
+                domain: String::from("example.com"),
+                selector: Some(String::from("ExamplesSelector")),
+                result: DKIMResultType::fail,
+                human_result: Some(String::from("Incoherent example"))
+            }])
+        );
+        assert_eq!(
+            record.auth_results.spf,
+            vec![SPFAuthResultType {
+                domain: String::from("example.com"),
+                scope: Some(SPFDomainScope::helo),
+                result: SPFResultType::pass,
+            }]
+        );
+    }
+
+    #[test]
+    fn solamora_report() {
+        let reader = File::open("testdata/dmarc-reports/solamora.xml").unwrap();
+        let report: feedback = serde_xml_rs::from_reader(reader).unwrap();
+
+        // Check metadata
+        assert_eq!(report.report_metadata.org_name, "solarmora.com");
+        assert_eq!(
+            report.report_metadata.email,
+            "noreply-dmarc-support@solarmora.com"
+        );
+        assert_eq!(
+            report.report_metadata.extra_contact_info.as_deref(),
+            Some("http://solarmora.com/dmarc/support")
+        );
+        assert_eq!(report.report_metadata.report_id, "9391651994964116463");
+        assert_eq!(report.report_metadata.date_range.begin, 1335571200);
+        assert_eq!(report.report_metadata.date_range.end, 1335657599);
+
+        // Check policy
+        assert_eq!(report.policy_published.domain, "bix-business.com");
+        assert_eq!(report.policy_published.adkim, Some(AlignmentType::r));
+        assert_eq!(report.policy_published.aspf, Some(AlignmentType::r));
+        assert_eq!(report.policy_published.p, DispositionType::none);
+        assert_eq!(report.policy_published.sp, Some(DispositionType::none));
+        assert_eq!(report.policy_published.pct, 100);
+
+        // Check record
+        assert_eq!(report.record.len(), 1);
+        let record = report.record.first().unwrap();
+        assert_eq!(record.row.source_ip.to_string(), "203.0.113.209");
+        assert_eq!(record.row.count, 2);
+        assert_eq!(
+            record.row.policy_evaluated.disposition,
+            DispositionType::none
+        );
+        assert_eq!(
+            record.row.policy_evaluated.dkim,
+            Some(DMARCResultType::fail)
+        );
+        assert_eq!(record.row.policy_evaluated.spf, Some(DMARCResultType::pass));
+        assert_eq!(record.identifiers.header_from, "bix-business.com");
+        assert_eq!(
+            record.auth_results.dkim,
+            Some(vec![DKIMAuthResultType {
+                domain: String::from("bix-business.com"),
+                selector: None,
+                result: DKIMResultType::fail,
+                human_result: Some(String::new())
+            }])
+        );
+        assert_eq!(
+            record.auth_results.spf,
+            vec![SPFAuthResultType {
+                domain: String::from("bix-business.com"),
+                scope: None,
                 result: SPFResultType::pass,
             }]
         );
