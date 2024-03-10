@@ -9,8 +9,9 @@ mod summary;
 
 use crate::http::run_http_server;
 use crate::imap::get_mails;
-use crate::parser::parse_reports_from_mail;
+use crate::parser::{extract_xml_files, parse_xml_file};
 use crate::state::AppState;
+use crate::summary::Summary;
 use anyhow::{Context, Result};
 use config::Configuration;
 use std::sync::{Arc, Mutex};
@@ -90,19 +91,40 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
 
     info!("Downloading mails...");
     let mails = get_mails(config).context("Failed to get mails")?;
-    state.lock().expect("Failed to lock app state").mails = mails.len();
     info!("Downloaded {} mails from IMAP inbox", mails.len());
 
-    info!("Parsing mails...");
-    let mut reports = Vec::new();
-    for mail in mails {
-        match parse_reports_from_mail(&mail) {
-            Ok(mut mail_reports) => reports.append(&mut mail_reports),
-            Err(err) => warn!("Failed to extract reports from mail: {err:#}"),
+    info!("Extracting XML files from mails...");
+    let mut xml_files = Vec::new();
+    for mail in &mails {
+        match extract_xml_files(mail) {
+            Ok(mut files) => xml_files.append(&mut files),
+            Err(err) => warn!("Failed to extract XML files from mail: {err:#}"),
         }
     }
-    let report_count = reports.len();
-    state.lock().expect("Failed to lock app state").reports = reports;
-    info!("Finished parsing mails and extracted {report_count} reports",);
+    info!("Extracted {} XML files from mails", xml_files.len());
+
+    info!("Parsing XML files as DMARC reports...");
+    let mut reports = Vec::new();
+    for xml_file in &xml_files {
+        match parse_xml_file(xml_file) {
+            Ok(report) => reports.push(report),
+            Err(err) => warn!("Failed to parse XML file as DMARC report: {err:#}"),
+        }
+    }
+    info!("Parsed {} DMARC reports successfully", reports.len());
+
+    info!("Creating report summary...");
+    let summary = Summary::new(&mails, &xml_files, &reports);
+
+    info!("Updating sharted state...");
+    {
+        let mut locked_state = state.lock().expect("Failed to lock app state");
+        locked_state.mails = mails.len();
+        locked_state.xml_files = xml_files.len();
+        locked_state.summary = summary;
+        locked_state.reports = reports;
+    }
+    info!("Finished updating shared state");
+
     Ok(())
 }

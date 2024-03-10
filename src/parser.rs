@@ -39,7 +39,7 @@ fn get_xml_from_gz(gz_bytes: &[u8]) -> Result<Vec<u8>> {
     Ok(xml_file)
 }
 
-fn extract_xml_files(mail: &[u8]) -> Result<Vec<Vec<u8>>> {
+pub fn extract_xml_files(mail: &[u8]) -> Result<Vec<Vec<u8>>> {
     let parsed = mailparse::parse_mail(mail).context("Failed to parse mail body")?;
 
     let mut xml_files = Vec::new();
@@ -72,19 +72,7 @@ fn extract_xml_files(mail: &[u8]) -> Result<Vec<Vec<u8>>> {
     Ok(xml_files)
 }
 
-fn parse_reports(xml_files: Vec<Vec<u8>>) -> Result<Vec<feedback>> {
-    let mut reports = Vec::new();
-    for xml in xml_files {
-        let mut cursor = Cursor::new(xml);
-        let report = dmarc_aggregate_parser::parse_reader(&mut cursor)
-            .context("Failed to parse XML as DMARC report")?;
-        reports.push(report);
-    }
-    Ok(reports)
-}
-
-pub fn parse_reports_from_mail(mail: &[u8]) -> Result<Vec<feedback>> {
-    let xml_files = extract_xml_files(mail).context("Failed to extract XML files from mail")?;
-    let reports = parse_reports(xml_files).context("Failed to parse XML files as reports")?;
-    Ok(reports)
+pub fn parse_xml_file(xml_file: &[u8]) -> Result<feedback> {
+    let mut cursor = Cursor::new(xml_file);
+    dmarc_aggregate_parser::parse_reader(&mut cursor).context("Failed to parse XML as DMARC report")
 }

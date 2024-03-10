@@ -1,6 +1,5 @@
 use crate::config::Configuration;
 use crate::state::AppState;
-use crate::summary::Summary;
 use anyhow::{Context, Result};
 use axum::body::Body;
 use axum::extract::Request;
@@ -115,6 +114,6 @@ async fn root(State(state): State<Arc<Mutex<AppState>>>) -> impl IntoResponse {
 
 async fn summary(State(state): State<Arc<Mutex<AppState>>>) -> impl IntoResponse {
     let locked_state = state.lock().expect("Failed to lock app state");
-    let summary = Summary::from_reports(&locked_state.reports);
+    let summary = locked_state.summary.clone();
     Json(summary)
 }
