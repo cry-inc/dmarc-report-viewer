@@ -395,6 +395,7 @@ dependencies = [
  "imap",
  "mailparse",
  "rustls-connector",
+ "serde",
  "tokio",
  "tracing",
  "tracing-subscriber",

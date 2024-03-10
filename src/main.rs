@@ -5,6 +5,7 @@ mod http;
 mod imap;
 mod parser;
 mod state;
+mod summary;
 
 use crate::http::run_http_server;
 use crate::imap::get_mails;

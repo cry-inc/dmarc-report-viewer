@@ -8,6 +8,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+serde = "1"
 axum = "0.7"
 anyhow = "1"
 flate2 = "1"

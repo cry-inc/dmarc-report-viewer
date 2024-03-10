@@ -1,12 +1,14 @@
 use crate::config::Configuration;
 use crate::state::AppState;
+use crate::summary::Summary;
 use anyhow::{Context, Result};
 use axum::body::Body;
 use axum::extract::Request;
 use axum::http::header::{AUTHORIZATION, WWW_AUTHENTICATE};
 use axum::http::StatusCode;
 use axum::middleware::{self, Next};
-use axum::response::Response;
+use axum::response::{IntoResponse, Response};
+use axum::Json;
 use axum::{extract::State, routing::get, Router};
 use base64::{engine::general_purpose::STANDARD, Engine as _};
 use std::sync::{Arc, Mutex};
@@ -17,6 +19,7 @@ use tracing::info;
 pub async fn run_http_server(config: &Configuration, state: Arc<Mutex<AppState>>) -> Result<()> {
     let app = Router::new()
         .route("/", get(root))
+        .route("/summary", get(summary))
         .route_layer(middleware::from_fn_with_state(
             config.clone(),
             basic_auth_middleware,
@@ -105,7 +108,13 @@ async fn basic_auth_middleware(
     }
 }
 
-async fn root(State(state): State<Arc<Mutex<AppState>>>) -> String {
+async fn root(State(state): State<Arc<Mutex<AppState>>>) -> impl IntoResponse {
     let mails = state.lock().expect("Failed to lock app state").mails;
     format!("Hello World, we have {mails} mails")
+}
+
+async fn summary(State(state): State<Arc<Mutex<AppState>>>) -> impl IntoResponse {
+    let locked_state = state.lock().expect("Failed to lock app state");
+    let summary = Summary::from_reports(&locked_state.reports);
+    Json(summary)
 }
