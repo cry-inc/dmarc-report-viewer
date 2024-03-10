@@ -20,25 +20,23 @@ pub struct ReportMetadataType {
     pub error: Option<Vec<String>>,
 }
 
-#[allow(non_camel_case_types)]
 #[derive(Debug, Deserialize, PartialEq)]
 pub enum AlignmentType {
-    /// Relaxed
-    r,
-    /// Strict
-    s,
+    #[serde(rename = "r")]
+    Relaxed,
+    #[serde(rename = "s")]
+    Strict,
 }
 
-#[allow(non_camel_case_types)]
 #[derive(Debug, Deserialize, PartialEq)]
+#[serde(rename_all = "snake_case")]
 pub enum DispositionType {
     /// There is no preference on how a failed DMARC should be handled.
-    none,
-    /// The message should be quarantined. This usually means it will be placed in the `spam` folder
-    /// of the user
-    quarantine,
-    /// The message should be regjected.
-    reject,
+    None,
+    /// The message should be quarantined. This usually means it will be placed in the `spam` folder of the user.
+    Quarantine,
+    /// The message should be rejected.
+    Reject,
 }
 
 #[derive(Debug, Deserialize)]
@@ -52,22 +50,22 @@ pub struct PolicyPublishedType {
     pub fo: Option<String>,
 }
 
-#[allow(non_camel_case_types)]
 #[derive(Debug, Deserialize, PartialEq)]
+#[serde(rename_all = "snake_case")]
 pub enum DMARCResultType {
-    pass,
-    fail,
+    Pass,
+    Fail,
 }
 
-#[allow(non_camel_case_types)]
 #[derive(Debug, Deserialize, PartialEq)]
+#[serde(rename_all = "snake_case")]
 pub enum PolicyOverrideType {
-    forwarded,
-    sampled_out,
-    trusted_forwarder,
-    mailing_list,
-    local_policy,
-    other,
+    Forwarded,
+    SampledOut,
+    TrustedForwarder,
+    MailingList,
+    LocalPolicy,
+    Other,
 }
 
 #[derive(Debug, Deserialize, PartialEq)]
@@ -98,16 +96,18 @@ pub struct IdentifierType {
     pub header_from: String,
 }
 
-#[allow(non_camel_case_types)]
 #[derive(Debug, Deserialize, PartialEq)]
+#[serde(rename_all = "snake_case")]
 pub enum DKIMResultType {
-    none,
-    pass,
-    fail,
-    policy,
-    neutral,
-    temperror,
-    permerror,
+    None,
+    Pass,
+    Fail,
+    Policy,
+    Neutral,
+    #[serde(rename = "temperror")]
+    TemporaryError,
+    #[serde(rename = "permerror")]
+    PermanentError,
 }
 
 #[derive(Debug, Deserialize, PartialEq)]
@@ -118,23 +118,26 @@ pub struct DKIMAuthResultType {
     pub human_result: Option<String>,
 }
 
-#[allow(non_camel_case_types)]
 #[derive(Debug, Deserialize, PartialEq)]
+#[serde(rename_all = "snake_case")]
 pub enum SPFDomainScope {
-    helo,
-    mfrom,
+    Helo,
+    Mfrom,
 }
 
-#[allow(non_camel_case_types)]
 #[derive(Debug, Deserialize, PartialEq)]
+#[serde(rename_all = "snake_case")]
 pub enum SPFResultType {
-    none,
-    neutral,
-    pass,
-    fail,
-    softfail,
-    temperror,
-    permerror,
+    None,
+    Neutral,
+    Pass,
+    Fail,
+    #[serde(rename = "softfail")]
+    SoftFail,
+    #[serde(rename = "temperror")]
+    TemporaryError,
+    #[serde(rename = "permerror")]
+    PermanentError,
 }
 
 #[derive(Debug, Deserialize, PartialEq)]
@@ -157,9 +160,8 @@ pub struct RecordType {
     pub auth_results: AuthResultType,
 }
 
-#[allow(non_camel_case_types)]
 #[derive(Debug, Deserialize)]
-pub struct feedback {
+pub struct Report {
     pub version: Option<String>,
     pub report_metadata: ReportMetadataType,
     pub policy_published: PolicyPublishedType,
@@ -174,7 +176,7 @@ mod tests {
     #[test]
     fn aol_report() {
         let reader = File::open("testdata/dmarc-reports/aol.xml").unwrap();
-        let report: feedback = serde_xml_rs::from_reader(reader).unwrap();
+        let report: Report = serde_xml_rs::from_reader(reader).unwrap();
 
         // Check metadata
         assert_eq!(report.report_metadata.org_name, "AOL");
@@ -185,10 +187,10 @@ mod tests {
 
         // Check policy
         assert_eq!(report.policy_published.domain, "website.com");
-        assert_eq!(report.policy_published.adkim, Some(AlignmentType::r));
-        assert_eq!(report.policy_published.aspf, Some(AlignmentType::r));
-        assert_eq!(report.policy_published.p, DispositionType::reject);
-        assert_eq!(report.policy_published.sp, Some(DispositionType::reject));
+        assert_eq!(report.policy_published.adkim, Some(AlignmentType::Relaxed));
+        assert_eq!(report.policy_published.aspf, Some(AlignmentType::Relaxed));
+        assert_eq!(report.policy_published.p, DispositionType::Reject);
+        assert_eq!(report.policy_published.sp, Some(DispositionType::Reject));
         assert_eq!(report.policy_published.pct, 100);
 
         // Check record
@@ -198,20 +200,20 @@ mod tests {
         assert_eq!(record.row.count, 1);
         assert_eq!(
             record.row.policy_evaluated.disposition,
-            DispositionType::none
+            DispositionType::None
         );
         assert_eq!(
             record.row.policy_evaluated.dkim,
-            Some(DMARCResultType::pass)
+            Some(DMARCResultType::Pass)
         );
-        assert_eq!(record.row.policy_evaluated.spf, Some(DMARCResultType::pass));
+        assert_eq!(record.row.policy_evaluated.spf, Some(DMARCResultType::Pass));
         assert_eq!(record.identifiers.header_from, "website.com");
         assert_eq!(
             record.auth_results.dkim,
             Some(vec![DKIMAuthResultType {
                 domain: String::from("website.com"),
                 selector: None,
-                result: DKIMResultType::pass,
+                result: DKIMResultType::Pass,
                 human_result: None
             }])
         );
@@ -219,8 +221,8 @@ mod tests {
             record.auth_results.spf,
             vec![SPFAuthResultType {
                 domain: String::from("website.com"),
-                scope: Some(SPFDomainScope::mfrom),
-                result: SPFResultType::pass,
+                scope: Some(SPFDomainScope::Mfrom),
+                result: SPFResultType::Pass,
             }]
         );
     }
@@ -228,7 +230,7 @@ mod tests {
     #[test]
     fn acme_report() {
         let reader = File::open("testdata/dmarc-reports/acme.xml").unwrap();
-        let report: feedback = serde_xml_rs::from_reader(reader).unwrap();
+        let report: Report = serde_xml_rs::from_reader(reader).unwrap();
 
         // Check metadata
         assert_eq!(report.report_metadata.org_name, "acme.com");
@@ -250,10 +252,10 @@ mod tests {
 
         // Check policy
         assert_eq!(report.policy_published.domain, "example.com");
-        assert_eq!(report.policy_published.adkim, Some(AlignmentType::r));
-        assert_eq!(report.policy_published.aspf, Some(AlignmentType::r));
-        assert_eq!(report.policy_published.p, DispositionType::none);
-        assert_eq!(report.policy_published.sp, Some(DispositionType::none));
+        assert_eq!(report.policy_published.adkim, Some(AlignmentType::Relaxed));
+        assert_eq!(report.policy_published.aspf, Some(AlignmentType::Relaxed));
+        assert_eq!(report.policy_published.p, DispositionType::None);
+        assert_eq!(report.policy_published.sp, Some(DispositionType::None));
         assert_eq!(report.policy_published.pct, 100);
         assert_eq!(report.policy_published.fo, Some(String::from("1")));
 
@@ -264,17 +266,17 @@ mod tests {
         assert_eq!(record.row.count, 2);
         assert_eq!(
             record.row.policy_evaluated.disposition,
-            DispositionType::none
+            DispositionType::None
         );
         assert_eq!(
             record.row.policy_evaluated.dkim,
-            Some(DMARCResultType::fail)
+            Some(DMARCResultType::Fail)
         );
-        assert_eq!(record.row.policy_evaluated.spf, Some(DMARCResultType::pass));
+        assert_eq!(record.row.policy_evaluated.spf, Some(DMARCResultType::Pass));
         assert_eq!(
             record.row.policy_evaluated.reason,
             Some(vec![PolicyOverrideReason {
-                r#type: PolicyOverrideType::other,
+                r#type: PolicyOverrideType::Other,
                 comment: Some(String::from(
                     "DMARC Policy overridden for incoherent example."
                 ))
@@ -294,7 +296,7 @@ mod tests {
             Some(vec![DKIMAuthResultType {
                 domain: String::from("example.com"),
                 selector: Some(String::from("ExamplesSelector")),
-                result: DKIMResultType::fail,
+                result: DKIMResultType::Fail,
                 human_result: Some(String::from("Incoherent example"))
             }])
         );
@@ -302,8 +304,8 @@ mod tests {
             record.auth_results.spf,
             vec![SPFAuthResultType {
                 domain: String::from("example.com"),
-                scope: Some(SPFDomainScope::helo),
-                result: SPFResultType::pass,
+                scope: Some(SPFDomainScope::Helo),
+                result: SPFResultType::Pass,
             }]
         );
     }
@@ -311,7 +313,7 @@ mod tests {
     #[test]
     fn solamora_report() {
         let reader = File::open("testdata/dmarc-reports/solamora.xml").unwrap();
-        let report: feedback = serde_xml_rs::from_reader(reader).unwrap();
+        let report: Report = serde_xml_rs::from_reader(reader).unwrap();
 
         // Check metadata
         assert_eq!(report.report_metadata.org_name, "solarmora.com");
@@ -329,10 +331,10 @@ mod tests {
 
         // Check policy
         assert_eq!(report.policy_published.domain, "bix-business.com");
-        assert_eq!(report.policy_published.adkim, Some(AlignmentType::r));
-        assert_eq!(report.policy_published.aspf, Some(AlignmentType::r));
-        assert_eq!(report.policy_published.p, DispositionType::none);
-        assert_eq!(report.policy_published.sp, Some(DispositionType::none));
+        assert_eq!(report.policy_published.adkim, Some(AlignmentType::Relaxed));
+        assert_eq!(report.policy_published.aspf, Some(AlignmentType::Relaxed));
+        assert_eq!(report.policy_published.p, DispositionType::None);
+        assert_eq!(report.policy_published.sp, Some(DispositionType::None));
         assert_eq!(report.policy_published.pct, 100);
 
         // Check record
@@ -342,20 +344,20 @@ mod tests {
         assert_eq!(record.row.count, 2);
         assert_eq!(
             record.row.policy_evaluated.disposition,
-            DispositionType::none
+            DispositionType::None
         );
         assert_eq!(
             record.row.policy_evaluated.dkim,
-            Some(DMARCResultType::fail)
+            Some(DMARCResultType::Fail)
         );
-        assert_eq!(record.row.policy_evaluated.spf, Some(DMARCResultType::pass));
+        assert_eq!(record.row.policy_evaluated.spf, Some(DMARCResultType::Pass));
         assert_eq!(record.identifiers.header_from, "bix-business.com");
         assert_eq!(
             record.auth_results.dkim,
             Some(vec![DKIMAuthResultType {
                 domain: String::from("bix-business.com"),
                 selector: None,
-                result: DKIMResultType::fail,
+                result: DKIMResultType::Fail,
                 human_result: Some(String::new())
             }])
         );
@@ -364,7 +366,7 @@ mod tests {
             vec![SPFAuthResultType {
                 domain: String::from("bix-business.com"),
                 scope: None,
-                result: SPFResultType::pass,
+                result: SPFResultType::Pass,
             }]
         );
     }
@@ -372,7 +374,7 @@ mod tests {
     #[test]
     fn yahoo_report() {
         let reader = File::open("testdata/dmarc-reports/yahoo.xml").unwrap();
-        let report: feedback = serde_xml_rs::from_reader(reader).unwrap();
+        let report: Report = serde_xml_rs::from_reader(reader).unwrap();
 
         // Check metadata
         assert_eq!(report.report_metadata.org_name, "Yahoo");
@@ -383,9 +385,9 @@ mod tests {
 
         // Check policy
         assert_eq!(report.policy_published.domain, "random.org");
-        assert_eq!(report.policy_published.adkim, Some(AlignmentType::r));
-        assert_eq!(report.policy_published.aspf, Some(AlignmentType::r));
-        assert_eq!(report.policy_published.p, DispositionType::reject);
+        assert_eq!(report.policy_published.adkim, Some(AlignmentType::Relaxed));
+        assert_eq!(report.policy_published.aspf, Some(AlignmentType::Relaxed));
+        assert_eq!(report.policy_published.p, DispositionType::Reject);
         assert_eq!(report.policy_published.pct, 100);
 
         // Check record
@@ -395,20 +397,20 @@ mod tests {
         assert_eq!(record.row.count, 1);
         assert_eq!(
             record.row.policy_evaluated.disposition,
-            DispositionType::none
+            DispositionType::None
         );
         assert_eq!(
             record.row.policy_evaluated.dkim,
-            Some(DMARCResultType::pass)
+            Some(DMARCResultType::Pass)
         );
-        assert_eq!(record.row.policy_evaluated.spf, Some(DMARCResultType::pass));
+        assert_eq!(record.row.policy_evaluated.spf, Some(DMARCResultType::Pass));
         assert_eq!(record.identifiers.header_from, "random.org");
         assert_eq!(
             record.auth_results.dkim,
             Some(vec![DKIMAuthResultType {
                 domain: String::from("random.org"),
                 selector: Some(String::from("abc")),
-                result: DKIMResultType::pass,
+                result: DKIMResultType::Pass,
                 human_result: None
             }])
         );
@@ -417,7 +419,7 @@ mod tests {
             vec![SPFAuthResultType {
                 domain: String::from("random.org"),
                 scope: None,
-                result: SPFResultType::pass,
+                result: SPFResultType::Pass,
             }]
         );
     }
@@ -425,7 +427,7 @@ mod tests {
     #[test]
     fn google_report() {
         let reader = File::open("testdata/dmarc-reports/google.xml").unwrap();
-        let report: feedback = serde_xml_rs::from_reader(reader).unwrap();
+        let report: Report = serde_xml_rs::from_reader(reader).unwrap();
 
         // Check metadata
         assert_eq!(report.report_metadata.org_name, "google.com");
@@ -443,10 +445,10 @@ mod tests {
 
         // Check policy
         assert_eq!(report.policy_published.domain, "foo-bar.io");
-        assert_eq!(report.policy_published.adkim, Some(AlignmentType::r));
-        assert_eq!(report.policy_published.aspf, Some(AlignmentType::r));
-        assert_eq!(report.policy_published.p, DispositionType::reject);
-        assert_eq!(report.policy_published.sp, Some(DispositionType::reject));
+        assert_eq!(report.policy_published.adkim, Some(AlignmentType::Relaxed));
+        assert_eq!(report.policy_published.aspf, Some(AlignmentType::Relaxed));
+        assert_eq!(report.policy_published.p, DispositionType::Reject);
+        assert_eq!(report.policy_published.sp, Some(DispositionType::Reject));
         assert_eq!(report.policy_published.pct, 100);
 
         // Check record
@@ -456,20 +458,20 @@ mod tests {
         assert_eq!(record.row.count, 1);
         assert_eq!(
             record.row.policy_evaluated.disposition,
-            DispositionType::none
+            DispositionType::None
         );
         assert_eq!(
             record.row.policy_evaluated.dkim,
-            Some(DMARCResultType::pass)
+            Some(DMARCResultType::Pass)
         );
-        assert_eq!(record.row.policy_evaluated.spf, Some(DMARCResultType::pass));
+        assert_eq!(record.row.policy_evaluated.spf, Some(DMARCResultType::Pass));
         assert_eq!(record.identifiers.header_from, "foo-bar.io");
         assert_eq!(
             record.auth_results.dkim,
             Some(vec![DKIMAuthResultType {
                 domain: String::from("foo-bar.io"),
                 selector: Some(String::from("krs")),
-                result: DKIMResultType::pass,
+                result: DKIMResultType::Pass,
                 human_result: None
             }])
         );
@@ -478,7 +480,7 @@ mod tests {
             vec![SPFAuthResultType {
                 domain: String::from("foo-bar.io"),
                 scope: None,
-                result: SPFResultType::pass,
+                result: SPFResultType::Pass,
             }]
         );
     }
@@ -486,7 +488,7 @@ mod tests {
     #[test]
     fn outlook_report() {
         let reader = File::open("testdata/dmarc-reports/outlook.xml").unwrap();
-        let report: feedback = serde_xml_rs::from_reader(reader).unwrap();
+        let report: Report = serde_xml_rs::from_reader(reader).unwrap();
 
         // Check metadata
         assert_eq!(report.report_metadata.org_name, "Outlook.com");
@@ -500,10 +502,10 @@ mod tests {
 
         // Check policy
         assert_eq!(report.policy_published.domain, "random.net");
-        assert_eq!(report.policy_published.adkim, Some(AlignmentType::r));
-        assert_eq!(report.policy_published.aspf, Some(AlignmentType::r));
-        assert_eq!(report.policy_published.p, DispositionType::reject);
-        assert_eq!(report.policy_published.sp, Some(DispositionType::reject));
+        assert_eq!(report.policy_published.adkim, Some(AlignmentType::Relaxed));
+        assert_eq!(report.policy_published.aspf, Some(AlignmentType::Relaxed));
+        assert_eq!(report.policy_published.p, DispositionType::Reject);
+        assert_eq!(report.policy_published.sp, Some(DispositionType::Reject));
         assert_eq!(report.policy_published.pct, 100);
         assert_eq!(report.policy_published.fo, Some(String::from("0")));
 
@@ -514,13 +516,13 @@ mod tests {
         assert_eq!(record.row.count, 1);
         assert_eq!(
             record.row.policy_evaluated.disposition,
-            DispositionType::none
+            DispositionType::None
         );
         assert_eq!(
             record.row.policy_evaluated.dkim,
-            Some(DMARCResultType::pass)
+            Some(DMARCResultType::Pass)
         );
-        assert_eq!(record.row.policy_evaluated.spf, Some(DMARCResultType::pass));
+        assert_eq!(record.row.policy_evaluated.spf, Some(DMARCResultType::Pass));
         assert_eq!(
             record.identifiers.envelope_to,
             Some(String::from("live.de"))
@@ -535,7 +537,7 @@ mod tests {
             Some(vec![DKIMAuthResultType {
                 domain: String::from("random.net"),
                 selector: Some(String::from("def")),
-                result: DKIMResultType::pass,
+                result: DKIMResultType::Pass,
                 human_result: None
             }])
         );
@@ -543,8 +545,8 @@ mod tests {
             record.auth_results.spf,
             vec![SPFAuthResultType {
                 domain: String::from("random.net"),
-                scope: Some(SPFDomainScope::mfrom),
-                result: SPFResultType::pass,
+                scope: Some(SPFDomainScope::Mfrom),
+                result: SPFResultType::Pass,
             }]
         );
 
@@ -554,13 +556,13 @@ mod tests {
         assert_eq!(record.row.count, 2);
         assert_eq!(
             record.row.policy_evaluated.disposition,
-            DispositionType::none
+            DispositionType::None
         );
         assert_eq!(
             record.row.policy_evaluated.dkim,
-            Some(DMARCResultType::pass)
+            Some(DMARCResultType::Pass)
         );
-        assert_eq!(record.row.policy_evaluated.spf, Some(DMARCResultType::pass));
+        assert_eq!(record.row.policy_evaluated.spf, Some(DMARCResultType::Pass));
         assert_eq!(
             record.identifiers.envelope_to,
             Some(String::from("outlook.de"))
@@ -575,7 +577,7 @@ mod tests {
             Some(vec![DKIMAuthResultType {
                 domain: String::from("random.net"),
                 selector: Some(String::from("def")),
-                result: DKIMResultType::pass,
+                result: DKIMResultType::Pass,
                 human_result: None
             }])
         );
@@ -583,8 +585,8 @@ mod tests {
             record.auth_results.spf,
             vec![SPFAuthResultType {
                 domain: String::from("random.net"),
-                scope: Some(SPFDomainScope::mfrom),
-                result: SPFResultType::pass,
+                scope: Some(SPFDomainScope::Mfrom),
+                result: SPFResultType::Pass,
             }]
         );
     }

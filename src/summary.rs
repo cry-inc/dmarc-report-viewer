@@ -1,4 +1,4 @@
-use crate::dmarc_report::{feedback, DKIMResultType, DMARCResultType, SPFResultType};
+use crate::dmarc_report::{DKIMResultType, DMARCResultType, Report, SPFResultType};
 use serde::Serialize;
 use std::collections::HashMap;
 
@@ -24,7 +24,7 @@ pub struct Summary {
 }
 
 impl Summary {
-    pub fn new(mails: &[Vec<u8>], xml_files: &[Vec<u8>], reports: &[feedback]) -> Self {
+    pub fn new(mails: &[Vec<u8>], xml_files: &[Vec<u8>], reports: &[Report]) -> Self {
         let mut orgs: HashMap<String, usize> = HashMap::new();
         let mut domains = HashMap::new();
         let mut rows = Vec::new();
@@ -103,8 +103,8 @@ enum PolicyResult {
 impl PolicyResult {
     fn from(result: &DMARCResultType) -> Self {
         match result {
-            DMARCResultType::pass => Self::Pass,
-            DMARCResultType::fail => Self::Fail,
+            DMARCResultType::Pass => Self::Pass,
+            DMARCResultType::Fail => Self::Fail,
         }
     }
 }
@@ -116,20 +116,20 @@ enum DkimAuthResult {
     Fail,
     Policy,
     Neutral,
-    TempError,
-    PermError,
+    TemporaryError,
+    PermanentError,
 }
 
 impl DkimAuthResult {
     fn from(result: &DKIMResultType) -> Self {
         match result {
-            DKIMResultType::none => Self::None,
-            DKIMResultType::pass => Self::Pass,
-            DKIMResultType::fail => Self::Fail,
-            DKIMResultType::policy => Self::Policy,
-            DKIMResultType::neutral => Self::Neutral,
-            DKIMResultType::temperror => Self::TempError,
-            DKIMResultType::permerror => Self::PermError,
+            DKIMResultType::None => Self::None,
+            DKIMResultType::Pass => Self::Pass,
+            DKIMResultType::Fail => Self::Fail,
+            DKIMResultType::Policy => Self::Policy,
+            DKIMResultType::Neutral => Self::Neutral,
+            DKIMResultType::TemporaryError => Self::TemporaryError,
+            DKIMResultType::PermanentError => Self::PermanentError,
         }
     }
 }
@@ -141,20 +141,20 @@ enum SpfAuthResult {
     Pass,
     Fail,
     SoftFail,
-    TempError,
-    PermError,
+    TemporaryError,
+    PermanentError,
 }
 
 impl SpfAuthResult {
     fn from(result: &SPFResultType) -> Self {
         match result {
-            SPFResultType::none => SpfAuthResult::None,
-            SPFResultType::neutral => SpfAuthResult::Neutral,
-            SPFResultType::pass => SpfAuthResult::Pass,
-            SPFResultType::fail => SpfAuthResult::Fail,
-            SPFResultType::softfail => SpfAuthResult::SoftFail,
-            SPFResultType::temperror => SpfAuthResult::TempError,
-            SPFResultType::permerror => SpfAuthResult::PermError,
+            SPFResultType::None => SpfAuthResult::None,
+            SPFResultType::Neutral => SpfAuthResult::Neutral,
+            SPFResultType::Pass => SpfAuthResult::Pass,
+            SPFResultType::Fail => SpfAuthResult::Fail,
+            SPFResultType::SoftFail => SpfAuthResult::SoftFail,
+            SPFResultType::TemporaryError => SpfAuthResult::TemporaryError,
+            SPFResultType::PermanentError => SpfAuthResult::PermanentError,
         }
     }
 }

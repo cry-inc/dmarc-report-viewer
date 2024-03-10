@@ -1,4 +1,4 @@
-use crate::dmarc_report::feedback;
+use crate::dmarc_report::Report;
 use crate::summary::Summary;
 
 /// Shared state between the different parts of the application.
@@ -14,7 +14,7 @@ pub struct AppState {
     pub xml_files: usize,
 
     /// DMARC reports parsed from emails in inbox
-    pub reports: Vec<feedback>,
+    pub reports: Vec<Report>,
 
     /// Summary of report and other stats
     pub summary: Summary,

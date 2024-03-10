@@ -1,4 +1,4 @@
-use crate::dmarc_report::feedback;
+use crate::dmarc_report::Report;
 use anyhow::{Context, Result};
 use flate2::read::GzDecoder;
 use mailparse::MailHeaderMap;
@@ -72,7 +72,7 @@ pub fn extract_xml_files(mail: &[u8]) -> Result<Vec<Vec<u8>>> {
     Ok(xml_files)
 }
 
-pub fn parse_xml_file(xml_file: &[u8]) -> Result<feedback> {
+pub fn parse_xml_file(xml_file: &[u8]) -> Result<Report> {
     let mut cursor = Cursor::new(xml_file);
     serde_xml_rs::from_reader(&mut cursor).context("Failed to parse XML as DMARC report")
 }
