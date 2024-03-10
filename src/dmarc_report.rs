@@ -368,4 +368,224 @@ mod tests {
             }]
         );
     }
+
+    #[test]
+    fn yahoo_report() {
+        let reader = File::open("testdata/dmarc-reports/yahoo.xml").unwrap();
+        let report: feedback = serde_xml_rs::from_reader(reader).unwrap();
+
+        // Check metadata
+        assert_eq!(report.report_metadata.org_name, "Yahoo");
+        assert_eq!(report.report_metadata.email, "dmarchelp@yahooinc.com");
+        assert_eq!(report.report_metadata.report_id, "1709600619.487850");
+        assert_eq!(report.report_metadata.date_range.begin, 1709510400);
+        assert_eq!(report.report_metadata.date_range.end, 1709596799);
+
+        // Check policy
+        assert_eq!(report.policy_published.domain, "random.org");
+        assert_eq!(report.policy_published.adkim, Some(AlignmentType::r));
+        assert_eq!(report.policy_published.aspf, Some(AlignmentType::r));
+        assert_eq!(report.policy_published.p, DispositionType::reject);
+        assert_eq!(report.policy_published.pct, 100);
+
+        // Check record
+        assert_eq!(report.record.len(), 1);
+        let record = report.record.first().unwrap();
+        assert_eq!(record.row.source_ip.to_string(), "1.2.3.4");
+        assert_eq!(record.row.count, 1);
+        assert_eq!(
+            record.row.policy_evaluated.disposition,
+            DispositionType::none
+        );
+        assert_eq!(
+            record.row.policy_evaluated.dkim,
+            Some(DMARCResultType::pass)
+        );
+        assert_eq!(record.row.policy_evaluated.spf, Some(DMARCResultType::pass));
+        assert_eq!(record.identifiers.header_from, "random.org");
+        assert_eq!(
+            record.auth_results.dkim,
+            Some(vec![DKIMAuthResultType {
+                domain: String::from("random.org"),
+                selector: Some(String::from("abc")),
+                result: DKIMResultType::pass,
+                human_result: None
+            }])
+        );
+        assert_eq!(
+            record.auth_results.spf,
+            vec![SPFAuthResultType {
+                domain: String::from("random.org"),
+                scope: None,
+                result: SPFResultType::pass,
+            }]
+        );
+    }
+
+    #[test]
+    fn google_report() {
+        let reader = File::open("testdata/dmarc-reports/google.xml").unwrap();
+        let report: feedback = serde_xml_rs::from_reader(reader).unwrap();
+
+        // Check metadata
+        assert_eq!(report.report_metadata.org_name, "google.com");
+        assert_eq!(
+            report.report_metadata.email,
+            "noreply-dmarc-support@google.com"
+        );
+        assert_eq!(
+            report.report_metadata.extra_contact_info,
+            Some(String::from("https://support.google.com/a/answer/2466580"))
+        );
+        assert_eq!(report.report_metadata.report_id, "3166094538684628578");
+        assert_eq!(report.report_metadata.date_range.begin, 1709683200);
+        assert_eq!(report.report_metadata.date_range.end, 1709769599);
+
+        // Check policy
+        assert_eq!(report.policy_published.domain, "foo-bar.io");
+        assert_eq!(report.policy_published.adkim, Some(AlignmentType::r));
+        assert_eq!(report.policy_published.aspf, Some(AlignmentType::r));
+        assert_eq!(report.policy_published.p, DispositionType::reject);
+        assert_eq!(report.policy_published.sp, Some(DispositionType::reject));
+        assert_eq!(report.policy_published.pct, 100);
+
+        // Check record
+        assert_eq!(report.record.len(), 1);
+        let record = report.record.first().unwrap();
+        assert_eq!(record.row.source_ip.to_string(), "1.2.3.4");
+        assert_eq!(record.row.count, 1);
+        assert_eq!(
+            record.row.policy_evaluated.disposition,
+            DispositionType::none
+        );
+        assert_eq!(
+            record.row.policy_evaluated.dkim,
+            Some(DMARCResultType::pass)
+        );
+        assert_eq!(record.row.policy_evaluated.spf, Some(DMARCResultType::pass));
+        assert_eq!(record.identifiers.header_from, "foo-bar.io");
+        assert_eq!(
+            record.auth_results.dkim,
+            Some(vec![DKIMAuthResultType {
+                domain: String::from("foo-bar.io"),
+                selector: Some(String::from("krs")),
+                result: DKIMResultType::pass,
+                human_result: None
+            }])
+        );
+        assert_eq!(
+            record.auth_results.spf,
+            vec![SPFAuthResultType {
+                domain: String::from("foo-bar.io"),
+                scope: None,
+                result: SPFResultType::pass,
+            }]
+        );
+    }
+
+    #[test]
+    fn outlook_report() {
+        let reader = File::open("testdata/dmarc-reports/outlook.xml").unwrap();
+        let report: feedback = serde_xml_rs::from_reader(reader).unwrap();
+
+        // Check metadata
+        assert_eq!(report.report_metadata.org_name, "Outlook.com");
+        assert_eq!(report.report_metadata.email, "dmarcreport@microsoft.com");
+        assert_eq!(
+            report.report_metadata.report_id,
+            "a4f4ef0654474d3faa5dca167a34a86a"
+        );
+        assert_eq!(report.report_metadata.date_range.begin, 1709683200);
+        assert_eq!(report.report_metadata.date_range.end, 1709769600);
+
+        // Check policy
+        assert_eq!(report.policy_published.domain, "random.net");
+        assert_eq!(report.policy_published.adkim, Some(AlignmentType::r));
+        assert_eq!(report.policy_published.aspf, Some(AlignmentType::r));
+        assert_eq!(report.policy_published.p, DispositionType::reject);
+        assert_eq!(report.policy_published.sp, Some(DispositionType::reject));
+        assert_eq!(report.policy_published.pct, 100);
+        assert_eq!(report.policy_published.fo, Some(String::from("0")));
+
+        // Check record #1
+        assert_eq!(report.record.len(), 2);
+        let record = report.record.first().unwrap();
+        assert_eq!(record.row.source_ip.to_string(), "1.2.3.4");
+        assert_eq!(record.row.count, 1);
+        assert_eq!(
+            record.row.policy_evaluated.disposition,
+            DispositionType::none
+        );
+        assert_eq!(
+            record.row.policy_evaluated.dkim,
+            Some(DMARCResultType::pass)
+        );
+        assert_eq!(record.row.policy_evaluated.spf, Some(DMARCResultType::pass));
+        assert_eq!(
+            record.identifiers.envelope_to,
+            Some(String::from("live.de"))
+        );
+        assert_eq!(
+            record.identifiers.envelope_from,
+            Some(String::from("random.net"))
+        );
+        assert_eq!(record.identifiers.header_from, "random.net");
+        assert_eq!(
+            record.auth_results.dkim,
+            Some(vec![DKIMAuthResultType {
+                domain: String::from("random.net"),
+                selector: Some(String::from("def")),
+                result: DKIMResultType::pass,
+                human_result: None
+            }])
+        );
+        assert_eq!(
+            record.auth_results.spf,
+            vec![SPFAuthResultType {
+                domain: String::from("random.net"),
+                scope: Some(SPFDomainScope::mfrom),
+                result: SPFResultType::pass,
+            }]
+        );
+
+        // Check record #2
+        let record = report.record.last().unwrap();
+        assert_eq!(record.row.source_ip.to_string(), "1.2.3.4");
+        assert_eq!(record.row.count, 2);
+        assert_eq!(
+            record.row.policy_evaluated.disposition,
+            DispositionType::none
+        );
+        assert_eq!(
+            record.row.policy_evaluated.dkim,
+            Some(DMARCResultType::pass)
+        );
+        assert_eq!(record.row.policy_evaluated.spf, Some(DMARCResultType::pass));
+        assert_eq!(
+            record.identifiers.envelope_to,
+            Some(String::from("outlook.de"))
+        );
+        assert_eq!(
+            record.identifiers.envelope_from,
+            Some(String::from("random.net"))
+        );
+        assert_eq!(record.identifiers.header_from, "random.net");
+        assert_eq!(
+            record.auth_results.dkim,
+            Some(vec![DKIMAuthResultType {
+                domain: String::from("random.net"),
+                selector: Some(String::from("def")),
+                result: DKIMResultType::pass,
+                human_result: None
+            }])
+        );
+        assert_eq!(
+            record.auth_results.spf,
+            vec![SPFAuthResultType {
+                domain: String::from("random.net"),
+                scope: Some(SPFDomainScope::mfrom),
+                result: SPFResultType::pass,
+            }]
+        );
+    }
 }
