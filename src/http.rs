@@ -13,9 +13,12 @@ use base64::{engine::general_purpose::STANDARD, Engine as _};
 use std::sync::{Arc, Mutex};
 use tokio::net::TcpListener;
 use tokio::signal;
-use tracing::info;
+use tracing::{info, warn};
 
 pub async fn run_http_server(config: &Configuration, state: Arc<Mutex<AppState>>) -> Result<()> {
+    if config.http_server_password.is_empty() {
+        warn!("Detected empty password: Basic Authentication will be disabled")
+    }
     let app = Router::new()
         .route("/", get(root))
         .route("/summary", get(summary))
