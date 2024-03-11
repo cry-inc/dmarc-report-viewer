@@ -1,4 +1,4 @@
-use crate::dmarc_report::{DKIMResultType, DMARCResultType, Report, SPFResultType};
+use crate::dmarc_report::{DkimResultType, DmarcResultType, Report, SpfResultType};
 use serde::Serialize;
 use std::collections::HashMap;
 
@@ -101,10 +101,10 @@ enum PolicyResult {
 }
 
 impl PolicyResult {
-    fn from(result: &DMARCResultType) -> Self {
+    fn from(result: &DmarcResultType) -> Self {
         match result {
-            DMARCResultType::Pass => Self::Pass,
-            DMARCResultType::Fail => Self::Fail,
+            DmarcResultType::Pass => Self::Pass,
+            DmarcResultType::Fail => Self::Fail,
         }
     }
 }
@@ -121,15 +121,15 @@ enum DkimAuthResult {
 }
 
 impl DkimAuthResult {
-    fn from(result: &DKIMResultType) -> Self {
+    fn from(result: &DkimResultType) -> Self {
         match result {
-            DKIMResultType::None => Self::None,
-            DKIMResultType::Pass => Self::Pass,
-            DKIMResultType::Fail => Self::Fail,
-            DKIMResultType::Policy => Self::Policy,
-            DKIMResultType::Neutral => Self::Neutral,
-            DKIMResultType::TemporaryError => Self::TemporaryError,
-            DKIMResultType::PermanentError => Self::PermanentError,
+            DkimResultType::None => Self::None,
+            DkimResultType::Pass => Self::Pass,
+            DkimResultType::Fail => Self::Fail,
+            DkimResultType::Policy => Self::Policy,
+            DkimResultType::Neutral => Self::Neutral,
+            DkimResultType::TemporaryError => Self::TemporaryError,
+            DkimResultType::PermanentError => Self::PermanentError,
         }
     }
 }
@@ -146,15 +146,15 @@ enum SpfAuthResult {
 }
 
 impl SpfAuthResult {
-    fn from(result: &SPFResultType) -> Self {
+    fn from(result: &SpfResultType) -> Self {
         match result {
-            SPFResultType::None => SpfAuthResult::None,
-            SPFResultType::Neutral => SpfAuthResult::Neutral,
-            SPFResultType::Pass => SpfAuthResult::Pass,
-            SPFResultType::Fail => SpfAuthResult::Fail,
-            SPFResultType::SoftFail => SpfAuthResult::SoftFail,
-            SPFResultType::TemporaryError => SpfAuthResult::TemporaryError,
-            SPFResultType::PermanentError => SpfAuthResult::PermanentError,
+            SpfResultType::None => SpfAuthResult::None,
+            SpfResultType::Neutral => SpfAuthResult::Neutral,
+            SpfResultType::Pass => SpfAuthResult::Pass,
+            SpfResultType::Fail => SpfAuthResult::Fail,
+            SpfResultType::SoftFail => SpfAuthResult::SoftFail,
+            SpfResultType::TemporaryError => SpfAuthResult::TemporaryError,
+            SpfResultType::PermanentError => SpfAuthResult::PermanentError,
         }
     }
 }

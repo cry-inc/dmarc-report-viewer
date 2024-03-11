@@ -1,5 +1,7 @@
-// Original code from https://github.com/bbustin/dmarc_aggregate_parser/
-// Its based upon appendix C of the DMARC RFC: https://tools.ietf.org/html/rfc7489#appendix-C
+// Original code before customization was copied from:
+// https://github.com/bbustin/dmarc_aggregate_parser/
+// Its based upon appendix C of the DMARC RFC:
+// https://tools.ietf.org/html/rfc7489#appendix-C
 
 use serde::Deserialize;
 use std::net::IpAddr;
@@ -52,7 +54,7 @@ pub struct PolicyPublishedType {
 
 #[derive(Debug, Deserialize, PartialEq)]
 #[serde(rename_all = "snake_case")]
-pub enum DMARCResultType {
+pub enum DmarcResultType {
     Pass,
     Fail,
 }
@@ -70,15 +72,16 @@ pub enum PolicyOverrideType {
 
 #[derive(Debug, Deserialize, PartialEq)]
 pub struct PolicyOverrideReason {
-    pub r#type: PolicyOverrideType,
+    #[serde(rename = "type")]
+    pub kind: PolicyOverrideType,
     pub comment: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct PolicyEvaluatedType {
     pub disposition: DispositionType,
-    pub dkim: Option<DMARCResultType>,
-    pub spf: Option<DMARCResultType>,
+    pub dkim: Option<DmarcResultType>,
+    pub spf: Option<DmarcResultType>,
     pub reason: Option<Vec<PolicyOverrideReason>>,
 }
 
@@ -98,7 +101,7 @@ pub struct IdentifierType {
 
 #[derive(Debug, Deserialize, PartialEq)]
 #[serde(rename_all = "snake_case")]
-pub enum DKIMResultType {
+pub enum DkimResultType {
     None,
     Pass,
     Fail,
@@ -111,23 +114,24 @@ pub enum DKIMResultType {
 }
 
 #[derive(Debug, Deserialize, PartialEq)]
-pub struct DKIMAuthResultType {
+pub struct DkimAuthResultType {
     pub domain: String,
     pub selector: Option<String>,
-    pub result: DKIMResultType,
+    pub result: DkimResultType,
     pub human_result: Option<String>,
 }
 
 #[derive(Debug, Deserialize, PartialEq)]
 #[serde(rename_all = "snake_case")]
-pub enum SPFDomainScope {
+pub enum SpfDomainScope {
     Helo,
-    Mfrom,
+    #[serde(rename = "mfrom")]
+    MailForm,
 }
 
 #[derive(Debug, Deserialize, PartialEq)]
 #[serde(rename_all = "snake_case")]
-pub enum SPFResultType {
+pub enum SpfResultType {
     None,
     Neutral,
     Pass,
@@ -141,16 +145,16 @@ pub enum SPFResultType {
 }
 
 #[derive(Debug, Deserialize, PartialEq)]
-pub struct SPFAuthResultType {
+pub struct SpfAuthResultType {
     pub domain: String,
-    pub scope: Option<SPFDomainScope>,
-    pub result: SPFResultType,
+    pub scope: Option<SpfDomainScope>,
+    pub result: SpfResultType,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct AuthResultType {
-    pub dkim: Option<Vec<DKIMAuthResultType>>,
-    pub spf: Vec<SPFAuthResultType>,
+    pub dkim: Option<Vec<DkimAuthResultType>>,
+    pub spf: Vec<SpfAuthResultType>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -204,25 +208,25 @@ mod tests {
         );
         assert_eq!(
             record.row.policy_evaluated.dkim,
-            Some(DMARCResultType::Pass)
+            Some(DmarcResultType::Pass)
         );
-        assert_eq!(record.row.policy_evaluated.spf, Some(DMARCResultType::Pass));
+        assert_eq!(record.row.policy_evaluated.spf, Some(DmarcResultType::Pass));
         assert_eq!(record.identifiers.header_from, "website.com");
         assert_eq!(
             record.auth_results.dkim,
-            Some(vec![DKIMAuthResultType {
+            Some(vec![DkimAuthResultType {
                 domain: String::from("website.com"),
                 selector: None,
-                result: DKIMResultType::Pass,
+                result: DkimResultType::Pass,
                 human_result: None
             }])
         );
         assert_eq!(
             record.auth_results.spf,
-            vec![SPFAuthResultType {
+            vec![SpfAuthResultType {
                 domain: String::from("website.com"),
-                scope: Some(SPFDomainScope::Mfrom),
-                result: SPFResultType::Pass,
+                scope: Some(SpfDomainScope::MailForm),
+                result: SpfResultType::Pass,
             }]
         );
     }
@@ -270,13 +274,13 @@ mod tests {
         );
         assert_eq!(
             record.row.policy_evaluated.dkim,
-            Some(DMARCResultType::Fail)
+            Some(DmarcResultType::Fail)
         );
-        assert_eq!(record.row.policy_evaluated.spf, Some(DMARCResultType::Pass));
+        assert_eq!(record.row.policy_evaluated.spf, Some(DmarcResultType::Pass));
         assert_eq!(
             record.row.policy_evaluated.reason,
             Some(vec![PolicyOverrideReason {
-                r#type: PolicyOverrideType::Other,
+                kind: PolicyOverrideType::Other,
                 comment: Some(String::from(
                     "DMARC Policy overridden for incoherent example."
                 ))
@@ -293,19 +297,19 @@ mod tests {
         );
         assert_eq!(
             record.auth_results.dkim,
-            Some(vec![DKIMAuthResultType {
+            Some(vec![DkimAuthResultType {
                 domain: String::from("example.com"),
                 selector: Some(String::from("ExamplesSelector")),
-                result: DKIMResultType::Fail,
+                result: DkimResultType::Fail,
                 human_result: Some(String::from("Incoherent example"))
             }])
         );
         assert_eq!(
             record.auth_results.spf,
-            vec![SPFAuthResultType {
+            vec![SpfAuthResultType {
                 domain: String::from("example.com"),
-                scope: Some(SPFDomainScope::Helo),
-                result: SPFResultType::Pass,
+                scope: Some(SpfDomainScope::Helo),
+                result: SpfResultType::Pass,
             }]
         );
     }
@@ -348,25 +352,25 @@ mod tests {
         );
         assert_eq!(
             record.row.policy_evaluated.dkim,
-            Some(DMARCResultType::Fail)
+            Some(DmarcResultType::Fail)
         );
-        assert_eq!(record.row.policy_evaluated.spf, Some(DMARCResultType::Pass));
+        assert_eq!(record.row.policy_evaluated.spf, Some(DmarcResultType::Pass));
         assert_eq!(record.identifiers.header_from, "bix-business.com");
         assert_eq!(
             record.auth_results.dkim,
-            Some(vec![DKIMAuthResultType {
+            Some(vec![DkimAuthResultType {
                 domain: String::from("bix-business.com"),
                 selector: None,
-                result: DKIMResultType::Fail,
+                result: DkimResultType::Fail,
                 human_result: Some(String::new())
             }])
         );
         assert_eq!(
             record.auth_results.spf,
-            vec![SPFAuthResultType {
+            vec![SpfAuthResultType {
                 domain: String::from("bix-business.com"),
                 scope: None,
-                result: SPFResultType::Pass,
+                result: SpfResultType::Pass,
             }]
         );
     }
@@ -401,25 +405,25 @@ mod tests {
         );
         assert_eq!(
             record.row.policy_evaluated.dkim,
-            Some(DMARCResultType::Pass)
+            Some(DmarcResultType::Pass)
         );
-        assert_eq!(record.row.policy_evaluated.spf, Some(DMARCResultType::Pass));
+        assert_eq!(record.row.policy_evaluated.spf, Some(DmarcResultType::Pass));
         assert_eq!(record.identifiers.header_from, "random.org");
         assert_eq!(
             record.auth_results.dkim,
-            Some(vec![DKIMAuthResultType {
+            Some(vec![DkimAuthResultType {
                 domain: String::from("random.org"),
                 selector: Some(String::from("abc")),
-                result: DKIMResultType::Pass,
+                result: DkimResultType::Pass,
                 human_result: None
             }])
         );
         assert_eq!(
             record.auth_results.spf,
-            vec![SPFAuthResultType {
+            vec![SpfAuthResultType {
                 domain: String::from("random.org"),
                 scope: None,
-                result: SPFResultType::Pass,
+                result: SpfResultType::Pass,
             }]
         );
     }
@@ -462,25 +466,25 @@ mod tests {
         );
         assert_eq!(
             record.row.policy_evaluated.dkim,
-            Some(DMARCResultType::Pass)
+            Some(DmarcResultType::Pass)
         );
-        assert_eq!(record.row.policy_evaluated.spf, Some(DMARCResultType::Pass));
+        assert_eq!(record.row.policy_evaluated.spf, Some(DmarcResultType::Pass));
         assert_eq!(record.identifiers.header_from, "foo-bar.io");
         assert_eq!(
             record.auth_results.dkim,
-            Some(vec![DKIMAuthResultType {
+            Some(vec![DkimAuthResultType {
                 domain: String::from("foo-bar.io"),
                 selector: Some(String::from("krs")),
-                result: DKIMResultType::Pass,
+                result: DkimResultType::Pass,
                 human_result: None
             }])
         );
         assert_eq!(
             record.auth_results.spf,
-            vec![SPFAuthResultType {
+            vec![SpfAuthResultType {
                 domain: String::from("foo-bar.io"),
                 scope: None,
-                result: SPFResultType::Pass,
+                result: SpfResultType::Pass,
             }]
         );
     }
@@ -520,9 +524,9 @@ mod tests {
         );
         assert_eq!(
             record.row.policy_evaluated.dkim,
-            Some(DMARCResultType::Pass)
+            Some(DmarcResultType::Pass)
         );
-        assert_eq!(record.row.policy_evaluated.spf, Some(DMARCResultType::Pass));
+        assert_eq!(record.row.policy_evaluated.spf, Some(DmarcResultType::Pass));
         assert_eq!(
             record.identifiers.envelope_to,
             Some(String::from("live.de"))
@@ -534,19 +538,19 @@ mod tests {
         assert_eq!(record.identifiers.header_from, "random.net");
         assert_eq!(
             record.auth_results.dkim,
-            Some(vec![DKIMAuthResultType {
+            Some(vec![DkimAuthResultType {
                 domain: String::from("random.net"),
                 selector: Some(String::from("def")),
-                result: DKIMResultType::Pass,
+                result: DkimResultType::Pass,
                 human_result: None
             }])
         );
         assert_eq!(
             record.auth_results.spf,
-            vec![SPFAuthResultType {
+            vec![SpfAuthResultType {
                 domain: String::from("random.net"),
-                scope: Some(SPFDomainScope::Mfrom),
-                result: SPFResultType::Pass,
+                scope: Some(SpfDomainScope::MailForm),
+                result: SpfResultType::Pass,
             }]
         );
 
@@ -560,9 +564,9 @@ mod tests {
         );
         assert_eq!(
             record.row.policy_evaluated.dkim,
-            Some(DMARCResultType::Pass)
+            Some(DmarcResultType::Pass)
         );
-        assert_eq!(record.row.policy_evaluated.spf, Some(DMARCResultType::Pass));
+        assert_eq!(record.row.policy_evaluated.spf, Some(DmarcResultType::Pass));
         assert_eq!(
             record.identifiers.envelope_to,
             Some(String::from("outlook.de"))
@@ -574,19 +578,19 @@ mod tests {
         assert_eq!(record.identifiers.header_from, "random.net");
         assert_eq!(
             record.auth_results.dkim,
-            Some(vec![DKIMAuthResultType {
+            Some(vec![DkimAuthResultType {
                 domain: String::from("random.net"),
                 selector: Some(String::from("def")),
-                result: DKIMResultType::Pass,
+                result: DkimResultType::Pass,
                 human_result: None
             }])
         );
         assert_eq!(
             record.auth_results.spf,
-            vec![SPFAuthResultType {
+            vec![SpfAuthResultType {
                 domain: String::from("random.net"),
-                scope: Some(SPFDomainScope::Mfrom),
-                result: SPFResultType::Pass,
+                scope: Some(SpfDomainScope::MailForm),
+                result: SpfResultType::Pass,
             }]
         );
     }
