@@ -91,7 +91,7 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
     info!("Starting background update cycle");
 
     info!("Downloading mails...");
-    let mails = get_mails(config).context("Failed to get mails")?;
+    let mails = get_mails(config).await.context("Failed to get mails")?;
     info!("Downloaded {} mails from IMAP inbox", mails.len());
 
     info!("Extracting XML files from mails...");
