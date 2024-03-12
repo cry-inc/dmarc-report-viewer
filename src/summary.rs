@@ -20,60 +20,56 @@ pub struct Summary {
     domains: HashMap<String, usize>,
 
     /// Map of SPF policy evaluation results
-    spf_policy_results: HashMap<PolicyResult, usize>,
+    spf_policy_results: HashMap<DmarcResultType, usize>,
 
     /// Map of DKIM policy evaluation results
-    dkim_policy_results: HashMap<PolicyResult, usize>,
+    dkim_policy_results: HashMap<DmarcResultType, usize>,
 
     /// Map of SPF auth results
-    spf_auth_results: HashMap<SpfAuthResult, usize>,
+    spf_auth_results: HashMap<SpfResultType, usize>,
 
     /// Map of DKIM auth results
-    dkim_auth_results: HashMap<DkimAuthResult, usize>,
+    dkim_auth_results: HashMap<DkimResultType, usize>,
 }
 
 impl Summary {
     pub fn new(mails: &[Vec<u8>], xml_files: &[Vec<u8>], reports: &[Report]) -> Self {
         let mut orgs: HashMap<String, usize> = HashMap::new();
         let mut domains = HashMap::new();
-        let mut spf_policy_results: HashMap<PolicyResult, usize> = HashMap::new();
-        let mut dkim_policy_results: HashMap<PolicyResult, usize> = HashMap::new();
-        let mut spf_auth_results: HashMap<SpfAuthResult, usize> = HashMap::new();
-        let mut dkim_auth_results: HashMap<DkimAuthResult, usize> = HashMap::new();
+        let mut spf_policy_results: HashMap<DmarcResultType, usize> = HashMap::new();
+        let mut dkim_policy_results: HashMap<DmarcResultType, usize> = HashMap::new();
+        let mut spf_auth_results: HashMap<SpfResultType, usize> = HashMap::new();
+        let mut dkim_auth_results: HashMap<DkimResultType, usize> = HashMap::new();
         for report in reports {
             for record in &report.record {
                 for r in &record.auth_results.spf {
-                    let result = SpfAuthResult::from(&r.result);
-                    if let Some(entry) = spf_auth_results.get_mut(&result) {
+                    if let Some(entry) = spf_auth_results.get_mut(&r.result) {
                         *entry += 1;
                     } else {
-                        spf_auth_results.insert(result, 1);
+                        spf_auth_results.insert(r.result.clone(), 1);
                     }
                 }
                 if let Some(vec) = &record.auth_results.dkim {
                     for r in vec {
-                        let result = DkimAuthResult::from(&r.result);
-                        if let Some(entry) = dkim_auth_results.get_mut(&result) {
+                        if let Some(entry) = dkim_auth_results.get_mut(&r.result) {
                             *entry += 1;
                         } else {
-                            dkim_auth_results.insert(result, 1);
+                            dkim_auth_results.insert(r.result.clone(), 1);
                         }
                     }
                 }
-                if let Some(result) = record.row.policy_evaluated.spf.as_ref() {
-                    let result = PolicyResult::from(result);
-                    if let Some(entry) = spf_policy_results.get_mut(&result) {
+                if let Some(result) = &record.row.policy_evaluated.spf {
+                    if let Some(entry) = spf_policy_results.get_mut(result) {
                         *entry += 1;
                     } else {
-                        spf_policy_results.insert(result, 1);
+                        spf_policy_results.insert(result.clone(), 1);
                     }
                 }
-                if let Some(result) = record.row.policy_evaluated.dkim.as_ref() {
-                    let result = PolicyResult::from(result);
-                    if let Some(entry) = dkim_policy_results.get_mut(&result) {
+                if let Some(result) = &record.row.policy_evaluated.dkim {
+                    if let Some(entry) = dkim_policy_results.get_mut(result) {
                         *entry += 1;
                     } else {
-                        dkim_policy_results.insert(result, 1);
+                        dkim_policy_results.insert(result.clone(), 1);
                     }
                 }
             }
@@ -100,71 +96,6 @@ impl Summary {
             dkim_policy_results,
             spf_auth_results,
             dkim_auth_results,
-        }
-    }
-}
-
-#[derive(Serialize, Clone, Hash, PartialEq, Eq)]
-enum PolicyResult {
-    Pass,
-    Fail,
-}
-
-impl PolicyResult {
-    fn from(result: &DmarcResultType) -> Self {
-        match result {
-            DmarcResultType::Pass => Self::Pass,
-            DmarcResultType::Fail => Self::Fail,
-        }
-    }
-}
-
-#[derive(Serialize, Clone, Hash, PartialEq, Eq)]
-enum DkimAuthResult {
-    None,
-    Pass,
-    Fail,
-    Policy,
-    Neutral,
-    TemporaryError,
-    PermanentError,
-}
-
-impl DkimAuthResult {
-    fn from(result: &DkimResultType) -> Self {
-        match result {
-            DkimResultType::None => Self::None,
-            DkimResultType::Pass => Self::Pass,
-            DkimResultType::Fail => Self::Fail,
-            DkimResultType::Policy => Self::Policy,
-            DkimResultType::Neutral => Self::Neutral,
-            DkimResultType::TemporaryError => Self::TemporaryError,
-            DkimResultType::PermanentError => Self::PermanentError,
-        }
-    }
-}
-
-#[derive(Serialize, Clone, Hash, PartialEq, Eq)]
-enum SpfAuthResult {
-    None,
-    Neutral,
-    Pass,
-    Fail,
-    SoftFail,
-    TemporaryError,
-    PermanentError,
-}
-
-impl SpfAuthResult {
-    fn from(result: &SpfResultType) -> Self {
-        match result {
-            SpfResultType::None => SpfAuthResult::None,
-            SpfResultType::Neutral => SpfAuthResult::Neutral,
-            SpfResultType::Pass => SpfAuthResult::Pass,
-            SpfResultType::Fail => SpfAuthResult::Fail,
-            SpfResultType::SoftFail => SpfAuthResult::SoftFail,
-            SpfResultType::TemporaryError => SpfAuthResult::TemporaryError,
-            SpfResultType::PermanentError => SpfAuthResult::PermanentError,
         }
     }
 }

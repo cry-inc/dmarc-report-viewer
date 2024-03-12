@@ -3,7 +3,7 @@
 // Its based upon appendix C of the DMARC RFC:
 // https://tools.ietf.org/html/rfc7489#appendix-C
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::net::IpAddr;
 
 #[derive(Debug, Deserialize)]
@@ -52,7 +52,7 @@ pub struct PolicyPublishedType {
     pub fo: Option<String>,
 }
 
-#[derive(Debug, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, Hash, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum DmarcResultType {
     Pass,
@@ -99,7 +99,7 @@ pub struct IdentifierType {
     pub header_from: String,
 }
 
-#[derive(Debug, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, Hash, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum DkimResultType {
     None,
@@ -129,7 +129,7 @@ pub enum SpfDomainScope {
     MailForm,
 }
 
-#[derive(Debug, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, Hash, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum SpfResultType {
     None,
