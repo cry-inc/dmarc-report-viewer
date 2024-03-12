@@ -18,4 +18,7 @@ pub struct AppState {
 
     /// Summary of report and other stats
     pub summary: Summary,
+
+    /// Time of last update from IMAP inbox as Unix timestamp
+    pub last_update: u64,
 }

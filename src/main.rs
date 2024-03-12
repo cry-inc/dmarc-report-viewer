@@ -16,7 +16,7 @@ use crate::summary::Summary;
 use anyhow::{Context, Result};
 use config::Configuration;
 use std::sync::{Arc, Mutex};
-use std::time::Duration;
+use std::time::{Duration, SystemTime};
 use tokio::sync::mpsc::channel;
 use tokio::sync::mpsc::Receiver;
 use tokio::task::JoinHandle;
@@ -118,12 +118,17 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
     let summary = Summary::new(&mails, &xml_files, &reports);
 
     info!("Updating sharted state...");
+    let ts = SystemTime::now()
+        .duration_since(SystemTime::UNIX_EPOCH)
+        .context("Failed to get Unix time stamp")?
+        .as_secs();
     {
         let mut locked_state = state.lock().expect("Failed to lock app state");
         locked_state.mails = mails.len();
         locked_state.xml_files = xml_files.len();
         locked_state.summary = summary;
         locked_state.reports = reports;
+        locked_state.last_update = ts;
     }
     info!("Finished updating shared state");
 
