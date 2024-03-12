@@ -17,19 +17,19 @@ pub struct Configuration {
     pub imap_password: String,
 
     /// TLS encrypted port of the IMAP server
-    #[arg(long, env, default_value = "993")]
+    #[arg(short = 't', long, env, default_value = "993")]
     pub imap_port: u16,
 
     /// Interval between checking for new reports in IMAP inbox in seconds
-    #[arg(long, env, default_value = "300")]
+    #[arg(short = 'i', long, env, default_value = "300")]
     pub imap_check_interval: u64,
 
     /// Embedded HTTP server port for web UI
-    #[arg(long, env, default_value = "8080")]
+    #[arg(short = 'w', long, env, default_value = "8080")]
     pub http_server_port: u16,
 
     /// Embedded HTTP server binding for web UI
-    #[arg(long, env, default_value = "0.0.0.0")]
+    #[arg(short = 'b', long, env, default_value = "0.0.0.0")]
     pub http_server_binding: String,
 
     /// Username for the HTTP server basic auth login
