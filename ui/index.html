@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>DMARC Report Viewer & Analyzer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="data:;base64,=">
+    <style>
+        body {
+            font-family: sans-serif;
+        }
+
+        #container {
+            display: grid;
+            column-gap: 10px;
+            row-gap: 10px;
+        }
+
+        .module {
+            border: 1px solid #aaa;
+            border-radius: 3px;
+            background-color: #eee;
+            padding: 5px;
+        }
+
+        .module canvas {
+            max-width: 300px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>DMARC Report Viewer & Analyzer</h1>
+
+    <div id="container">
+        <div class="module" style="grid-column: 1; grid-row: 1;">
+            <h2>Inbox</h2>
+            <ul>
+                <li>Mails: <span id="mail_count">0</span></li>
+                <li>XML Files: <span id="xml_count">0</span></li>
+                <li>DMARC Reports: <span id="report_count">0</span></li>
+            </ul>
+        </div>
+
+        <div class="module" style="grid-column: 2; grid-row: 1;">
+            <h2>Domains</h2>
+            <canvas id="domains_chart"></canvas>
+        </div>
+
+        <div class="module" style="grid-column: 3; grid-row: 1;">
+            <h2>Orgs</h2>
+            <canvas id="orgs_chart"></canvas>
+        </div>
+
+        <div class="module" style="grid-column: 1; grid-row: 2;">
+            <h2>SPF Policy Results</h2>
+            <canvas id="spf_policy_chart"></canvas>
+        </div>
+
+        <div class="module" style="grid-column: 2; grid-row: 2;">
+            <h2>DKIM Policy Results</h2>
+            <canvas id="dkim_policy_chart"></canvas>
+        </div>
+
+        <div class="module" style="grid-column: 3; grid-row: 2;">
+            <h2>SPF Auth Results</h2>
+            <canvas id="spf_auth_chart"></canvas>
+        </div>
+
+        <div class="module" style="grid-column: 4; grid-row: 2;">
+            <h2>DKIM Auth Results</h2>
+            <canvas id="dkim_auth_chart"></canvas>
+        </div>
+    </div>
+
+    <script src="chart.umd.js"></script>
+    <script>
+        async function update() {
+            const response = await fetch("summary");
+            const summary = await response.json();
+            update_inbox(summary);
+            create_pie_chart("orgs_chart", summary.orgs);
+            create_pie_chart("domains_chart", summary.domains);
+            create_pie_chart("spf_policy_chart", summary.spf_policy_results);
+            create_pie_chart("dkim_policy_chart", summary.dkim_policy_results);
+            create_pie_chart("spf_auth_chart", summary.spf_auth_results);
+            create_pie_chart("dkim_auth_chart", summary.dkim_auth_results);
+        }
+
+        function update_inbox(summary) {
+            document.getElementById("mail_count").innerHTML = summary.mails;
+            document.getElementById("xml_count").innerHTML = summary.xml_files;
+            document.getElementById("report_count").innerHTML = summary.reports;
+        }
+
+        function create_pie_chart(element_id, data_map) {
+            const element = document.getElementById(element_id);
+            const labels = Object.keys(data_map);
+            const data = labels.map(k => data_map[k]);
+            new Chart(element, {
+                type: "pie",
+                data: {
+                    labels,
+                    datasets: [{ data }]
+                }
+            });
+        }
+
+        update();
+    </script>
+</body>
+
+</html>
