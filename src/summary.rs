@@ -19,6 +19,12 @@ pub struct Summary {
     /// Map of domains with number of corresponding reports
     domains: HashMap<String, usize>,
 
+    /// Map of SPF policy evaluation results
+    spf_policy_result: HashMap<PolicyResult, usize>,
+
+    /// Map of DKIM policy evaluation results
+    dkim_policy_result: HashMap<PolicyResult, usize>,
+
     /// All rows found in the reports
     rows: Vec<Row>,
 }
@@ -28,6 +34,8 @@ impl Summary {
         let mut orgs: HashMap<String, usize> = HashMap::new();
         let mut domains = HashMap::new();
         let mut rows = Vec::new();
+        let mut spf_policy_result: HashMap<PolicyResult, usize> = HashMap::new();
+        let mut dkim_policy_result: HashMap<PolicyResult, usize> = HashMap::new();
         for report in reports {
             let org = report.report_metadata.org_name.clone();
             let domain = report.policy_published.domain.clone();
@@ -48,6 +56,22 @@ impl Summary {
                         domain: domain.clone(),
                         result: SpfAuthResult::from(&r.result),
                     });
+                }
+                if let Some(result) = record.row.policy_evaluated.spf.as_ref() {
+                    let result = PolicyResult::from(result);
+                    if let Some(entry) = spf_policy_result.get_mut(&result) {
+                        *entry += 1;
+                    } else {
+                        spf_policy_result.insert(result, 1);
+                    }
+                }
+                if let Some(result) = record.row.policy_evaluated.dkim.as_ref() {
+                    let result = PolicyResult::from(result);
+                    if let Some(entry) = dkim_policy_result.get_mut(&result) {
+                        *entry += 1;
+                    } else {
+                        dkim_policy_result.insert(result, 1);
+                    }
                 }
                 let row = Row {
                     org: org.clone(),
@@ -89,12 +113,14 @@ impl Summary {
             xml_files: xml_files.len(),
             orgs,
             domains,
+            spf_policy_result,
+            dkim_policy_result,
             rows,
         }
     }
 }
 
-#[derive(Serialize, Clone)]
+#[derive(Serialize, Clone, Hash, PartialEq, Eq)]
 enum PolicyResult {
     Pass,
     Fail,
