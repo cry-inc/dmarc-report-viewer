@@ -20,10 +20,16 @@ pub struct Summary {
     domains: HashMap<String, usize>,
 
     /// Map of SPF policy evaluation results
-    spf_policy_result: HashMap<PolicyResult, usize>,
+    spf_policy_results: HashMap<PolicyResult, usize>,
 
     /// Map of DKIM policy evaluation results
-    dkim_policy_result: HashMap<PolicyResult, usize>,
+    dkim_policy_results: HashMap<PolicyResult, usize>,
+
+    /// Map of SPF auth results
+    spf_auth_results: HashMap<SpfAuthResult, usize>,
+
+    /// Map of DKIM auth results
+    dkim_auth_results: HashMap<DkimAuthResult, usize>,
 
     /// All rows found in the reports
     rows: Vec<Row>,
@@ -34,43 +40,57 @@ impl Summary {
         let mut orgs: HashMap<String, usize> = HashMap::new();
         let mut domains = HashMap::new();
         let mut rows = Vec::new();
-        let mut spf_policy_result: HashMap<PolicyResult, usize> = HashMap::new();
-        let mut dkim_policy_result: HashMap<PolicyResult, usize> = HashMap::new();
+        let mut spf_policy_results: HashMap<PolicyResult, usize> = HashMap::new();
+        let mut dkim_policy_results: HashMap<PolicyResult, usize> = HashMap::new();
+        let mut spf_auth_results: HashMap<SpfAuthResult, usize> = HashMap::new();
+        let mut dkim_auth_results: HashMap<DkimAuthResult, usize> = HashMap::new();
         for report in reports {
             let org = report.report_metadata.org_name.clone();
             let domain = report.policy_published.domain.clone();
             for record in &report.record {
+                let mut auth_spf = Vec::new();
+                for r in &record.auth_results.spf {
+                    let result = SpfAuthResult::from(&r.result);
+                    auth_spf.push(SpfAuthResultStruct {
+                        domain: domain.clone(),
+                        result: result.clone(),
+                    });
+                    if let Some(entry) = spf_auth_results.get_mut(&result) {
+                        *entry += 1;
+                    } else {
+                        spf_auth_results.insert(result, 1);
+                    }
+                }
                 let mut auth_dkim = Vec::new();
                 if let Some(vec) = &record.auth_results.dkim {
                     for r in vec {
+                        let result = DkimAuthResult::from(&r.result);
                         auth_dkim.push(DkimAuthResultStruct {
                             domain: domain.clone(),
                             selector: r.selector.clone(),
-                            result: DkimAuthResult::from(&r.result),
+                            result: result.clone(),
                         });
+                        if let Some(entry) = dkim_auth_results.get_mut(&result) {
+                            *entry += 1;
+                        } else {
+                            dkim_auth_results.insert(result, 1);
+                        }
                     }
-                }
-                let mut auth_spf = Vec::new();
-                for r in &record.auth_results.spf {
-                    auth_spf.push(SpfAuthResultStruct {
-                        domain: domain.clone(),
-                        result: SpfAuthResult::from(&r.result),
-                    });
                 }
                 if let Some(result) = record.row.policy_evaluated.spf.as_ref() {
                     let result = PolicyResult::from(result);
-                    if let Some(entry) = spf_policy_result.get_mut(&result) {
+                    if let Some(entry) = spf_policy_results.get_mut(&result) {
                         *entry += 1;
                     } else {
-                        spf_policy_result.insert(result, 1);
+                        spf_policy_results.insert(result, 1);
                     }
                 }
                 if let Some(result) = record.row.policy_evaluated.dkim.as_ref() {
                     let result = PolicyResult::from(result);
-                    if let Some(entry) = dkim_policy_result.get_mut(&result) {
+                    if let Some(entry) = dkim_policy_results.get_mut(&result) {
                         *entry += 1;
                     } else {
-                        dkim_policy_result.insert(result, 1);
+                        dkim_policy_results.insert(result, 1);
                     }
                 }
                 let row = Row {
@@ -113,8 +133,10 @@ impl Summary {
             xml_files: xml_files.len(),
             orgs,
             domains,
-            spf_policy_result,
-            dkim_policy_result,
+            spf_policy_results,
+            dkim_policy_results,
+            spf_auth_results,
+            dkim_auth_results,
             rows,
         }
     }
@@ -135,7 +157,7 @@ impl PolicyResult {
     }
 }
 
-#[derive(Serialize, Clone)]
+#[derive(Serialize, Clone, Hash, PartialEq, Eq)]
 enum DkimAuthResult {
     None,
     Pass,
@@ -160,7 +182,7 @@ impl DkimAuthResult {
     }
 }
 
-#[derive(Serialize, Clone)]
+#[derive(Serialize, Clone, Hash, PartialEq, Eq)]
 enum SpfAuthResult {
     None,
     Neutral,
