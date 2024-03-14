@@ -1,0 +1,51 @@
+name: CI
+on: [push, pull_request]
+jobs:
+  Linux:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    - name: Update Rust
+      run: rustup toolchain install stable --profile minimal --no-self-update
+    - name: Enable Rust Caching
+      uses: Swatinem/rust-cache@v2
+    - name: Release Build
+      run: cargo build --release --all
+    - name: Execute Tests
+      run: cargo test --release --all
+    - name: Run Clippy
+      run: cargo clippy --release --all -- -D warnings
+    - name: Check Formatting
+      run: cargo fmt --all -- --check
+  Windows:
+    runs-on: windows-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    - name: Update Rust
+      run: rustup toolchain install stable --profile minimal --no-self-update
+    - name: Enable Rust Caching
+      uses: Swatinem/rust-cache@v2
+    - name: Release Build
+      run: cargo build --release --all
+    - name: Execute Tests
+      run: cargo test --release --all
+  Docker:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    - name: Build Docker Image
+      run: docker build . --pull --tag dmarc-report-viewer
+    - name: Test Docker Image
+      run: docker run --rm dmarc-report-viewer ./dmarc-report-viewer --help
+    - name: Publish Docker Image
+      if: ${{github.ref == 'refs/heads/master'}}
+      run: |
+        echo ${{secrets.GITHUB_TOKEN}} | docker login ghcr.io -u ${{github.actor}} --password-stdin
+        docker tag dmarc-report-viewer ghcr.io/${{github.actor}}/dmarc-report-viewer:latest
+        docker push ghcr.io/${{github.actor}}/dmarc-report-viewer:latest
