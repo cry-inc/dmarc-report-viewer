@@ -2,7 +2,6 @@ use clap::Parser;
 
 #[derive(Parser, Clone)]
 #[command(version, about, long_about = None)]
-/// DMARC Report Analyzer
 pub struct Configuration {
     /// Host name or domain of the IMAP server with the DMARC reports inbox
     #[arg(short = 's', long, env)]

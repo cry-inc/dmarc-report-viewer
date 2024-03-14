@@ -1,6 +1,6 @@
 [package]
 name = "dmarc-report-viewer"
-description = "Selfhosted standalone DMARC report viewer that fetches reports periodically from an IMAP mailbox"
+description = "Standalone DMARC report viewer that fetches input data periodically from an IMAP mailbox"
 keywords = ["dmarc", "email"]
 categories = ["email"]
 license = "MIT"
