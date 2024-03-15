@@ -9,10 +9,10 @@ Alternatively, you can use the tiny Linux Docker image to deploy the application
 
 ## Run with Docker
 The latest version is always published automatically as Docker image in the GitHub container registry.
-You can download the image using the command `docker pull ghcr.io/cry-inc/dmarc-report-viewer`.
+You can download the image using the command `sudo docker pull ghcr.io/cry-inc/dmarc-report-viewer`.
 
 List all available configuration parameters with the corresponding environment variables by running this command:
-`docker run --rm ghcr.io/cry-inc/dmarc-report-viewer ./dmarc-report-viewer --help`.
+`sudo docker run --rm ghcr.io/cry-inc/dmarc-report-viewer ./dmarc-report-viewer --help`.
 
 You can configure the application with command line arguments or environment variables.
 For the Docker use case environment variables are recommended.
@@ -20,7 +20,7 @@ Do not forget to forward the port for the HTTP server!
 Since the application has no persistent data, no volumes are required.
 Here is an complete example: 
 
-    docker run --rm \
+    sudo docker run --rm \
       -e IMAP_HOST=mymailserver.com \
       -e IMAP_USER=dmarc@mymailserver.com \
       -e IMAP_PASSWORD=mysecurepassword \
@@ -28,7 +28,7 @@ Here is an complete example:
       -e HTTP_SERVER_USER=webui-user \
       -e HTTP_SERVER_PASSWORD=webui-password \
       -p 8123:8123 \
-      ghcr.io/cry-inc/dmarc-report-viewer`
+      ghcr.io/cry-inc/dmarc-report-viewer
 
 ## Build from Source
 1. Install Rust (see https://rustup.rs/)
