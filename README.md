@@ -1,4 +1,9 @@
 # DMARC Report Viewer
+
+[![Build Status](https://github.com/cry-inc/dmarc-report-viewer/workflows/CI/badge.svg)](https://github.com/cry-inc/dmarc-report-viewer/actions)
+[![No Unsafe](https://img.shields.io/badge/unsafe-forbidden-brightgreen.svg)](https://doc.rust-lang.org/nomicon/meet-safe-and-unsafe.html)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+
 A lightweight selfhosted standalone DMARC report viewer that automatically fetches input data periodically from an IMAP mailbox.
 
 Ideal for smaller selfhosted mailservers.
