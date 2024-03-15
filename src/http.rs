@@ -6,10 +6,13 @@ use axum::extract::Request;
 use axum::http::header::{self, AUTHORIZATION, WWW_AUTHENTICATE};
 use axum::http::StatusCode;
 use axum::middleware::{self, Next};
-use axum::response::{Html, IntoResponse, Response};
+use axum::response::{IntoResponse, Response};
 use axum::Json;
 use axum::{extract::State, routing::get, Router};
 use base64::{engine::general_purpose::STANDARD, Engine as _};
+use flate2::read::DeflateEncoder;
+use flate2::Compression;
+use std::io::Read;
 use std::sync::{Arc, Mutex};
 use tokio::net::TcpListener;
 use tokio::signal;
@@ -111,15 +114,29 @@ async fn basic_auth_middleware(
     }
 }
 
+fn compress_into_response(data: &[u8], content_type: &str) -> impl IntoResponse {
+    let mut compressed = Vec::new();
+    let mut encoder = DeflateEncoder::new(data, Compression::fast());
+    encoder
+        .read_to_end(&mut compressed)
+        .expect("Failed to compress data");
+    (
+        [
+            (header::CONTENT_TYPE, String::from(content_type)),
+            (header::CONTENT_ENCODING, String::from("deflate")),
+        ],
+        compressed,
+    )
+}
+
 async fn root() -> impl IntoResponse {
-    Html(include_str!("../ui/index.html"))
+    let html = include_bytes!("../ui/index.html");
+    compress_into_response(html, "text/html")
 }
 
 async fn chart_js() -> impl IntoResponse {
-    (
-        [(header::CONTENT_TYPE, "text/javascript")],
-        include_str!("../ui/chart.umd.js"),
-    )
+    let js = include_bytes!("../ui/chart.umd.js");
+    compress_into_response(js, "text/javascript")
 }
 
 async fn summary(State(state): State<Arc<Mutex<AppState>>>) -> impl IntoResponse {
