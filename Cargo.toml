@@ -24,6 +24,6 @@ tracing-subscriber = "0.3"
 serde = {version = "1", features = ["derive"] }
 clap = { version = "4", features = ["derive", "env"] }
 tower-http = { version = "0.5", features = ["compression-gzip"] }
-tokio = { version = "1", features = ["macros", "rt-multi-thread", "signal"] }
+tokio = { version = "1.36", features = ["macros", "rt-multi-thread", "signal"] }
 zip = { version = "0.6", default-features = false, features = ["deflate"] }
 async-imap = {version = "0.9.7", default-features = false, features = ["runtime-tokio"] }
