@@ -10,12 +10,10 @@ use axum::response::{IntoResponse, Response};
 use axum::Json;
 use axum::{extract::State, routing::get, Router};
 use base64::{engine::general_purpose::STANDARD, Engine as _};
-use flate2::read::DeflateEncoder;
-use flate2::Compression;
-use std::io::Read;
 use std::sync::{Arc, Mutex};
 use tokio::net::TcpListener;
 use tokio::signal;
+use tower_http::compression::CompressionLayer;
 use tracing::{info, warn};
 
 pub async fn run_http_server(config: &Configuration, state: Arc<Mutex<AppState>>) -> Result<()> {
@@ -26,6 +24,7 @@ pub async fn run_http_server(config: &Configuration, state: Arc<Mutex<AppState>>
         .route("/", get(root))
         .route("/chart.umd.js", get(chart_js))
         .route("/summary", get(summary))
+        .route_layer(CompressionLayer::new())
         .route_layer(middleware::from_fn_with_state(
             config.clone(),
             basic_auth_middleware,
@@ -114,29 +113,18 @@ async fn basic_auth_middleware(
     }
 }
 
-fn compress_into_response(data: &[u8], content_type: &str) -> impl IntoResponse {
-    let mut compressed = Vec::new();
-    let mut encoder = DeflateEncoder::new(data, Compression::fast());
-    encoder
-        .read_to_end(&mut compressed)
-        .expect("Failed to compress data");
+async fn root() -> impl IntoResponse {
     (
-        [
-            (header::CONTENT_TYPE, String::from(content_type)),
-            (header::CONTENT_ENCODING, String::from("deflate")),
-        ],
-        compressed,
+        [(header::CONTENT_TYPE, "text/html")],
+        include_bytes!("../ui/index.html"),
     )
 }
 
-async fn root() -> impl IntoResponse {
-    let html = include_bytes!("../ui/index.html");
-    compress_into_response(html, "text/html")
-}
-
 async fn chart_js() -> impl IntoResponse {
-    let js = include_bytes!("../ui/chart.umd.js");
-    compress_into_response(js, "text/javascript")
+    (
+        [(header::CONTENT_TYPE, "text/javascript")],
+        include_bytes!("../ui/chart.umd.js"),
+    )
 }
 
 async fn summary(State(state): State<Arc<Mutex<AppState>>>) -> impl IntoResponse {
