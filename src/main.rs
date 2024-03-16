@@ -16,7 +16,7 @@ use anyhow::{Context, Result};
 use config::Configuration;
 use std::sync::{Arc, Mutex};
 use tokio::sync::mpsc::channel;
-use tracing::info;
+use tracing::{info, Level};
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -27,6 +27,7 @@ async fn main() -> Result<()> {
     // Set up basic logging to stdout
     let subscriber = tracing_subscriber::fmt()
         .compact()
+        .with_max_level(Level::INFO)
         .with_target(false)
         .with_ansi(false)
         .finish();
