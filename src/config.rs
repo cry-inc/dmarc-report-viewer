@@ -1,4 +1,5 @@
 use clap::Parser;
+use tracing::Level;
 
 #[derive(Parser, Clone)]
 #[command(version, about, long_about = None)]
@@ -43,6 +44,10 @@ pub struct Configuration {
     /// Use empty string to disable (not recommended).
     #[arg(short = 'a', long, env)]
     pub http_server_password: String,
+
+    /// Log level (trace, debug, info, warn, error)
+    #[arg(short = 'e', long, env, default_value = "INFO")]
+    pub log_level: Level,
 }
 
 impl Configuration {

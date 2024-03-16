@@ -16,7 +16,7 @@ use anyhow::{Context, Result};
 use config::Configuration;
 use std::sync::{Arc, Mutex};
 use tokio::sync::mpsc::channel;
-use tracing::{info, Level};
+use tracing::info;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -27,7 +27,7 @@ async fn main() -> Result<()> {
     // Set up basic logging to stdout
     let subscriber = tracing_subscriber::fmt()
         .compact()
-        .with_max_level(Level::INFO)
+        .with_max_level(config.log_level)
         .with_target(false)
         .with_ansi(false)
         .finish();
@@ -35,6 +35,7 @@ async fn main() -> Result<()> {
         .expect("Failed to set up default tracing subscriber");
 
     info!("DMARC Report Analyzer");
+    info!("Log Level: {}", config.log_level);
 
     // Prepare shared application state
     let state = Arc::new(Mutex::new(AppState::default()));
