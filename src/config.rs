@@ -19,8 +19,12 @@ pub struct Configuration {
     #[arg(short = 't', long, env, default_value = "993")]
     pub imap_port: u16,
 
+    /// TCP connection timeout for IMAP server in seconds
+    #[arg(short = 'o', long, env, default_value = "10")]
+    pub imap_timeout: u64,
+
     /// Interval between checking for new reports in IMAP inbox in seconds
-    #[arg(short = 'i', long, env, default_value = "300")]
+    #[arg(short = 'i', long, env, default_value = "1000")]
     pub imap_check_interval: u64,
 
     /// Embedded HTTP server port for web UI

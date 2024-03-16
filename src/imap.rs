@@ -37,8 +37,9 @@ pub async fn get_mails(config: &Configuration) -> Result<Vec<Vec<u8>>> {
     let addr = addrs.first().context("Unable get first resolved address")?;
     debug!("Got address {addr}");
 
-    let std_tcp_stream = StdTcpStream::connect_timeout(addr, Duration::from_secs(10))
-        .context("Failed to connect to IMAP server")?;
+    let timeout = Duration::from_secs(config.imap_timeout);
+    let std_tcp_stream =
+        StdTcpStream::connect_timeout(addr, timeout).context("Failed to connect to IMAP server")?;
     debug!("Created TCP stream");
 
     std_tcp_stream
