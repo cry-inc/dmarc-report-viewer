@@ -1,5 +1,4 @@
 # DMARC Report Viewer
-
 [![Build Status](https://github.com/cry-inc/dmarc-report-viewer/workflows/CI/badge.svg)](https://github.com/cry-inc/dmarc-report-viewer/actions)
 [![No Unsafe](https://img.shields.io/badge/unsafe-forbidden-brightgreen.svg)](https://doc.rust-lang.org/nomicon/meet-safe-and-unsafe.html)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
@@ -12,6 +11,20 @@ It combines the DMARC report parser with an IMAP client and an HTTP server for e
 You can run the executable directly on any Linux, Windows or MacOS system.
 Alternatively, you can use the tiny Linux Docker image to deploy the application.
 
+## Features
+- [x] Lightweight Docker image for easy deployment
+- [x] Secure IMAP client
+- [x] Automatic fetching of reports from IMAP inbox
+- [x] Robust parsing of XML DMARC reports
+- [x] Embedded HTTP server for UI
+- [x] Basic Auth password protection for HTTP server
+- [x] Easy configuration via command line arguments or ENV variables
+- [x] Summary with diagrams for domains, organizations and passed/failed checks
+- [ ] Viewing of individual DMARC reports
+- [ ] Viewing filtered lists of reports
+- [ ] Viewing parsing errors for XML DMARC reports
+- [ ] Automatic HTTPS via ACME/Let's Encrypt
+
 ## Run with Docker
 The latest version is always published automatically as Docker image in the GitHub container registry.
 You can download the image using the command `sudo docker pull ghcr.io/cry-inc/dmarc-report-viewer`.
@@ -21,9 +34,14 @@ List all available configuration parameters with the corresponding environment v
 
 You can configure the application with command line arguments or environment variables.
 For the Docker use case environment variables are recommended.
-Do not forget to forward the port for the HTTP server!
 Since the application has no persistent data, no volumes are required.
-Here is an complete example: 
+
+Do not forget to forward the port for the HTTP server!
+Since the HTTP server does not provide TLS/HTTPS its strongly recommended to keep the
+HTTP port private and use an HTTPS reverse proxy like [Caddy](https://caddyserver.com/)
+to expose it to the Internet.
+
+Here is a concrete example: 
 
     sudo docker run --rm \
       -e IMAP_HOST=mymailserver.com \
