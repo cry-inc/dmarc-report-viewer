@@ -15,6 +15,7 @@ use base64::{engine::general_purpose::STANDARD, Engine as _};
 use futures::StreamExt;
 use rustls_acme::caches::DirCache;
 use rustls_acme::AcmeConfig;
+use serde::Serialize;
 use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
 use tokio::signal;
@@ -29,6 +30,7 @@ pub async fn run_http_server(config: &Configuration, state: Arc<Mutex<AppState>>
         .route("/", get(root))
         .route("/chart.umd.js", get(chart_js))
         .route("/summary", get(summary))
+        .route("/reports", get(reports))
         .route_layer(CompressionLayer::new())
         .route_layer(middleware::from_fn_with_state(
             config.clone(),
@@ -226,4 +228,30 @@ async fn summary(State(state): State<Arc<Mutex<AppState>>>) -> impl IntoResponse
             .summary
             .clone(),
     )
+}
+
+#[derive(Serialize)]
+struct ReportHeader {
+    id: String,
+    org: String,
+    date_begin: u64,
+    date_end: u64,
+    rows: usize,
+}
+
+async fn reports(State(state): State<Arc<Mutex<AppState>>>) -> impl IntoResponse {
+    let reports: Vec<ReportHeader> = state
+        .lock()
+        .expect("Failed to lock app state")
+        .reports
+        .iter()
+        .map(|r| ReportHeader {
+            id: r.report_metadata.report_id.clone(),
+            org: r.report_metadata.org_name.clone(),
+            date_begin: r.report_metadata.date_range.begin,
+            date_end: r.report_metadata.date_range.end,
+            rows: r.record.len(),
+        })
+        .collect();
+    Json(reports)
 }
