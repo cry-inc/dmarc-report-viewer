@@ -8,8 +8,8 @@ use std::net::IpAddr;
 
 #[derive(Debug, Deserialize)]
 pub struct DateRangeType {
-    pub begin: u32,
-    pub end: u32,
+    pub begin: u64,
+    pub end: u64,
 }
 
 #[derive(Debug, Deserialize)]
@@ -88,7 +88,7 @@ pub struct PolicyEvaluatedType {
 #[derive(Debug, Deserialize)]
 pub struct RowType {
     pub source_ip: IpAddr,
-    pub count: u32,
+    pub count: usize,
     pub policy_evaluated: PolicyEvaluatedType,
 }
 
