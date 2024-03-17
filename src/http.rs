@@ -2,7 +2,7 @@ use crate::config::Configuration;
 use crate::state::AppState;
 use anyhow::{Context, Result};
 use axum::body::Body;
-use axum::extract::Request;
+use axum::extract::{Path, Request};
 use axum::http::header::{self, AUTHORIZATION, WWW_AUTHENTICATE};
 use axum::http::StatusCode;
 use axum::middleware::{self, Next};
@@ -31,6 +31,7 @@ pub async fn run_http_server(config: &Configuration, state: Arc<Mutex<AppState>>
         .route("/chart.umd.js", get(chart_js))
         .route("/summary", get(summary))
         .route("/reports", get(reports))
+        .route("/reports/:id", get(report))
         .route_layer(CompressionLayer::new())
         .route_layer(middleware::from_fn_with_state(
             config.clone(),
@@ -254,4 +255,25 @@ async fn reports(State(state): State<Arc<Mutex<AppState>>>) -> impl IntoResponse
         })
         .collect();
     Json(reports)
+}
+
+async fn report(
+    State(state): State<Arc<Mutex<AppState>>>,
+    Path(id): Path<usize>,
+) -> impl IntoResponse {
+    let lock = state.lock().expect("Failed to lock app state");
+    if let Some(report) = lock.reports.get(id) {
+        let report_json = serde_json::to_string(report).expect("Failed to serialize JSON");
+        (
+            StatusCode::OK,
+            [(header::CONTENT_TYPE, "application/json")],
+            report_json,
+        )
+    } else {
+        (
+            StatusCode::NOT_FOUND,
+            [(header::CONTENT_TYPE, "text/plain")],
+            format!("Cannot find report with ID {id}"),
+        )
+    }
 }

@@ -6,13 +6,13 @@
 use serde::{Deserialize, Serialize};
 use std::net::IpAddr;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct DateRangeType {
     pub begin: u64,
     pub end: u64,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct ReportMetadataType {
     pub org_name: String,
     pub email: String,
@@ -22,7 +22,7 @@ pub struct ReportMetadataType {
     pub error: Option<Vec<String>>,
 }
 
-#[derive(Debug, Deserialize, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub enum AlignmentType {
     #[serde(rename = "r")]
     Relaxed,
@@ -30,7 +30,7 @@ pub enum AlignmentType {
     Strict,
 }
 
-#[derive(Debug, Deserialize, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "snake_case")]
 pub enum DispositionType {
     /// There is no preference on how a failed DMARC should be handled.
@@ -41,7 +41,7 @@ pub enum DispositionType {
     Reject,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct PolicyPublishedType {
     pub domain: String,
     pub adkim: Option<AlignmentType>,
@@ -59,7 +59,7 @@ pub enum DmarcResultType {
     Fail,
 }
 
-#[derive(Debug, Deserialize, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "snake_case")]
 pub enum PolicyOverrideType {
     Forwarded,
@@ -70,14 +70,14 @@ pub enum PolicyOverrideType {
     Other,
 }
 
-#[derive(Debug, Deserialize, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct PolicyOverrideReason {
     #[serde(rename = "type")]
     pub kind: PolicyOverrideType,
     pub comment: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct PolicyEvaluatedType {
     pub disposition: DispositionType,
     pub dkim: Option<DmarcResultType>,
@@ -85,14 +85,14 @@ pub struct PolicyEvaluatedType {
     pub reason: Option<Vec<PolicyOverrideReason>>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct RowType {
     pub source_ip: IpAddr,
     pub count: usize,
     pub policy_evaluated: PolicyEvaluatedType,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct IdentifierType {
     pub envelope_to: Option<String>,
     pub envelope_from: Option<String>,
@@ -113,7 +113,7 @@ pub enum DkimResultType {
     PermanentError,
 }
 
-#[derive(Debug, Deserialize, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct DkimAuthResultType {
     pub domain: String,
     pub selector: Option<String>,
@@ -121,7 +121,7 @@ pub struct DkimAuthResultType {
     pub human_result: Option<String>,
 }
 
-#[derive(Debug, Deserialize, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "snake_case")]
 pub enum SpfDomainScope {
     Helo,
@@ -144,27 +144,27 @@ pub enum SpfResultType {
     PermanentError,
 }
 
-#[derive(Debug, Deserialize, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct SpfAuthResultType {
     pub domain: String,
     pub scope: Option<SpfDomainScope>,
     pub result: SpfResultType,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct AuthResultType {
     pub dkim: Option<Vec<DkimAuthResultType>>,
     pub spf: Vec<SpfAuthResultType>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct RecordType {
     pub row: RowType,
     pub identifiers: IdentifierType,
     pub auth_results: AuthResultType,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Report {
     pub version: Option<String>,
     pub report_metadata: ReportMetadataType,

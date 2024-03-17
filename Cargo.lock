@@ -613,6 +613,7 @@ dependencies = [
  "rustls-acme",
  "serde",
  "serde-xml-rs",
+ "serde_json",
  "tokio",
  "tokio-rustls 0.25.0",
  "tower-http",
