@@ -21,10 +21,10 @@ Alternatively, you can use the tiny Linux Docker image to deploy the application
 - [x] Basic Auth password protection for HTTP server
 - [x] Easy configuration via command line arguments or ENV variables
 - [x] Summary with diagrams for domains, organizations and passed/failed checks
+- [x] Automatic HTTPS via ACME/Let's Encrypt
 - [ ] Viewing of individual DMARC reports
 - [ ] Viewing filtered lists of reports
 - [ ] Viewing parsing errors for XML DMARC reports
-- [ ] Automatic HTTPS via ACME/Let's Encrypt
 
 ## Run with Docker
 The latest version is always published automatically as Docker image in the GitHub container registry.
@@ -34,24 +34,42 @@ List all available configuration parameters with the corresponding environment v
 `sudo docker run --rm ghcr.io/cry-inc/dmarc-report-viewer ./dmarc-report-viewer --help`.
 
 You can configure the application with command line arguments or environment variables.
-For the Docker use case environment variables are recommended.
-Since the application has no persistent data, no volumes are required.
-
+For the Docker use case, environment variables are recommended.
 Do not forget to forward the port for the HTTP server!
-Since the HTTP server does not provide TLS/HTTPS its strongly recommended to keep the
-HTTP port private and use an HTTPS reverse proxy like [Caddy](https://caddyserver.com/)
-to expose it to the Internet.
 
 Here is a concrete example: 
 
     sudo docker run --rm \
-      -e IMAP_HOST=mymailserver.com \
+      -e IMAP_HOST=imap.mymailserver.com \
       -e IMAP_USER=dmarc@mymailserver.com \
       -e IMAP_PASSWORD=mysecurepassword \
       -e HTTP_SERVER_PORT=8123 \
       -e HTTP_SERVER_USER=webui-user \
       -e HTTP_SERVER_PASSWORD=webui-password \
       -p 8123:8123 \
+      ghcr.io/cry-inc/dmarc-report-viewer
+
+### HTTPS
+By default, the application will start an unencrypted and unsecure HTTP server.
+It is *strongly* recommended use the automatic HTTPS feature that will automaticall fetch and use a certificate from Let's Encrypt.
+Alternatively, you can use an separate HTTPS reverse proxy like [Caddy](https://caddyserver.com/) to secure it.
+
+To use the automatic HTTPS feature you need to make sure that the public port exposed to the internet is 443.
+You should also persist the certificate caching directory on your host file system:
+
+    sudo docker run --rm \
+      -e IMAP_HOST=imap.mymailserver.com \
+      -e IMAP_USER=dmarc@mymailserver.com \
+      -e IMAP_PASSWORD=mysecurepassword \
+      -e HTTP_SERVER_PORT=8443 \
+      -e HTTP_SERVER_USER=webui-user \
+      -e HTTP_SERVER_PASSWORD=webui-password \
+      -e HTTPS_AUTO_CERT=true \
+      -e HTTPS_AUTO_CERT_CACHE=/certs \
+      -e HTTPS_AUTO_CERT_MAIL=admin@mymailserver.com \
+      -e HTTPS_AUTO_CERT_DOMAIN=dmarc.mymailserver.com \
+      -v /host/cert/folder:/certs \
+      -p 443:8443 \
       ghcr.io/cry-inc/dmarc-report-viewer
 
 ## Build from Source

@@ -7,20 +7,25 @@ use axum::http::header::{self, AUTHORIZATION, WWW_AUTHENTICATE};
 use axum::http::StatusCode;
 use axum::middleware::{self, Next};
 use axum::response::{IntoResponse, Response};
+use axum::routing::IntoMakeService;
 use axum::Json;
 use axum::{extract::State, routing::get, Router};
+use axum_server::Handle;
 use base64::{engine::general_purpose::STANDARD, Engine as _};
+use futures::StreamExt;
+use rustls_acme::caches::DirCache;
+use rustls_acme::AcmeConfig;
+use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
-use tokio::net::TcpListener;
 use tokio::signal;
 use tower_http::compression::CompressionLayer;
-use tracing::{info, warn};
+use tracing::{error, info, warn};
 
 pub async fn run_http_server(config: &Configuration, state: Arc<Mutex<AppState>>) -> Result<()> {
     if config.http_server_password.is_empty() {
         warn!("Detected empty password: Basic Authentication will be disabled")
     }
-    let app = Router::new()
+    let make_service = Router::new()
         .route("/", get(root))
         .route("/chart.umd.js", get(chart_js))
         .route("/summary", get(summary))
@@ -29,20 +34,105 @@ pub async fn run_http_server(config: &Configuration, state: Arc<Mutex<AppState>>
             config.clone(),
             basic_auth_middleware,
         ))
-        .with_state(state.clone());
+        .with_state(state.clone())
+        .into_make_service();
 
     let binding = format!("{}:{}", config.http_server_binding, config.http_server_port);
-    info!("Starting HTTP server on binding {binding}...");
+    let addr: SocketAddr = binding.parse().context("Failed to parse binding address")?;
+    info!("Binding HTTP server to {addr}...");
 
-    let listener = TcpListener::bind(binding)
-        .await
-        .context("Failed to create TCP listener")?;
-    axum::serve(listener, app)
-        .with_graceful_shutdown(shutdown_signal())
-        .await
-        .context("Failed to serve HTTP with axum")
+    if config.https_auto_cert {
+        start_https_server(config, addr, make_service)
+            .await
+            .context("Failed to start HTTPS server")
+    } else {
+        start_http_server(addr, make_service)
+            .await
+            .context("Failed to start HTTP server")
+    }
 }
 
+async fn start_http_server(
+    addr: SocketAddr,
+    make_service: IntoMakeService<Router>,
+) -> anyhow::Result<()> {
+    let handle = Handle::new();
+    let handle_clone = handle.clone();
+    tokio::spawn(async move {
+        shutdown_signal().await;
+        handle_clone.shutdown();
+    });
+
+    axum_server::bind(addr)
+        .handle(handle)
+        .serve(make_service)
+        .await
+        .context("Failed to create axum HTTP server")
+}
+
+async fn start_https_server(
+    config: &Configuration,
+    addr: SocketAddr,
+    make_service: IntoMakeService<Router>,
+) -> anyhow::Result<()> {
+    let handle = Handle::new();
+    let handle_clone = handle.clone();
+    tokio::spawn(async move {
+        shutdown_signal().await;
+        handle_clone.shutdown();
+    });
+
+    let acme_domain = config
+        .https_auto_cert_domain
+        .as_deref()
+        .context("HTTPS automatic certificate domain is missing in configuration")?;
+
+    let acme_contact = format!(
+        "mailto:{}",
+        config
+            .https_auto_cert_mail
+            .as_deref()
+            .context("HTTPS automatic certificate mail is missing in configuration")?
+    );
+
+    let acme_cache = DirCache::new(
+        config
+            .https_auto_cert_cache
+            .as_deref()
+            .context("HTTPS automatic certificate cache directory is missing in configuration")?
+            .to_owned(),
+    );
+
+    let mut acme_state = AcmeConfig::new([acme_domain])
+        .contact([acme_contact])
+        .cache_option(Some(acme_cache))
+        .directory_lets_encrypt(true)
+        .state();
+    let rustls_config = acme_state.default_rustls_config();
+    let acceptor = acme_state.axum_acceptor(rustls_config);
+
+    tokio::spawn(async move {
+        loop {
+            match acme_state
+                .next()
+                .await
+                .expect("Failed to get next ACME event")
+            {
+                Ok(ok) => info!("ACME Event: {:?}", ok),
+                Err(err) => error!("ACME Error: {:?}", err),
+            }
+        }
+    });
+
+    axum_server::bind(addr)
+        .handle(handle)
+        .acceptor(acceptor)
+        .serve(make_service)
+        .await
+        .context("Failed to create axum HTTPS server")
+}
+
+/// Promise will be fulfilled when a shutdown signal is received
 async fn shutdown_signal() {
     let ctrlc = async {
         signal::ctrl_c()
@@ -67,6 +157,7 @@ async fn shutdown_signal() {
     }
 }
 
+/// Middleware to add basic auth password protection
 async fn basic_auth_middleware(
     State(config): State<Configuration>,
     request: Request,

@@ -45,6 +45,31 @@ pub struct Configuration {
     #[arg(long, env)]
     pub http_server_password: String,
 
+    /// Enable automatic HTTPS encryption using Let's Encrypt certificates.
+    /// This will replace the HTTP protocol on the configured HTTP port with HTTPS.
+    /// There is no second separate port for HTTPS!
+    /// This uses the TLS-ALPN-01 challenge and therefore the public HTTPS port MUST be 443!
+    #[arg(
+        long,
+        env,
+        requires = "https_auto_cert_domain",
+        requires = "https_auto_cert_mail",
+        requires = "https_auto_cert_cache"
+    )]
+    pub https_auto_cert: bool,
+
+    /// Contact E-Mail address, required for automatic HTTPS
+    #[arg(long, env)]
+    pub https_auto_cert_mail: Option<String>,
+
+    /// Certificate caching directory, required for automatic HTTPS
+    #[arg(long, env)]
+    pub https_auto_cert_cache: Option<String>,
+
+    /// HTTPS server domain, required for automatic HTTPS
+    #[arg(long, env)]
+    pub https_auto_cert_domain: Option<String>,
+
     /// Log level (trace, debug, info, warn, error)
     #[arg(long, env, default_value = "INFO")]
     pub log_level: Level,
