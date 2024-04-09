@@ -1,5 +1,5 @@
 FROM rust:1-alpine as builder
-RUN apk add --no-cache musl-dev
+RUN apk add --no-cache musl-dev make cmake g++
 WORKDIR /usr/src
 COPY . .
 RUN cargo build --target x86_64-unknown-linux-musl --release
