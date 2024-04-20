@@ -51,7 +51,8 @@ Here is a concrete example:
 
 ### HTTPS
 By default, the application will start an unencrypted and unsecure HTTP server.
-It is *strongly* recommended use the automatic HTTPS feature that will automaticall fetch and use a certificate from Let's Encrypt.
+It is *strongly* recommended use the automatic HTTPS feature that will automatically fetch and renew a certificate from Let's Encrypt.
+This feature uses the TLS-ALPN-01 challenge, which uses the HTTPS port 443 also for the challenge. No port 80 required!
 Alternatively, you can use an separate HTTPS reverse proxy like [Caddy](https://caddyserver.com/) to secure it.
 
 To use the automatic HTTPS feature you need to make sure that the public port exposed to the internet is 443.
@@ -82,3 +83,4 @@ You should also persist the certificate caching directory on your host file syst
 ## Acknowledgements
 - https://github.com/bbustin/dmarc_aggregate_parser was used as foundation for the slightly modified DMARC report parser
 - https://github.com/chartjs/Chart.js is embedded as JavaScript library for generating nice charts
+- See also `Cargo.toml` for other Rust dependencies that make this application possible!
