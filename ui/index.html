@@ -27,6 +27,15 @@
         .module canvas {
             max-width: 300px;
         }
+
+        th {
+            text-align: left;
+        }
+
+        td,
+        th {
+            padding-right: 10px;
+        }
     </style>
 </head>
 
@@ -74,9 +83,28 @@
         </div>
     </div>
 
+    <div>
+        <h1>Reports</h1>
+        <table>
+            <tr>
+                <th>ID</th>
+                <th>Org</th>
+                <th>Rows</th>
+                <th>Begin</th>
+                <th>End</th>
+            </tr>
+            <tbody id="reportsTableBody">
+                <tr>
+                    <td colspan="5">Loading...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
     <script src="chart.umd.js"></script>
     <script>
         async function update() {
+            update_reports_table();
             const response = await fetch("summary");
             const summary = await response.json();
             update_inbox(summary);
@@ -105,6 +133,23 @@
                     datasets: [{ data }]
                 }
             });
+        }
+
+        async function update_reports_table() {
+            const response = await fetch("reports");
+            const reports = await response.json();
+            reports.sort((a, b) => b.date_begin - a.date_begin);
+            let html = "";
+            reports.forEach(report => {
+                html += "<tr>\n" +
+                    "<td>" + report.id + "</td>\n" +
+                    "<td>" + report.org + "</td>\n" +
+                    "<td>" + report.rows + "</td>\n" +
+                    "<td>" + new Date(report.date_begin * 1000).toLocaleString() + "</td>\n" +
+                    "<td>" + new Date(report.date_end * 1000).toLocaleString() + "</td>\n" +
+                    "</tr>\n";
+            });
+            document.getElementById("reportsTableBody").innerHTML = html;
         }
 
         update();
