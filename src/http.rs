@@ -259,10 +259,14 @@ async fn reports(State(state): State<Arc<Mutex<AppState>>>) -> impl IntoResponse
 
 async fn report(
     State(state): State<Arc<Mutex<AppState>>>,
-    Path(id): Path<usize>,
+    Path(id): Path<String>,
 ) -> impl IntoResponse {
     let lock = state.lock().expect("Failed to lock app state");
-    if let Some(report) = lock.reports.get(id) {
+    if let Some(report) = lock
+        .reports
+        .iter()
+        .find(|r| *r.report_metadata.report_id == id)
+    {
         let report_json = serde_json::to_string(report).expect("Failed to serialize JSON");
         (
             StatusCode::OK,

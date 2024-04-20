@@ -101,6 +101,8 @@
         </table>
     </div>
 
+    <div id="report"></div>
+
     <script src="chart.umd.js"></script>
     <script>
         async function update() {
@@ -135,21 +137,50 @@
             });
         }
 
+        function html_escape(str) {
+            return str !== null ? str
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, "&#x27;")
+                .replace(/\//g, '&#x2F;') : "n/a";
+        }
+
         async function update_reports_table() {
             const response = await fetch("reports");
             const reports = await response.json();
             reports.sort((a, b) => b.date_begin - a.date_begin);
             let html = "";
             reports.forEach(report => {
+                const escaped_id = html_escape(report.id);
                 html += "<tr>\n" +
-                    "<td>" + report.id + "</td>\n" +
-                    "<td>" + report.org + "</td>\n" +
+                    "<td><a href=\"javascript:load_report('" + escaped_id + "')\">" + escaped_id + "</a></td>\n" +
+                    "<td>" + html_escape(report.org) + "</td>\n" +
                     "<td>" + report.rows + "</td>\n" +
                     "<td>" + new Date(report.date_begin * 1000).toLocaleString() + "</td>\n" +
                     "<td>" + new Date(report.date_end * 1000).toLocaleString() + "</td>\n" +
                     "</tr>\n";
             });
             document.getElementById("reportsTableBody").innerHTML = html;
+        }
+
+        async function load_report(id) {
+            const response = await fetch("reports/" + id);
+            const report = await response.json();
+            let html = "<h1>Report</h1>\n" +
+                "<table>\n" +
+                "<tr><th>Id</th><td>" + html_escape(report.report_metadata.report_id) + "</td></tr>\n" +
+                "<tr><th>Org</th><td>" + html_escape(report.report_metadata.org_name) + "</td></tr>\n" +
+                "<tr><th>Rows</th><td>" + report.record.length + "</td></tr>\n" +
+                "<tr><th>Date Range</th><td>" + new Date(report.report_metadata.date_range.begin * 1000).toLocaleString() +
+                " - " + new Date(report.report_metadata.date_range.end * 1000).toLocaleString() + "</td></tr>\n" +
+                "<tr><th>E-Mail</th><td>" + html_escape(report.report_metadata.email) + "</td></tr>\n" +
+                "<tr><th>Extra Info</th><td>" + html_escape(report.report_metadata.extra_contact_info) + "</td></tr>\n" +
+                "<tr><th>Error</th><td>" + html_escape(report.report_metadata.error) + "</td></tr>\n" +
+                "<tr><th>Version</th><td>" + html_escape(report.version) + "</td></tr>\n" +
+                "</table>\n";
+            document.getElementById("report").innerHTML = html;
         }
 
         update();
