@@ -17,7 +17,7 @@ futures = "0.3"
 tracing = "0.1"
 base64 = "0.22"
 serde_json = "1"
-mailparse = "0.14"
+mailparse = "0.15"
 axum-server = "0.6"
 serde-xml-rs = "0.6"
 tokio-rustls = "0.26"
@@ -28,5 +28,5 @@ clap = { version = "4", features = ["derive", "env"] }
 rustls-acme = { version = "0.9", features = ["axum"] }
 tower-http = { version = "0.5", features = ["compression-gzip"] }
 tokio = { version = "1.36", features = ["macros", "rt-multi-thread", "signal"] }
-zip = { version = "0.6", default-features = false, features = ["deflate"] }
+zip = { version = "1", default-features = false, features = ["deflate"] }
 async-imap = {version = "0.9.7", default-features = false, features = ["runtime-tokio"] }
