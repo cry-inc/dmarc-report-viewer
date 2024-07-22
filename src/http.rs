@@ -210,6 +210,9 @@ async fn basic_auth_middleware(
 async fn root() -> impl IntoResponse {
     (
         [(header::CONTENT_TYPE, "text/html")],
+        #[cfg(debug_assertions)]
+        std::fs::read("ui/index.html").expect("Failed to read index.html"),
+        #[cfg(not(debug_assertions))]
         include_bytes!("../ui/index.html"),
     )
 }
@@ -217,6 +220,9 @@ async fn root() -> impl IntoResponse {
 async fn chart_js() -> impl IntoResponse {
     (
         [(header::CONTENT_TYPE, "text/javascript")],
+        #[cfg(debug_assertions)]
+        std::fs::read("ui/chart.umd.js").expect("Failed to read chart.umd.js"),
+        #[cfg(not(debug_assertions))]
         include_bytes!("../ui/chart.umd.js"),
     )
 }
