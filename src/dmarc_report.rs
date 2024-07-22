@@ -178,6 +178,59 @@ mod tests {
     use std::fs::File;
 
     #[test]
+    fn mailru_report() {
+        let reader = File::open("testdata/dmarc-reports/mailru.xml").unwrap();
+        let report: Report = serde_xml_rs::from_reader(reader).unwrap();
+
+        // Check metadata
+        assert_eq!(report.report_metadata.org_name, "Mail.Ru");
+        assert_eq!(report.report_metadata.email, "dmarc_support@corp.mail.ru");
+        assert_eq!(
+            report.report_metadata.extra_contact_info.as_deref(),
+            Some("http://help.mail.ru/mail-help")
+        );
+        assert_eq!(
+            report.report_metadata.report_id,
+            "28327321193681154911721360800"
+        );
+        assert_eq!(report.report_metadata.date_range.begin, 1721260800);
+        assert_eq!(report.report_metadata.date_range.end, 1721347200);
+
+        // Check policy
+        assert_eq!(report.policy_published.domain, "foobar.de");
+        assert_eq!(report.policy_published.adkim, Some(AlignmentType::Relaxed));
+        assert_eq!(report.policy_published.aspf, Some(AlignmentType::Relaxed));
+        assert_eq!(report.policy_published.p, DispositionType::Reject);
+        assert_eq!(report.policy_published.sp, Some(DispositionType::Reject));
+        assert_eq!(report.policy_published.pct, 100);
+
+        // Check record
+        assert_eq!(report.record.len(), 1);
+        let record = report.record.first().unwrap();
+        assert_eq!(record.row.source_ip.to_string(), "118.41.204.2");
+        assert_eq!(record.row.count, 1);
+        assert_eq!(
+            record.row.policy_evaluated.disposition,
+            DispositionType::Reject
+        );
+        assert_eq!(
+            record.row.policy_evaluated.dkim,
+            Some(DmarcResultType::Fail)
+        );
+        assert_eq!(record.row.policy_evaluated.spf, Some(DmarcResultType::Fail));
+        assert_eq!(record.identifiers.header_from, "foobar.de");
+        assert_eq!(record.auth_results.dkim, None);
+        assert_eq!(
+            record.auth_results.spf,
+            vec![SpfAuthResultType {
+                domain: String::from("foobar.de"),
+                scope: Some(SpfDomainScope::MailForm),
+                result: SpfResultType::SoftFail,
+            }]
+        );
+    }
+
+    #[test]
     fn aol_report() {
         let reader = File::open("testdata/dmarc-reports/aol.xml").unwrap();
         let report: Report = serde_xml_rs::from_reader(reader).unwrap();
