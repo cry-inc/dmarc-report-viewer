@@ -6,185 +6,20 @@
     <title>DMARC Report Viewer & Analyzer</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="data:;base64,=">
-    <style>
-        body {
-            font-family: sans-serif;
-        }
-
-        #container {
-            display: grid;
-            column-gap: 10px;
-            row-gap: 10px;
-        }
-
-        .module {
-            border: 1px solid #aaa;
-            border-radius: 3px;
-            background-color: #eee;
-            padding: 5px;
-        }
-
-        .module canvas {
-            max-width: 300px;
-        }
-
-        th {
-            text-align: left;
-        }
-
-        td,
-        th {
-            padding-right: 10px;
-        }
-    </style>
+    <script src="chart.js"></script>
+    <script type="importmap">
+        { "imports": { "lit": "./lit.js" } }
+    </script>
+    <script type="module">
+        import "./components/app.js";
+        import "./components/dashboard.js";
+        import "./components/reports.js";
+        import "./components/report.js";
+    </script>
 </head>
 
 <body>
-    <h1>DMARC Report Viewer & Analyzer</h1>
-
-    <div id="container">
-        <div class="module" style="grid-column: 1; grid-row: 1;">
-            <h2>Inbox</h2>
-            <ul>
-                <li>Mails: <span id="mail_count">0</span></li>
-                <li>XML Files: <span id="xml_count">0</span></li>
-                <li>DMARC Reports: <span id="report_count">0</span></li>
-            </ul>
-        </div>
-
-        <div class="module" style="grid-column: 2; grid-row: 1;">
-            <h2>Domains</h2>
-            <canvas id="domains_chart"></canvas>
-        </div>
-
-        <div class="module" style="grid-column: 3; grid-row: 1;">
-            <h2>Orgs</h2>
-            <canvas id="orgs_chart"></canvas>
-        </div>
-
-        <div class="module" style="grid-column: 1; grid-row: 2;">
-            <h2>SPF Policy Results</h2>
-            <canvas id="spf_policy_chart"></canvas>
-        </div>
-
-        <div class="module" style="grid-column: 2; grid-row: 2;">
-            <h2>DKIM Policy Results</h2>
-            <canvas id="dkim_policy_chart"></canvas>
-        </div>
-
-        <div class="module" style="grid-column: 3; grid-row: 2;">
-            <h2>SPF Auth Results</h2>
-            <canvas id="spf_auth_chart"></canvas>
-        </div>
-
-        <div class="module" style="grid-column: 4; grid-row: 2;">
-            <h2>DKIM Auth Results</h2>
-            <canvas id="dkim_auth_chart"></canvas>
-        </div>
-    </div>
-
-    <div>
-        <h1>Reports</h1>
-        <table>
-            <tr>
-                <th>ID</th>
-                <th>Org</th>
-                <th>Rows</th>
-                <th>Begin</th>
-                <th>End</th>
-            </tr>
-            <tbody id="reportsTableBody">
-                <tr>
-                    <td colspan="5">Loading...</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-
-    <div id="report"></div>
-
-    <script src="chart.umd.js"></script>
-    <script>
-        async function update() {
-            update_reports_table();
-            const response = await fetch("summary");
-            const summary = await response.json();
-            update_inbox(summary);
-            create_pie_chart("orgs_chart", summary.orgs);
-            create_pie_chart("domains_chart", summary.domains);
-            create_pie_chart("spf_policy_chart", summary.spf_policy_results);
-            create_pie_chart("dkim_policy_chart", summary.dkim_policy_results);
-            create_pie_chart("spf_auth_chart", summary.spf_auth_results);
-            create_pie_chart("dkim_auth_chart", summary.dkim_auth_results);
-        }
-
-        function update_inbox(summary) {
-            document.getElementById("mail_count").innerHTML = summary.mails;
-            document.getElementById("xml_count").innerHTML = summary.xml_files;
-            document.getElementById("report_count").innerHTML = summary.reports;
-        }
-
-        function create_pie_chart(element_id, data_map) {
-            const element = document.getElementById(element_id);
-            const labels = Object.keys(data_map);
-            const data = labels.map(k => data_map[k]);
-            new Chart(element, {
-                type: "pie",
-                data: {
-                    labels,
-                    datasets: [{ data }]
-                }
-            });
-        }
-
-        function html_escape(str) {
-            return str !== null ? str
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, "&#x27;")
-                .replace(/\//g, '&#x2F;') : "n/a";
-        }
-
-        async function update_reports_table() {
-            const response = await fetch("reports");
-            const reports = await response.json();
-            reports.sort((a, b) => b.date_begin - a.date_begin);
-            let html = "";
-            reports.forEach(report => {
-                const escaped_id = html_escape(report.id);
-                html += "<tr>\n" +
-                    "<td><a href=\"javascript:load_report('" + escaped_id + "')\">" + escaped_id + "</a></td>\n" +
-                    "<td>" + html_escape(report.org) + "</td>\n" +
-                    "<td>" + report.rows + "</td>\n" +
-                    "<td>" + new Date(report.date_begin * 1000).toLocaleString() + "</td>\n" +
-                    "<td>" + new Date(report.date_end * 1000).toLocaleString() + "</td>\n" +
-                    "</tr>\n";
-            });
-            document.getElementById("reportsTableBody").innerHTML = html;
-        }
-
-        async function load_report(id) {
-            const response = await fetch("reports/" + id);
-            const report = await response.json();
-            let html = "<h1>Report</h1>\n" +
-                "<table>\n" +
-                "<tr><th>Id</th><td>" + html_escape(report.report_metadata.report_id) + "</td></tr>\n" +
-                "<tr><th>Org</th><td>" + html_escape(report.report_metadata.org_name) + "</td></tr>\n" +
-                "<tr><th>Rows</th><td>" + report.record.length + "</td></tr>\n" +
-                "<tr><th>Date Range</th><td>" + new Date(report.report_metadata.date_range.begin * 1000).toLocaleString() +
-                " - " + new Date(report.report_metadata.date_range.end * 1000).toLocaleString() + "</td></tr>\n" +
-                "<tr><th>E-Mail</th><td>" + html_escape(report.report_metadata.email) + "</td></tr>\n" +
-                "<tr><th>Extra Info</th><td>" + html_escape(report.report_metadata.extra_contact_info) + "</td></tr>\n" +
-                "<tr><th>Error</th><td>" + html_escape(report.report_metadata.error) + "</td></tr>\n" +
-                "<tr><th>Version</th><td>" + html_escape(report.version) + "</td></tr>\n" +
-                "</table>\n";
-            document.getElementById("report").innerHTML = html;
-        }
-
-        update();
-    </script>
+    <dmarc-app></egl-dmarc>
 </body>
 
 </html>

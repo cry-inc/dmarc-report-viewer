@@ -27,8 +27,13 @@ pub async fn run_http_server(config: &Configuration, state: Arc<Mutex<AppState>>
         warn!("Detected empty password: Basic Authentication will be disabled")
     }
     let make_service = Router::new()
-        .route("/", get(root))
-        .route("/chart.umd.js", get(chart_js))
+        .route("/", get(index_html))
+        .route("/chart.js", get(chart_js))
+        .route("/lit.js", get(lit_js))
+        .route("/components/app.js", get(comp_app_js))
+        .route("/components/dashboard.js", get(comp_dashboard_js))
+        .route("/components/reports.js", get(comp_reports_js))
+        .route("/components/report.js", get(comp_report_js))
         .route("/summary", get(summary))
         .route("/reports", get(reports))
         .route("/reports/:id", get(report))
@@ -207,7 +212,7 @@ async fn basic_auth_middleware(
     }
 }
 
-async fn root() -> impl IntoResponse {
+async fn index_html() -> impl IntoResponse {
     (
         [(header::CONTENT_TYPE, "text/html")],
         #[cfg(debug_assertions)]
@@ -217,13 +222,58 @@ async fn root() -> impl IntoResponse {
     )
 }
 
-async fn chart_js() -> impl IntoResponse {
+async fn comp_app_js() -> impl IntoResponse {
     (
         [(header::CONTENT_TYPE, "text/javascript")],
         #[cfg(debug_assertions)]
-        std::fs::read("ui/chart.umd.js").expect("Failed to read chart.umd.js"),
+        std::fs::read("ui/components/app.js").expect("Failed to read components/app.js"),
         #[cfg(not(debug_assertions))]
-        include_bytes!("../ui/chart.umd.js"),
+        include_bytes!("../ui/component/app.js"),
+    )
+}
+
+async fn comp_dashboard_js() -> impl IntoResponse {
+    (
+        [(header::CONTENT_TYPE, "text/javascript")],
+        #[cfg(debug_assertions)]
+        std::fs::read("ui/components/dashboard.js")
+            .expect("Failed to read components/dashboard.js"),
+        #[cfg(not(debug_assertions))]
+        include_bytes!("../ui/component/dashboard.js"),
+    )
+}
+
+async fn comp_reports_js() -> impl IntoResponse {
+    (
+        [(header::CONTENT_TYPE, "text/javascript")],
+        #[cfg(debug_assertions)]
+        std::fs::read("ui/components/reports.js").expect("Failed to read components/reports.js"),
+        #[cfg(not(debug_assertions))]
+        include_bytes!("../ui/component/reports.js"),
+    )
+}
+
+async fn comp_report_js() -> impl IntoResponse {
+    (
+        [(header::CONTENT_TYPE, "text/javascript")],
+        #[cfg(debug_assertions)]
+        std::fs::read("ui/components/report.js").expect("Failed to read components/report.js"),
+        #[cfg(not(debug_assertions))]
+        include_bytes!("../ui/component/report.js"),
+    )
+}
+
+async fn chart_js() -> impl IntoResponse {
+    (
+        [(header::CONTENT_TYPE, "text/javascript")],
+        include_bytes!("../ui/chart.umd.4.4.2.min.js"),
+    )
+}
+
+async fn lit_js() -> impl IntoResponse {
+    (
+        [(header::CONTENT_TYPE, "text/javascript")],
+        include_bytes!("../ui/lit-core.3.1.4.min.js"),
     )
 }
 
