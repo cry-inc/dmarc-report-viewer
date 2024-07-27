@@ -2,21 +2,32 @@ import { LitElement, html, css } from "lit";
 
 export class Dashboard extends LitElement {
     static styles = css`
-        :host {
+        .container {
             display: grid;
             column-gap: 10px;
             row-gap: 10px;
         }
 
         .module {
-            border: 1px solid #aaa;
+            border: 1px solid #e0e0e0;
             border-radius: 3px;
-            background-color: #eee;
+            background-color: #efefef;
             padding: 5px;
+            text-align: center;
         }
 
         .module canvas {
             max-width: 300px;
+            margin: auto;
+        }
+
+        .stats {
+            margin-bottom: 10px;
+        }
+
+        .stats span {
+            margin-left: 15px;
+            margin-right: 15px;
         }
     `;
 
@@ -65,43 +76,42 @@ export class Dashboard extends LitElement {
 
     render() {
         return html`
-            <div class="module" style="grid-column: 1; grid-row: 1;">
-                <h2>Inbox</h2>
-                <ul>
-                    <li>Mails: ${this.mails}</li>
-                    <li>XML Files: ${this.xmlFiles}</li>
-                    <li>DMARC Reports: ${this.reports}</li>
-                </ul>
+            <div class="module stats">
+                <span>Mails: <b>${this.mails}</b></span>
+                <span>XML Files: <b>${this.xmlFiles}</b></span>
+                <span>DMARC Reports: <b>${this.reports}</b></span>
             </div>
 
-            <div class="module" style="grid-column: 2; grid-row: 1;">
-                <h2>Domains</h2>
-                <canvas class="domains_chart"></canvas>
-            </div>
+            <div class="container">
+                <div class="module" style="grid-column: 1; grid-row: 1;">
+                    <h2>Domains</h2>
+                    <canvas class="domains_chart"></canvas>
+                </div>
 
-            <div class="module" style="grid-column: 3; grid-row: 1;">
-                <h2>Orgs</h2>
-                <canvas class="orgs_chart"></canvas>
-            </div>
+                <div class="module" style="grid-column: 2; grid-row: 1;">
+                    <h2>Orgs</h2>
+                    <canvas class="orgs_chart"></canvas>
+                </div>
 
-            <div class="module" style="grid-column: 1; grid-row: 2;">
-                <h2>SPF Policy Results</h2>
-                <canvas class="spf_policy_chart"></canvas>
-            </div>
+                <div class="module" style="grid-column: 3; grid-row: 1;">
+                    <h2>SPF Policy Results</h2>
+                    <canvas class="spf_policy_chart"></canvas>
+                </div>
 
-            <div class="module" style="grid-column: 2; grid-row: 2;">
-                <h2>DKIM Policy Results</h2>
-                <canvas class="dkim_policy_chart"></canvas>
-            </div>
+                <div class="module" style="grid-column: 1; grid-row: 2;">
+                    <h2>DKIM Policy Results</h2>
+                    <canvas class="dkim_policy_chart"></canvas>
+                </div>
 
-            <div class="module" style="grid-column: 3; grid-row: 2;">
-                <h2>SPF Auth Results</h2>
-                <canvas class="spf_auth_chart"></canvas>
-            </div>
+                <div class="module" style="grid-column: 2; grid-row: 2;">
+                    <h2>SPF Auth Results</h2>
+                    <canvas class="spf_auth_chart"></canvas>
+                </div>
 
-            <div class="module" style="grid-column: 4; grid-row: 2;">
-                <h2>DKIM Auth Results</h2>
-                <canvas class="dkim_auth_chart"></canvas>
+                <div class="module" style="grid-column: 3; grid-row: 2;">
+                    <h2>DKIM Auth Results</h2>
+                    <canvas class="dkim_auth_chart"></canvas>
+                </div>
             </div>
         `;
     }
