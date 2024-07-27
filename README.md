@@ -10,16 +10,16 @@ Ideal for smaller selfhosted mailservers.
 The application is a single executable written in Rust.
 It combines the DMARC report parser with an IMAP client and an HTTP server for easy access of the reports.
 You can run the executable directly on any Linux, Windows or MacOS system.
-Alternatively, you can use the tiny Linux Docker image to deploy the application.
+Alternatively, you can use the tiny 10 MB Docker image to deploy the application.
 
-![Dashboard Screenshot](screenshots/dashboard.png "Dashboard")
+![Screenshot of Dashboard](screenshots/dashboard.png "Screenshot of Dashboard")
 
 ## Features
 - [x] Lightweight Docker image for easy deployment
 - [x] Secure IMAP client
 - [x] Automatic fetching of reports from IMAP inbox
 - [x] Robust parsing of XML DMARC reports
-- [x] Embedded HTTP server for UI
+- [x] Embedded HTTP server for web UI
 - [x] Basic Auth password protection for HTTP server
 - [x] Easy configuration via command line arguments or ENV variables
 - [x] Summary with diagrams for domains, organizations and passed/failed checks
