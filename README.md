@@ -12,6 +12,8 @@ It combines the DMARC report parser with an IMAP client and an HTTP server for e
 You can run the executable directly on any Linux, Windows or MacOS system.
 Alternatively, you can use the tiny Linux Docker image to deploy the application.
 
+![Dashboard Screenshot](screenshots/dashboard.png "Dashboard")
+
 ## Features
 - [x] Lightweight Docker image for easy deployment
 - [x] Secure IMAP client
