@@ -80,7 +80,7 @@ You should also persist the certificate caching directory on your host file syst
 4. Find the compiled executable in the folder `target/release`
 5. Use the help argument to list all possible configuration parameters: `dmarc-report-viewer --help`
 
-## Acknowledgements
+## Acknowledgments
 - https://github.com/bbustin/dmarc_aggregate_parser was used as foundation for the slightly modified DMARC report parser
-- https://github.com/chartjs/Chart.js is embedded as JavaScript library for generating nice charts
-- See also `Cargo.toml` for other Rust dependencies that make this application possible!
+- [Charts.js](https://github.com/chartjs/Chart.js) and [Lit](https://lit.dev/) as embedded as JavaScript libraries for the UI
+- All the other Rust dependencies in [Cargo.toml](Cargo.toml) that make this application possible!
