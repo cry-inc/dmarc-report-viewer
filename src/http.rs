@@ -291,9 +291,10 @@ async fn summary(State(state): State<Arc<Mutex<AppState>>>) -> impl IntoResponse
 struct ReportHeader {
     id: String,
     org: String,
+    domain: String,
     date_begin: u64,
     date_end: u64,
-    rows: usize,
+    records: usize,
 }
 
 async fn reports(State(state): State<Arc<Mutex<AppState>>>) -> impl IntoResponse {
@@ -305,9 +306,10 @@ async fn reports(State(state): State<Arc<Mutex<AppState>>>) -> impl IntoResponse
         .map(|r| ReportHeader {
             id: r.report_metadata.report_id.clone(),
             org: r.report_metadata.org_name.clone(),
+            domain: r.policy_published.domain.clone(),
             date_begin: r.report_metadata.date_range.begin,
             date_end: r.report_metadata.date_range.end,
-            rows: r.record.len(),
+            records: r.record.len(),
         })
         .collect();
     Json(reports)

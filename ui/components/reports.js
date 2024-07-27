@@ -32,8 +32,9 @@ export class Reports extends LitElement {
             <table>
                 <tr>
                     <th>ID</th>
-                    <th>Org</th>
-                    <th>Rows</th>
+                    <th>Organization</th>
+                    <th>Domain</th>
+                    <th>Records</th>
                     <th>Begin</th>
                     <th>End</th>
                 </tr>
@@ -41,7 +42,8 @@ export class Reports extends LitElement {
                     html`<tr>
                         <td><a href="#/reports/${report.id}">${report.id}</a></td>
                         <td>${report.org}</td>
-                        <td>${report.rows}</td>
+                        <td>${report.domain}</td>
+                        <td>${report.records}</td>
                         <td>${new Date(report.date_begin * 1000).toLocaleString()}</td>
                         <td>${new Date(report.date_end * 1000).toLocaleString()}</td>
                     </tr>`

@@ -89,7 +89,7 @@ export class Dashboard extends LitElement {
                 </div>
 
                 <div class="module" style="grid-column: 2; grid-row: 1;">
-                    <h2>Orgs</h2>
+                    <h2>Organizations</h2>
                     <canvas class="orgs_chart"></canvas>
                 </div>
 
