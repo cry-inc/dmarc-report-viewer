@@ -5,6 +5,10 @@ export class App extends LitElement {
         :host {
             font-family: sans-serif;
         }
+
+        a {
+            color: rgb(14, 117, 212);
+        }
     `;
 
     static get properties() {

@@ -2,12 +2,28 @@ import { LitElement, html, css } from "lit";
 
 export class Reports extends LitElement {
     static styles = css`
+        table {
+            width: 100%;
+        }
+
         th {
             text-align: left;
+            background-color: #efefef;
         }
 
         td, th {
+            padding-left: 5px;
             padding-right: 10px;
+            padding-top: 3px;
+            padding-bottom: 3px;
+        }
+
+        tr:hover {
+            background-color: #f4f4f4;
+        }
+
+        a {
+            color: rgb(14, 117, 212);
         }
     `;
 
@@ -39,7 +55,7 @@ export class Reports extends LitElement {
                     <th>End</th>
                 </tr>
                 ${this.reports.map((report) =>
-                    html`<tr>
+            html`<tr>
                         <td><a href="#/reports/${report.id}">${report.id}</a></td>
                         <td>${report.org}</td>
                         <td>${report.domain}</td>
@@ -47,7 +63,7 @@ export class Reports extends LitElement {
                         <td>${new Date(report.date_begin * 1000).toLocaleString()}</td>
                         <td>${new Date(report.date_end * 1000).toLocaleString()}</td>
                     </tr>`
-                )}
+        )}
             </table>
         `;
     }
