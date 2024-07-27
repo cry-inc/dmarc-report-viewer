@@ -228,7 +228,7 @@ async fn comp_app_js() -> impl IntoResponse {
         #[cfg(debug_assertions)]
         std::fs::read("ui/components/app.js").expect("Failed to read components/app.js"),
         #[cfg(not(debug_assertions))]
-        include_bytes!("../ui/component/app.js"),
+        include_bytes!("../ui/components/app.js"),
     )
 }
 
@@ -239,7 +239,7 @@ async fn comp_dashboard_js() -> impl IntoResponse {
         std::fs::read("ui/components/dashboard.js")
             .expect("Failed to read components/dashboard.js"),
         #[cfg(not(debug_assertions))]
-        include_bytes!("../ui/component/dashboard.js"),
+        include_bytes!("../ui/components/dashboard.js"),
     )
 }
 
@@ -249,7 +249,7 @@ async fn comp_reports_js() -> impl IntoResponse {
         #[cfg(debug_assertions)]
         std::fs::read("ui/components/reports.js").expect("Failed to read components/reports.js"),
         #[cfg(not(debug_assertions))]
-        include_bytes!("../ui/component/reports.js"),
+        include_bytes!("../ui/components/reports.js"),
     )
 }
 
@@ -259,7 +259,7 @@ async fn comp_report_js() -> impl IntoResponse {
         #[cfg(debug_assertions)]
         std::fs::read("ui/components/report.js").expect("Failed to read components/report.js"),
         #[cfg(not(debug_assertions))]
-        include_bytes!("../ui/component/report.js"),
+        include_bytes!("../ui/components/report.js"),
     )
 }
 
