@@ -4,6 +4,7 @@ export class App extends LitElement {
     static styles = css`
         :host {
             font-family: sans-serif;
+            font-size: 16px;
         }
 
         a {

@@ -12,7 +12,7 @@ export class Reports extends LitElement {
         }
 
         td, th {
-            padding-left: 5px;
+            padding-left: 10px;
             padding-right: 10px;
             padding-top: 3px;
             padding-bottom: 3px;

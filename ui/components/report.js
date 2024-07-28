@@ -14,10 +14,18 @@ export class Report extends LitElement {
         }
 
         td, th {
-            padding-left: 5px;
+            padding-left: 10px;
             padding-right: 10px;
             padding-top: 3px;
             padding-bottom: 3px;
+        }
+
+        .na {
+            color: #ccc;
+        }
+
+        .bigHeader {
+            font-size: 20px;
         }
     `;
 
@@ -38,7 +46,14 @@ export class Report extends LitElement {
         if (changedProperties.has("id") && changedProperties.id !== this.id && this.id) {
             const response = await fetch("reports/" + this.id);
             this.report = await response.json();
-            //console.log("Report", this.report);
+        }
+    }
+
+    renderOptional(value) {
+        if (value !== null && value !== undefined) {
+            return html`${value}`;
+        } else {
+            return html`<span class="na">n/a</span>`;
         }
     }
 
@@ -47,7 +62,7 @@ export class Report extends LitElement {
             return html`No report loaded`;
         }
 
-        let errors = "";
+        let errors = null;
         if (this.report.report_metadata.error) {
             errors = this.report.report_metadata.error.join(", ");
         }
@@ -55,7 +70,7 @@ export class Report extends LitElement {
         return html`
             <table>
                 <tr>
-                    <th colspan="2">Report</th>
+                    <th colspan="2" class="bigHeader">Report</th>
                 </tr>
                 <tr>
                     <th>Id</th>
@@ -83,15 +98,15 @@ export class Report extends LitElement {
                 </tr>
                 <tr>
                     <th>Extra Contact Info</th>
-                    <td>${this.report.report_metadata.extra_contact_info}</td>
+                    <td>${this.renderOptional(this.report.report_metadata.extra_contact_info)}</td>
                 </tr>
                 <tr>
                     <th>Errors</th>
-                    <td>${errors}</td>
+                    <td>${this.renderOptional(errors)}</td>
                 </tr>
                 <tr>
                     <th>Version</th>
-                    <td>${this.report.version}</td>
+                    <td>${this.renderOptional(this.report.version)}</td>
                 </tr>
                 <tr>
                     <th colspan="2">Published Policy</th>
@@ -102,11 +117,11 @@ export class Report extends LitElement {
                 </tr>
                 <tr>
                     <th>adkim</th>
-                    <td>${this.report.policy_published.adkim}</td>
+                    <td>${this.renderOptional(this.report.policy_published.adkim)}</td>
                 </tr>
                 <tr>
                     <th>aspf</th>
-                    <td>${this.report.policy_published.aspf}</td>
+                    <td>${this.renderOptional(this.report.policy_published.aspf)}</td>
                 </tr>
                 <tr>
                     <th>p</th>
@@ -114,7 +129,7 @@ export class Report extends LitElement {
                 </tr>
                 <tr>
                     <th>sp</th>
-                    <td>${this.report.policy_published.sp}</td>
+                    <td>${this.renderOptional(this.report.policy_published.sp)}</td>
                 </tr>
                 <tr>
                     <th>pct</th>
@@ -122,14 +137,14 @@ export class Report extends LitElement {
                 </tr>
                 <tr>
                     <th>fo</th>
-                    <td>${this.report.policy_published.fo}</td>
+                    <td>${this.renderOptional(this.report.policy_published.fo)}</td>
                 </tr>
                 ${this.report.record.map((record) => html`
                     <tr>
                         <td colspan="2">&nbsp;</td>
                     </tr>
                     <tr>
-                        <th colspan="2">Record</th>
+                        <th colspan="2" class="bigHeader">Record</th>
                     </tr>
                     <tr>
                         <th>Source IP</th>
@@ -145,11 +160,21 @@ export class Report extends LitElement {
                     </tr>
                     <tr>
                         <th>Policy DKIM</th>
-                        <td>${record.row.policy_evaluated.dkim}</td>
+                        <td>${this.renderOptional(record.row.policy_evaluated.dkim)}</td>
                     </tr>
                     <tr>
                         <th>Policy SPF</th>
-                        <td>${record.row.policy_evaluated.spf}</td>
+                        <td>${this.renderOptional(record.row.policy_evaluated.spf)}</td>
+                    </tr>
+                    <tr>
+                        <th>Policy Reason</th>
+                        <td>
+                            ${record.row.policy_evaluated.reason ?
+                                record.row.policy_evaluated.reason.map(
+                                    (reason) => html`${reason.kind} ${reason.comment}`
+                                ) : html`<span class="na">n/a</span>`
+                            }
+                        </td>
                     </tr>
                     <tr>
                         <th>Header From</th>
@@ -157,11 +182,11 @@ export class Report extends LitElement {
                     </tr>
                     <tr>
                         <th>Envelope From</th>
-                        <td>${record.identifiers.envelope_from}</td>
+                        <td>${this.renderOptional(record.identifiers.envelope_from)}</td>
                     </tr>
                     <tr>
                         <th>Envelope To</th>
-                        <td>${record.identifiers.envelope_from}</td>
+                        <td>${this.renderOptional(record.identifiers.envelope_to)}</td>
                     </tr>
                     <tr>
                         <th colspan="2">SPF Auth Results</th>
@@ -173,24 +198,27 @@ export class Report extends LitElement {
                         </tr>
                         <tr>
                             <th>Scope</th>
-                            <td>${result.scope}</td>
+                            <td>${this.renderOptional(result.scope)}</td>
                         </tr>
                         <tr>
                             <th>Result</th>
                             <td>${result.result}</td>
                         </tr>
                     `)}
-                    <tr>
-                        <th colspan="2">DKIM Auth Results</th>
-                    </tr>
-                    ${(record.auth_results.dkim ? record.auth_results.dkim : []).map((result) => html`
+                    ${(record.auth_results.dkim ? html`
+                        <tr>
+                            <th colspan="2">DKIM Auth Results</th>
+                        </tr>
+                    ` : html`<!-- No DKIM Results -->`)}
+                    ${(record.auth_results.dkim ?
+                        record.auth_results.dkim : []).map((result) => html`
                         <tr>
                             <th>Domain</th>
                             <td>${result.domain}</td>
                         </tr>
                         <tr>
                             <th>Scope</th>
-                            <td>${result.selector}</td>
+                            <td>${this.renderOptional(result.selector)}</td>
                         </tr>
                         <tr>
                             <th>Result</th>
@@ -198,7 +226,7 @@ export class Report extends LitElement {
                         </tr>
                         <tr>
                             <th>Human Result</th>
-                            <td>${result.human_result}</td>
+                            <td>${this.renderOptional(result.human_result)}</td>
                         </tr>
                     `)}
                 `)}

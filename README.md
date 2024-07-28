@@ -22,9 +22,9 @@ Alternatively, you can use the tiny 10 MB Docker image to deploy the application
 - [x] Embedded HTTP server for web UI
 - [x] Basic Auth password protection for HTTP server
 - [x] Easy configuration via command line arguments or ENV variables
-- [x] Summary with diagrams for domains, organizations and passed/failed checks
+- [x] Summary with charts for domains, organizations and passed/failed checks
 - [x] Automatic HTTPS via ACME/Let's Encrypt
-- [ ] Viewing of individual DMARC reports
+- [x] Viewing of individual DMARC reports
 - [ ] Viewing filtered lists of reports
 - [ ] Viewing parsing errors for XML DMARC reports
 
