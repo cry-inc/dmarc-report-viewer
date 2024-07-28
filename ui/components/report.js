@@ -27,6 +27,22 @@ export class Report extends LitElement {
         .bigHeader {
             font-size: 20px;
         }
+
+        .result {
+            border-radius: 3px;
+            padding-left: 4px;
+            padding-right: 4px;
+            background-color: #888;
+            color: white;
+        }
+
+        .result.negative {
+            background-color: #f00;
+        }
+
+        .result.positive {
+            background-color: #090;
+        }
     `;
 
     static get properties() {
@@ -54,6 +70,21 @@ export class Report extends LitElement {
             return html`${value}`;
         } else {
             return html`<span class="na">n/a</span>`;
+        }
+    }
+
+    renderResultBadge(result) {
+        if (result === "fail" || result === "temperror" ||
+            result === "permerror" || result === "softfail" ||
+            result === "quarantine" || result === "reject"
+        ) {
+            return html`<span class="result negative">${result}</span>`;
+        } else if (result === "pass") {
+            return html`<span class="result positive">${result}</span>`;
+        } else if (result !== null || result !== undefined) {
+            return html`<span class="na">n/a</span>`;
+        } else {
+            return html`<span class="result neutral">${result}</span>`;
         }
     }
 
@@ -156,15 +187,15 @@ export class Report extends LitElement {
                     </tr>
                     <tr>
                         <th>Policy Disposition</th>
-                        <td>${record.row.policy_evaluated.disposition}</td>
+                        <td>${this.renderResultBadge(record.row.policy_evaluated.disposition)}</td>
                     </tr>
                     <tr>
                         <th>Policy DKIM</th>
-                        <td>${this.renderOptional(record.row.policy_evaluated.dkim)}</td>
+                        <td>${this.renderResultBadge(record.row.policy_evaluated.dkim)}</td>
                     </tr>
                     <tr>
                         <th>Policy SPF</th>
-                        <td>${this.renderOptional(record.row.policy_evaluated.spf)}</td>
+                        <td>${this.renderResultBadge(record.row.policy_evaluated.spf)}</td>
                     </tr>
                     <tr>
                         <th>Policy Reason</th>
@@ -188,10 +219,10 @@ export class Report extends LitElement {
                         <th>Envelope To</th>
                         <td>${this.renderOptional(record.identifiers.envelope_to)}</td>
                     </tr>
-                    <tr>
-                        <th colspan="2">SPF Auth Results</th>
-                    </tr>
                     ${record.auth_results.spf.map((result) => html`
+                        <tr>
+                            <th colspan="2">SPF Auth Result</th>
+                        </tr>
                         <tr>
                             <th>Domain</th>
                             <td>${result.domain}</td>
@@ -202,16 +233,14 @@ export class Report extends LitElement {
                         </tr>
                         <tr>
                             <th>Result</th>
-                            <td>${result.result}</td>
+                            <td>${this.renderResultBadge(result.result)}</td>
                         </tr>
                     `)}
-                    ${(record.auth_results.dkim ? html`
-                        <tr>
-                            <th colspan="2">DKIM Auth Results</th>
-                        </tr>
-                    ` : html`<!-- No DKIM Results -->`)}
                     ${(record.auth_results.dkim ?
                         record.auth_results.dkim : []).map((result) => html`
+                        <tr>
+                            <th colspan="2">DKIM Auth Result</th>
+                        </tr>
                         <tr>
                             <th>Domain</th>
                             <td>${result.domain}</td>
@@ -222,7 +251,7 @@ export class Report extends LitElement {
                         </tr>
                         <tr>
                             <th>Result</th>
-                            <td>${result.result}</td>
+                            <td>${this.renderResultBadge(result.result)}</td>
                         </tr>
                         <tr>
                             <th>Human Result</th>
