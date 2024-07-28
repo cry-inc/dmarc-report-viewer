@@ -55,7 +55,7 @@ export class Reports extends LitElement {
                     <th>End</th>
                 </tr>
                 ${this.reports.map((report) =>
-            html`<tr>
+                    html`<tr>
                         <td><a href="#/reports/${report.id}">${report.id}</a></td>
                         <td>${report.org}</td>
                         <td>${report.domain}</td>
@@ -63,7 +63,7 @@ export class Reports extends LitElement {
                         <td>${new Date(report.date_begin * 1000).toLocaleString()}</td>
                         <td>${new Date(report.date_end * 1000).toLocaleString()}</td>
                     </tr>`
-        )}
+                )}
             </table>
         `;
     }
