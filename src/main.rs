@@ -2,10 +2,10 @@
 
 mod background;
 mod config;
-mod report;
 mod http;
 mod imap;
 mod parser;
+mod report;
 mod state;
 mod summary;
 
