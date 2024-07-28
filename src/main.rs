@@ -2,7 +2,7 @@
 
 mod background;
 mod config;
-mod dmarc_report;
+mod report;
 mod http;
 mod imap;
 mod parser;

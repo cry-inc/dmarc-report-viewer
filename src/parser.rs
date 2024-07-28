@@ -1,4 +1,4 @@
-use crate::dmarc_report::Report;
+use crate::report::Report;
 use anyhow::{Context, Result};
 use flate2::read::GzDecoder;
 use mailparse::MailHeaderMap;

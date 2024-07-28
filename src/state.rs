@@ -1,4 +1,4 @@
-use crate::dmarc_report::Report;
+use crate::report::Report;
 use crate::summary::Summary;
 
 /// Shared state between the different parts of the application.

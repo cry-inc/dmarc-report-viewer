@@ -1,4 +1,4 @@
-use crate::dmarc_report::{DkimResultType, DmarcResultType, Report, SpfResultType};
+use crate::report::{DkimResultType, DmarcResultType, Report, SpfResultType};
 use serde::Serialize;
 use std::collections::HashMap;
 
