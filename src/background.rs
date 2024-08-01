@@ -3,6 +3,7 @@ use crate::imap::get_mails;
 use crate::parser::{extract_xml_files, parse_xml_file};
 use crate::state::AppState;
 use crate::summary::Summary;
+use crate::xml_error::XmlError;
 use anyhow::{Context, Result};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, SystemTime};
@@ -52,17 +53,25 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
     info!("Extracted {} XML files from mails", xml_files.len());
 
     info!("Parsing XML files as DMARC reports...");
+    let mut xml_errors = Vec::new();
     let mut reports = Vec::new();
     for xml_file in &xml_files {
         match parse_xml_file(xml_file) {
             Ok(report) => reports.push(report),
-            Err(err) => warn!("Failed to parse XML file as DMARC report: {err:#}"),
+            Err(err) => {
+                let error = format!("{err:#}");
+                warn!("Failed to parse XML file as DMARC report: {error}");
+                xml_errors.push(XmlError {
+                    error,
+                    xml: String::from_utf8_lossy(xml_file).to_string(),
+                });
+            }
         }
     }
     info!("Parsed {} DMARC reports successfully", reports.len());
 
     info!("Creating report summary...");
-    let summary = Summary::new(&mails, &xml_files, &reports);
+    let summary = Summary::new(mails.len(), xml_files.len(), &reports);
 
     info!("Updating sharted state...");
     let ts = SystemTime::now()
@@ -76,6 +85,7 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
         locked_state.summary = summary;
         locked_state.reports = reports;
         locked_state.last_update = ts;
+        locked_state.xml_errors = xml_errors;
     }
     info!("Finished updating shared state");
 

@@ -33,7 +33,7 @@ pub struct Summary {
 }
 
 impl Summary {
-    pub fn new(mails: &[Vec<u8>], xml_files: &[Vec<u8>], reports: &[Report]) -> Self {
+    pub fn new(mails: usize, xml_files: usize, reports: &[Report]) -> Self {
         let mut orgs: HashMap<String, usize> = HashMap::new();
         let mut domains = HashMap::new();
         let mut spf_policy_results: HashMap<DmarcResultType, usize> = HashMap::new();
@@ -87,9 +87,9 @@ impl Summary {
             }
         }
         Self {
-            mails: mails.len(),
+            mails,
+            xml_files,
             reports: reports.len(),
-            xml_files: xml_files.len(),
             orgs,
             domains,
             spf_policy_results,

@@ -1,5 +1,6 @@
 use crate::report::Report;
 use crate::summary::Summary;
+use crate::xml_error::XmlError;
 
 /// Shared state between the different parts of the application.
 /// Connects the background task that collects mails via IMAP,
@@ -21,4 +22,7 @@ pub struct AppState {
 
     /// Time of last update from IMAP inbox as Unix timestamp
     pub last_update: u64,
+
+    /// XML parsing errors
+    pub xml_errors: Vec<XmlError>,
 }

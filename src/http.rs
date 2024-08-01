@@ -37,6 +37,7 @@ pub async fn run_http_server(config: &Configuration, state: Arc<Mutex<AppState>>
         .route("/summary", get(summary))
         .route("/reports", get(reports))
         .route("/reports/:id", get(report))
+        .route("/xml-errors", get(xml_errors))
         .route_layer(CompressionLayer::new())
         .route_layer(middleware::from_fn_with_state(
             config.clone(),
@@ -338,4 +339,14 @@ async fn report(
             format!("Cannot find report with ID {id}"),
         )
     }
+}
+
+async fn xml_errors(State(state): State<Arc<Mutex<AppState>>>) -> impl IntoResponse {
+    let lock = state.lock().expect("Failed to lock app state");
+    let errors_json = serde_json::to_string(&lock.xml_errors).expect("Failed to serialize JSON");
+    (
+        StatusCode::OK,
+        [(header::CONTENT_TYPE, "application/json")],
+        errors_json,
+    )
 }
