@@ -82,6 +82,9 @@ You should also persist the certificate caching directory on your host file syst
 4. Find the compiled executable in the folder `target/release`
 5. Use the help argument to list all possible configuration parameters: `dmarc-report-viewer --help`
 
+### Docker Builds (Linux only)
+Use the command `docker build . --pull --tag dmarc-report-viewer` to build the tiny Docker image.
+
 ## Acknowledgments
 - https://github.com/bbustin/dmarc_aggregate_parser was used as foundation for the slightly modified DMARC report parser
 - [Charts.js](https://github.com/chartjs/Chart.js) and [Lit](https://lit.dev/) as embedded as JavaScript libraries for the UI
