@@ -39,12 +39,12 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
     info!("Starting background update cycle");
 
     info!("Downloading mails...");
-    let mails = get_mails(config).await.context("Failed to get mails")?;
+    let mut mails = get_mails(config).await.context("Failed to get mails")?;
     info!("Downloaded {} mails from IMAP inbox", mails.len());
 
     info!("Extracting XML files from mails...");
     let mut xml_files = Vec::new();
-    for mail in &mails {
+    for mail in &mut mails {
         match extract_xml_files(mail) {
             Ok(mut files) => xml_files.append(&mut files),
             Err(err) => warn!("Failed to extract XML files from mail: {err:#}"),

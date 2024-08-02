@@ -40,8 +40,9 @@ fn get_xml_from_gz(gz_bytes: &[u8]) -> Result<Vec<u8>> {
     Ok(xml_file)
 }
 
-pub fn extract_xml_files(mail: &Mail) -> Result<Vec<Vec<u8>>> {
-    let parsed = mailparse::parse_mail(&mail.body).context("Failed to parse mail body")?;
+pub fn extract_xml_files(mail: &mut Mail) -> Result<Vec<Vec<u8>>> {
+    let body = mail.body.take().context("Missing mail body")?;
+    let parsed = mailparse::parse_mail(&body).context("Failed to parse mail body")?;
 
     let mut xml_files = Vec::new();
     for part in parsed.parts() {

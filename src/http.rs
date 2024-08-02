@@ -39,6 +39,7 @@ pub async fn run_http_server(config: &Configuration, state: Arc<Mutex<AppState>>
         .route("/reports", get(reports))
         .route("/reports/:id", get(report))
         .route("/xml-errors", get(xml_errors))
+        .route("/mails", get(mails))
         .route_layer(CompressionLayer::new())
         .route_layer(middleware::from_fn_with_state(
             config.clone(),
@@ -359,5 +360,15 @@ async fn xml_errors(State(state): State<Arc<Mutex<AppState>>>) -> impl IntoRespo
         StatusCode::OK,
         [(header::CONTENT_TYPE, "application/json")],
         errors_json,
+    )
+}
+
+async fn mails(State(state): State<Arc<Mutex<AppState>>>) -> impl IntoResponse {
+    let lock = state.lock().expect("Failed to lock app state");
+    let mails_json = serde_json::to_string(&lock.mails).expect("Failed to serialize JSON");
+    (
+        StatusCode::OK,
+        [(header::CONTENT_TYPE, "application/json")],
+        mails_json,
     )
 }

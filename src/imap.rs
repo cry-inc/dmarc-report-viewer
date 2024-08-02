@@ -1,6 +1,7 @@
 use crate::config::Configuration;
 use crate::mail::Mail;
 use anyhow::{Context, Result};
+use async_imap::imap_proto::Address;
 use async_imap::Client;
 use futures::StreamExt;
 use std::net::TcpStream as StdTcpStream;
@@ -113,9 +114,25 @@ pub async fn get_mails(config: &Configuration) -> Result<Vec<Mail>> {
             let mail =
                 fetch_result.context("Failed to get next mail header from IMAP fetch response")?;
             let uid = mail.uid.context("Mail server did not provide UID")?;
+            let env = mail
+                .envelope()
+                .context("Mail server did not provide envelope")?;
+            let subject = env
+                .subject
+                .as_deref()
+                .map(|s| String::from_utf8_lossy(s))
+                .unwrap_or("n/a".into())
+                .to_string();
+            let sender = addrs_to_string(env.sender.as_deref());
+            let to = addrs_to_string(env.to.as_deref());
             if let Some(body) = mail.body() {
                 mails.push(Mail {
-                    body: body.to_vec(),
+                    body: Some(body.to_vec()),
+                    uid,
+                    sender,
+                    to,
+                    subject,
+                    size: body.len(),
                 })
             } else {
                 warn!("Mail with UID {} has no body!", uid);
@@ -129,4 +146,30 @@ pub async fn get_mails(config: &Configuration) -> Result<Vec<Mail>> {
         .context("Failed to log off from IMAP server")?;
 
     Ok(mails)
+}
+
+fn addrs_to_string(addrs: Option<&[Address]>) -> String {
+    if let Some(addrs) = addrs {
+        addrs
+            .iter()
+            .map(|addr| {
+                let mailbox = addr
+                    .mailbox
+                    .as_deref()
+                    .map(|s| String::from_utf8_lossy(s))
+                    .unwrap_or("n/a".into())
+                    .to_string();
+                let host = addr
+                    .host
+                    .as_deref()
+                    .map(|s| String::from_utf8_lossy(s))
+                    .unwrap_or("n/a".into())
+                    .to_string();
+                format!("{mailbox}@{host}")
+            })
+            .collect::<Vec<String>>()
+            .join("; ")
+    } else {
+        String::from("n/a")
+    }
 }
