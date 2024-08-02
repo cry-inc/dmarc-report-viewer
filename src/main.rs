@@ -4,6 +4,7 @@ mod background;
 mod config;
 mod http;
 mod imap;
+mod mail;
 mod parser;
 mod report;
 mod state;

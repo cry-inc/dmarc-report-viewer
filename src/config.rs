@@ -17,19 +17,19 @@ pub struct Configuration {
     pub imap_password: String,
 
     /// TLS encrypted port of the IMAP server
-    #[arg(long, env, default_value = "993")]
+    #[arg(long, env, default_value_t = 993)]
     pub imap_port: u16,
 
     /// TCP connection timeout for IMAP server in seconds
-    #[arg(long, env, default_value = "10")]
+    #[arg(long, env, default_value_t = 10)]
     pub imap_timeout: u64,
 
     /// Interval between checking for new reports in IMAP inbox in seconds
-    #[arg(long, env, default_value = "1000")]
+    #[arg(long, env, default_value_t = 1000)]
     pub imap_check_interval: u64,
 
     /// Embedded HTTP server port for web UI
-    #[arg(long, env, default_value = "8080")]
+    #[arg(long, env, default_value_t = 8080)]
     pub http_server_port: u16,
 
     /// Embedded HTTP server binding for web UI
@@ -71,8 +71,12 @@ pub struct Configuration {
     pub https_auto_cert_domain: Option<String>,
 
     /// Log level (trace, debug, info, warn, error)
-    #[arg(long, env, default_value = "INFO")]
+    #[arg(long, env, default_value_t = Level::INFO)]
     pub log_level: Level,
+
+    /// Maximum mail size in bytes, anything bigger will be ignored and not parsed
+    #[arg(long, env, default_value_t = 1024 * 1024 * 1)]
+    pub max_mail_size: u32,
 }
 
 impl Configuration {

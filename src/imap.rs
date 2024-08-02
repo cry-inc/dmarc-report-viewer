@@ -1,4 +1,5 @@
 use crate::config::Configuration;
+use crate::mail::Mail;
 use anyhow::{Context, Result};
 use async_imap::Client;
 use futures::StreamExt;
@@ -12,7 +13,7 @@ use tokio_rustls::rustls::{ClientConfig, RootCertStore};
 use tokio_rustls::TlsConnector;
 use tracing::{debug, warn};
 
-pub async fn get_mails(config: &Configuration) -> Result<Vec<Vec<u8>>> {
+pub async fn get_mails(config: &Configuration) -> Result<Vec<Mail>> {
     // Prepare cert store with webpki roots
     let mut root_cert_store = RootCertStore::empty();
     let certs = webpki_roots::TLS_SERVER_ROOTS.iter().cloned();
@@ -75,25 +76,57 @@ pub async fn get_mails(config: &Configuration) -> Result<Vec<Vec<u8>>> {
         .context("Failed to select inbox")?;
     debug!("Selected INBOX successfully");
 
-    let mut mails = Vec::new();
+    // Get metadata for all all mails and filter by size
+    let mut uids = Vec::new();
     debug!("Number of mails in INBOX: {}", mailbox.exists);
     if mailbox.exists > 0 {
         let sequence = format!("1:{}", mailbox.exists);
-        let mut message_stream = session
-            .fetch(sequence, "RFC822")
+        let mut stream = session
+            .fetch(sequence, "(RFC822.SIZE UID ENVELOPE)")
             .await
             .context("Failed to fetch message stream from IMAP inbox")?;
-        while let Some(message) = message_stream.next().await {
-            let message = message.context("Failed to get next message from IMAP inbox")?;
-            match message.body() {
-                Some(body) => mails.push(body.to_vec()),
-                None => warn!("Found a message without a body!"),
+        while let Some(fetch_result) = stream.next().await {
+            let mail =
+                fetch_result.context("Failed to get next mail header from IMAP fetch response")?;
+            let uid = mail.uid.context("Mail server did not provide UID")?;
+            let size = mail.size.context("Mail server did not provide size")?;
+            if size <= config.max_mail_size {
+                uids.push(uid.to_string());
+            } else {
+                warn!(
+                    "Found mail over size limit of {}: {}",
+                    config.max_mail_size, size
+                )
             }
         }
     }
+
+    // Get full mails for all selected UIDs
+    let mut mails = Vec::new();
+    if !uids.is_empty() {
+        let sequence: String = uids.join(",");
+        let mut stream = session
+            .uid_fetch(sequence, "(RFC822 UID ENVELOPE)")
+            .await
+            .context("Failed to fetch message stream from IMAP inbox")?;
+        while let Some(fetch_result) = stream.next().await {
+            let mail =
+                fetch_result.context("Failed to get next mail header from IMAP fetch response")?;
+            let uid = mail.uid.context("Mail server did not provide UID")?;
+            if let Some(body) = mail.body() {
+                mails.push(Mail {
+                    body: body.to_vec(),
+                })
+            } else {
+                warn!("Mail with UID {} has no body!", uid);
+            }
+        }
+    }
+
     session
         .logout()
         .await
         .context("Failed to log off from IMAP server")?;
+
     Ok(mails)
 }

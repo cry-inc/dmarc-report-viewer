@@ -1,3 +1,4 @@
+use crate::mail::Mail;
 use crate::report::Report;
 use crate::summary::Summary;
 use crate::xml_error::XmlError;
@@ -9,7 +10,7 @@ use crate::xml_error::XmlError;
 #[derive(Default)]
 pub struct AppState {
     /// Number of emails in IMAP report inbox
-    pub mails: usize,
+    pub mails: Vec<Mail>,
 
     /// Number of XML files found in IMAP report inbox
     pub xml_files: usize,
