@@ -2,6 +2,7 @@ use crate::config::Configuration;
 use crate::mail::Mail;
 use anyhow::{Context, Result};
 use async_imap::imap_proto::Address;
+use async_imap::types::Fetch;
 use async_imap::Client;
 use futures::StreamExt;
 use std::net::TcpStream as StdTcpStream;
@@ -12,7 +13,7 @@ use tokio::net::TcpStream;
 use tokio_rustls::rustls::pki_types::ServerName;
 use tokio_rustls::rustls::{ClientConfig, RootCertStore};
 use tokio_rustls::TlsConnector;
-use tracing::{debug, warn};
+use tracing::{debug, info, warn};
 
 pub async fn get_mails(config: &Configuration) -> Result<Vec<Mail>> {
     // Prepare cert store with webpki roots
@@ -78,7 +79,8 @@ pub async fn get_mails(config: &Configuration) -> Result<Vec<Mail>> {
     debug!("Selected INBOX successfully");
 
     // Get metadata for all all mails and filter by size
-    let mut uids = Vec::new();
+    let mut mails = Vec::new();
+    let mut size_filtered_uids = Vec::new();
     debug!("Number of mails in INBOX: {}", mailbox.exists);
     if mailbox.exists > 0 {
         let sequence = format!("1:{}", mailbox.exists);
@@ -87,62 +89,49 @@ pub async fn get_mails(config: &Configuration) -> Result<Vec<Mail>> {
             .await
             .context("Failed to fetch message stream from IMAP inbox")?;
         while let Some(fetch_result) = stream.next().await {
-            let mail =
+            let fetched =
                 fetch_result.context("Failed to get next mail header from IMAP fetch response")?;
-            let uid = mail.uid.context("Mail server did not provide UID")?;
-            let size = mail.size.context("Mail server did not provide size")?;
-            if size <= config.max_mail_size {
-                uids.push(uid.to_string());
+            let mail = extract_metadata(&fetched, config.max_mail_size as usize)
+                .context("Unable to extract mail metadata")?;
+            if mail.oversized {
+                // Add oversized mails without body to result list
+                mails.push(mail);
             } else {
-                warn!(
-                    "Found mail over size limit of {}: {}",
-                    config.max_mail_size, size
-                )
+                // Get mails with body in next step
+                size_filtered_uids.push(mail.uid.to_string());
             }
         }
+        if !mails.is_empty() {
+            warn!(
+                "Found {} mails over size limit of {} bytes",
+                mails.len(),
+                config.max_mail_size
+            )
+        }
+        info!("Downloaded metadata of {} mails", mailbox.exists)
     }
 
     // Get full mails for all selected UIDs
-    let mut mails = Vec::new();
-    if !uids.is_empty() {
-        let sequence: String = uids.join(",");
+    if !size_filtered_uids.is_empty() {
+        let sequence: String = size_filtered_uids.join(",");
         let mut stream = session
-            .uid_fetch(sequence, "(RFC822 UID ENVELOPE INTERNALDATE)")
+            .uid_fetch(sequence, "(RFC822 RFC822.SIZE UID ENVELOPE INTERNALDATE)")
             .await
             .context("Failed to fetch message stream from IMAP inbox")?;
         while let Some(fetch_result) = stream.next().await {
-            let mail =
+            let fetched =
                 fetch_result.context("Failed to get next mail header from IMAP fetch response")?;
-            let uid = mail.uid.context("Mail server did not provide UID")?;
-            let date = mail
-                .internal_date()
-                .context("Mail server did not provide date")?
-                .timestamp();
-            let env = mail
-                .envelope()
-                .context("Mail server did not provide envelope")?;
-            let subject = env
-                .subject
-                .as_deref()
-                .map(|s| String::from_utf8_lossy(s))
-                .unwrap_or("n/a".into())
-                .to_string();
-            let sender = addrs_to_string(env.sender.as_deref());
-            let to = addrs_to_string(env.to.as_deref());
-            if let Some(body) = mail.body() {
-                mails.push(Mail {
-                    body: Some(body.to_vec()),
-                    uid,
-                    sender,
-                    to,
-                    subject,
-                    date,
-                    size: body.len(),
-                })
+            let mut mail = extract_metadata(&fetched, config.max_mail_size as usize)
+                .context("Unable to extract mail metadata")?;
+            if let Some(body) = fetched.body() {
+                mail.body = Some(body.to_vec());
+                mail.size = body.len();
+                mails.push(mail);
             } else {
-                warn!("Mail with UID {} has no body!", uid);
+                warn!("Mail with UID {} has no body!", mail.uid);
             }
         }
+        info!("Downloaded {} mails", size_filtered_uids.len())
     }
 
     session
@@ -151,6 +140,39 @@ pub async fn get_mails(config: &Configuration) -> Result<Vec<Mail>> {
         .context("Failed to log off from IMAP server")?;
 
     Ok(mails)
+}
+
+fn extract_metadata(mail: &Fetch, max_size: usize) -> Result<Mail> {
+    let uid = mail.uid.context("Mail server did not provide UID")?;
+    let size = mail.size.context("Mail server did not provide size")? as usize;
+    let env = mail
+        .envelope()
+        .context("Mail server did not provide envelope")?;
+    let sender = addrs_to_string(env.sender.as_deref());
+    let to = addrs_to_string(env.to.as_deref());
+    let date = mail
+        .internal_date()
+        .context("Mail server did not provide date")?
+        .timestamp();
+    let env = mail
+        .envelope()
+        .context("Mail server did not provide envelope")?;
+    let subject = env
+        .subject
+        .as_deref()
+        .map(|s| String::from_utf8_lossy(s))
+        .unwrap_or("n/a".into())
+        .to_string();
+    Ok(Mail {
+        body: None,
+        uid,
+        sender,
+        to,
+        subject,
+        date,
+        size,
+        oversized: size > max_size,
+    })
 }
 
 fn addrs_to_string(addrs: Option<&[Address]>) -> String {
