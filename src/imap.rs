@@ -83,7 +83,7 @@ pub async fn get_mails(config: &Configuration) -> Result<Vec<Mail>> {
     if mailbox.exists > 0 {
         let sequence = format!("1:{}", mailbox.exists);
         let mut stream = session
-            .fetch(sequence, "(RFC822.SIZE UID ENVELOPE)")
+            .fetch(sequence, "(RFC822.SIZE UID ENVELOPE INTERNALDATE)")
             .await
             .context("Failed to fetch message stream from IMAP inbox")?;
         while let Some(fetch_result) = stream.next().await {
@@ -107,13 +107,17 @@ pub async fn get_mails(config: &Configuration) -> Result<Vec<Mail>> {
     if !uids.is_empty() {
         let sequence: String = uids.join(",");
         let mut stream = session
-            .uid_fetch(sequence, "(RFC822 UID ENVELOPE)")
+            .uid_fetch(sequence, "(RFC822 UID ENVELOPE INTERNALDATE)")
             .await
             .context("Failed to fetch message stream from IMAP inbox")?;
         while let Some(fetch_result) = stream.next().await {
             let mail =
                 fetch_result.context("Failed to get next mail header from IMAP fetch response")?;
             let uid = mail.uid.context("Mail server did not provide UID")?;
+            let date = mail
+                .internal_date()
+                .context("Mail server did not provide date")?
+                .timestamp();
             let env = mail
                 .envelope()
                 .context("Mail server did not provide envelope")?;
@@ -132,6 +136,7 @@ pub async fn get_mails(config: &Configuration) -> Result<Vec<Mail>> {
                     sender,
                     to,
                     subject,
+                    date,
                     size: body.len(),
                 })
             } else {
