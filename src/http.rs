@@ -34,6 +34,7 @@ pub async fn run_http_server(config: &Configuration, state: Arc<Mutex<AppState>>
         .route("/components/dashboard.js", get(comp_dashboard_js))
         .route("/components/reports.js", get(comp_reports_js))
         .route("/components/report.js", get(comp_report_js))
+        .route("/components/mailtable.js", get(comp_mailtable_js))
         .route("/components/problems.js", get(comp_problems_js))
         .route("/summary", get(summary))
         .route("/reports", get(reports))
@@ -273,6 +274,17 @@ async fn comp_problems_js() -> impl IntoResponse {
         std::fs::read("ui/components/problems.js").expect("Failed to read components/problems.js"),
         #[cfg(not(debug_assertions))]
         include_bytes!("../ui/components/problems.js"),
+    )
+}
+
+async fn comp_mailtable_js() -> impl IntoResponse {
+    (
+        [(header::CONTENT_TYPE, "text/javascript")],
+        #[cfg(debug_assertions)]
+        std::fs::read("ui/components/mailtable.js")
+            .expect("Failed to read components/mailtable.js"),
+        #[cfg(not(debug_assertions))]
+        include_bytes!("../ui/components/mailtable.js"),
     )
 }
 
