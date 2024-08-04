@@ -19,7 +19,6 @@ use serde::Serialize;
 use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
 use tokio::signal;
-use tower_http::compression::CompressionLayer;
 use tracing::{error, info, warn};
 
 pub async fn run_http_server(config: &Configuration, state: Arc<Mutex<AppState>>) -> Result<()> {
@@ -27,21 +26,13 @@ pub async fn run_http_server(config: &Configuration, state: Arc<Mutex<AppState>>
         warn!("Detected empty password: Basic Authentication will be disabled")
     }
     let make_service = Router::new()
-        .route("/", get(index_html))
-        .route("/chart.js", get(chart_js))
-        .route("/lit.js", get(lit_js))
-        .route("/components/app.js", get(comp_app_js))
-        .route("/components/dashboard.js", get(comp_dashboard_js))
-        .route("/components/reports.js", get(comp_reports_js))
-        .route("/components/report.js", get(comp_report_js))
-        .route("/components/mailtable.js", get(comp_mailtable_js))
-        .route("/components/problems.js", get(comp_problems_js))
         .route("/summary", get(summary))
         .route("/reports", get(reports))
         .route("/reports/:id", get(report))
         .route("/xml-errors", get(xml_errors))
         .route("/mails", get(mails))
-        .route_layer(CompressionLayer::new())
+        .route("/", get(static_file)) // index.html
+        .route("/*filepath", get(static_file)) // all other files
         .route_layer(middleware::from_fn_with_state(
             config.clone(),
             basic_auth_middleware,
@@ -216,89 +207,34 @@ async fn basic_auth_middleware(
     }
 }
 
-async fn index_html() -> impl IntoResponse {
+async fn static_file(req: Request) -> impl IntoResponse {
+    let path = req.uri().path();
+    for sf in STATIC_FILES {
+        if sf.http_path == path {
+            let mut mime_type = "application/octet-stream";
+            for mt in MIME_TYPES {
+                if sf.file_path.ends_with(mt.ext) {
+                    mime_type = mt.mime_type;
+                    break;
+                }
+            }
+            return (
+                StatusCode::OK,
+                [(header::CONTENT_TYPE, mime_type)],
+                #[cfg(debug_assertions)]
+                std::fs::read(sf.file_path).expect("Failed to read file"),
+                #[cfg(not(debug_assertions))]
+                sf._data,
+            );
+        }
+    }
     (
-        [(header::CONTENT_TYPE, "text/html")],
+        StatusCode::NOT_FOUND,
+        [(header::CONTENT_TYPE, "text/plain")],
         #[cfg(debug_assertions)]
-        std::fs::read("ui/index.html").expect("Failed to read index.html"),
+        b"File not found".to_vec(),
         #[cfg(not(debug_assertions))]
-        include_bytes!("../ui/index.html"),
-    )
-}
-
-async fn comp_app_js() -> impl IntoResponse {
-    (
-        [(header::CONTENT_TYPE, "text/javascript")],
-        #[cfg(debug_assertions)]
-        std::fs::read("ui/components/app.js").expect("Failed to read components/app.js"),
-        #[cfg(not(debug_assertions))]
-        include_bytes!("../ui/components/app.js"),
-    )
-}
-
-async fn comp_dashboard_js() -> impl IntoResponse {
-    (
-        [(header::CONTENT_TYPE, "text/javascript")],
-        #[cfg(debug_assertions)]
-        std::fs::read("ui/components/dashboard.js")
-            .expect("Failed to read components/dashboard.js"),
-        #[cfg(not(debug_assertions))]
-        include_bytes!("../ui/components/dashboard.js"),
-    )
-}
-
-async fn comp_reports_js() -> impl IntoResponse {
-    (
-        [(header::CONTENT_TYPE, "text/javascript")],
-        #[cfg(debug_assertions)]
-        std::fs::read("ui/components/reports.js").expect("Failed to read components/reports.js"),
-        #[cfg(not(debug_assertions))]
-        include_bytes!("../ui/components/reports.js"),
-    )
-}
-
-async fn comp_report_js() -> impl IntoResponse {
-    (
-        [(header::CONTENT_TYPE, "text/javascript")],
-        #[cfg(debug_assertions)]
-        std::fs::read("ui/components/report.js").expect("Failed to read components/report.js"),
-        #[cfg(not(debug_assertions))]
-        include_bytes!("../ui/components/report.js"),
-    )
-}
-
-async fn comp_problems_js() -> impl IntoResponse {
-    (
-        [(header::CONTENT_TYPE, "text/javascript")],
-        #[cfg(debug_assertions)]
-        std::fs::read("ui/components/problems.js").expect("Failed to read components/problems.js"),
-        #[cfg(not(debug_assertions))]
-        include_bytes!("../ui/components/problems.js"),
-    )
-}
-
-async fn comp_mailtable_js() -> impl IntoResponse {
-    (
-        [(header::CONTENT_TYPE, "text/javascript")],
-        #[cfg(debug_assertions)]
-        std::fs::read("ui/components/mailtable.js")
-            .expect("Failed to read components/mailtable.js"),
-        #[cfg(not(debug_assertions))]
-        include_bytes!("../ui/components/mailtable.js"),
-    )
-}
-
-async fn chart_js() -> impl IntoResponse {
-    (
-        [(header::CONTENT_TYPE, "text/javascript")],
-        include_bytes!("../ui/chart.umd.4.4.2.min.js"),
-    )
-}
-
-async fn lit_js() -> impl IntoResponse {
-    (
-        [(header::CONTENT_TYPE, "text/javascript")],
-        include_bytes!("../ui/lit-core.3.1.4.min.js"),
+        b"File not found",
     )
 }
 
@@ -383,4 +319,74 @@ async fn mails(State(state): State<Arc<Mutex<AppState>>>) -> impl IntoResponse {
         [(header::CONTENT_TYPE, "application/json")],
         mails_json,
     )
+}
+
+const STATIC_FILES: &[StaticFile] = &[
+    StaticFile {
+        http_path: "/",
+        file_path: "ui/index.html",
+        _data: include_bytes!("../ui/index.html"),
+    },
+    StaticFile {
+        http_path: "/chart.js",
+        file_path: "ui/chart.umd.4.4.2.min.js",
+        _data: include_bytes!("../ui/chart.umd.4.4.2.min.js"),
+    },
+    StaticFile {
+        http_path: "/lit.js",
+        file_path: "ui/lit-core.3.1.4.min.js",
+        _data: include_bytes!("../ui/lit-core.3.1.4.min.js"),
+    },
+    StaticFile {
+        http_path: "/components/app.js",
+        file_path: "ui/components/app.js",
+        _data: include_bytes!("../ui/components/app.js"),
+    },
+    StaticFile {
+        http_path: "/components/dashboard.js",
+        file_path: "ui/components/dashboard.js",
+        _data: include_bytes!("../ui/components/dashboard.js"),
+    },
+    StaticFile {
+        http_path: "/components/mailtable.js",
+        file_path: "ui/components/mailtable.js",
+        _data: include_bytes!("../ui/components/mailtable.js"),
+    },
+    StaticFile {
+        http_path: "/components/problems.js",
+        file_path: "ui/components/problems.js",
+        _data: include_bytes!("../ui/components/problems.js"),
+    },
+    StaticFile {
+        http_path: "/components/report.js",
+        file_path: "ui/components/report.js",
+        _data: include_bytes!("../ui/components/report.js"),
+    },
+    StaticFile {
+        http_path: "/components/reports.js",
+        file_path: "ui/components/reports.js",
+        _data: include_bytes!("../ui/components/reports.js"),
+    },
+];
+
+const MIME_TYPES: &[MimeType] = &[
+    MimeType {
+        ext: ".html",
+        mime_type: "text/html",
+    },
+    MimeType {
+        ext: ".js",
+        mime_type: "text/javascript",
+    },
+];
+
+struct MimeType {
+    ext: &'static str,
+    mime_type: &'static str,
+}
+
+struct StaticFile {
+    http_path: &'static str,
+    file_path: &'static str,
+    _data: &'static [u8],
 }
