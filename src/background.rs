@@ -37,11 +37,8 @@ pub fn start_bg_task(
 
 async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Result<()> {
     info!("Starting background update cycle");
-
-    info!("Downloading mails...");
     let mut mails = get_mails(config).await.context("Failed to get mails")?;
 
-    info!("Extracting XML files from mails...");
     let mut xml_files = Vec::new();
     for mail in &mut mails {
         if mail.body.is_some() {
@@ -53,7 +50,6 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
     }
     info!("Extracted {} XML files from mails", xml_files.len());
 
-    info!("Parsing XML files as DMARC reports...");
     let mut xml_errors = Vec::new();
     let mut reports = Vec::new();
     for xml_file in &xml_files {
@@ -61,7 +57,6 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
             Ok(report) => reports.push(report),
             Err(err) => {
                 let error = format!("{err:#}");
-                warn!("Failed to parse XML file as DMARC report: {error}");
                 xml_errors.push(XmlError {
                     error,
                     xml: String::from_utf8_lossy(xml_file).to_string(),
@@ -70,22 +65,27 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
         }
     }
     info!("Parsed {} DMARC reports successfully", reports.len());
+    if !xml_errors.is_empty() {
+        warn!(
+            "Failed to parse {} XML file as DMARC reports",
+            xml_errors.len()
+        );
+    }
 
-    info!("Creating report summary...");
     let summary = Summary::new(mails.len(), xml_files.len(), &reports);
 
-    info!("Updating sharted state...");
-    let ts = SystemTime::now()
+    let timestamp = SystemTime::now()
         .duration_since(SystemTime::UNIX_EPOCH)
         .context("Failed to get Unix time stamp")?
         .as_secs();
+
     {
         let mut locked_state = state.lock().expect("Failed to lock app state");
         locked_state.mails = mails;
         locked_state.xml_files = xml_files.len();
         locked_state.summary = summary;
         locked_state.reports = reports;
-        locked_state.last_update = ts;
+        locked_state.last_update = timestamp;
         locked_state.xml_errors = xml_errors;
     }
     info!("Finished updating shared state");
