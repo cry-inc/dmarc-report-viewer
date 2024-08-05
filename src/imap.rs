@@ -1,5 +1,5 @@
 use crate::config::Configuration;
-use crate::mail::Mail;
+use crate::mail::{decode_subject, Mail};
 use anyhow::{Context, Result};
 use async_imap::imap_proto::Address;
 use async_imap::types::Fetch;
@@ -157,12 +157,13 @@ fn extract_metadata(mail: &Fetch, max_size: usize) -> Result<Mail> {
     let env = mail
         .envelope()
         .context("Mail server did not provide envelope")?;
-    let subject = env
-        .subject
-        .as_deref()
-        .map(|s| String::from_utf8_lossy(s))
-        .unwrap_or("n/a".into())
-        .to_string();
+    let subject = decode_subject(
+        env.subject
+            .as_deref()
+            .map(|s| String::from_utf8_lossy(s))
+            .unwrap_or("n/a".into())
+            .to_string(),
+    );
     Ok(Mail {
         body: None,
         uid,

@@ -11,7 +11,7 @@ use axum::routing::IntoMakeService;
 use axum::Json;
 use axum::{extract::State, routing::get, Router};
 use axum_server::Handle;
-use base64::{engine::general_purpose::STANDARD, Engine as _};
+use base64::{engine::general_purpose::STANDARD, Engine};
 use futures::StreamExt;
 use rustls_acme::caches::DirCache;
 use rustls_acme::AcmeConfig;
