@@ -72,12 +72,12 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
         );
     }
 
-    let summary = Summary::new(mails.len(), xml_files.len(), &reports);
-
     let timestamp = SystemTime::now()
         .duration_since(SystemTime::UNIX_EPOCH)
         .context("Failed to get Unix time stamp")?
         .as_secs();
+
+    let summary = Summary::new(mails.len(), xml_files.len(), &reports, timestamp);
 
     {
         let mut locked_state = state.lock().expect("Failed to lock app state");

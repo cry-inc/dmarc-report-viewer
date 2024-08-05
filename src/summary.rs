@@ -13,6 +13,9 @@ pub struct Summary {
     /// Number of successfully parsed DMARC reports XML files found in IMAP inbox
     pub reports: usize,
 
+    /// Unix timestamp with time of last update
+    pub last_update: u64,
+
     /// Map of organizations with number of corresponding reports
     orgs: HashMap<String, usize>,
 
@@ -33,7 +36,7 @@ pub struct Summary {
 }
 
 impl Summary {
-    pub fn new(mails: usize, xml_files: usize, reports: &[Report]) -> Self {
+    pub fn new(mails: usize, xml_files: usize, reports: &[Report], last_update: u64) -> Self {
         let mut orgs: HashMap<String, usize> = HashMap::new();
         let mut domains = HashMap::new();
         let mut spf_policy_results: HashMap<DmarcResultType, usize> = HashMap::new();
@@ -89,6 +92,7 @@ impl Summary {
         Self {
             mails,
             xml_files,
+            last_update,
             reports: reports.len(),
             orgs,
             domains,

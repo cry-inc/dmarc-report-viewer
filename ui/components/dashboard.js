@@ -35,6 +35,7 @@ export class Dashboard extends LitElement {
         mails: { type: Number },
         xmlFiles: { type: Number },
         reports: { type: Number },
+        lastUpdate: { type: Number },
     };
 
     constructor() {
@@ -43,6 +44,7 @@ export class Dashboard extends LitElement {
         this.mails = 0;
         this.xmlFiles = 0;
         this.reports = 0;
+        this.lastUpdate = 0;
     }
 
     async firstUpdated() {
@@ -52,6 +54,7 @@ export class Dashboard extends LitElement {
         this.mails = summary.mails;
         this.xmlFiles = summary.xml_files;
         this.reports = summary.reports;
+        this.lastUpdate = summary.last_update;
 
         this.createPieChart("orgs_chart", summary.orgs);
         this.createPieChart("domains_chart", summary.domains);
@@ -80,6 +83,7 @@ export class Dashboard extends LitElement {
                 <span>Mails: <b>${this.mails}</b></span>
                 <span>XML Files: <b>${this.xmlFiles}</b></span>
                 <span>DMARC Reports: <b>${this.reports}</b></span>
+                <span>Last Update: <b>${new Date(this.lastUpdate * 1000).toLocaleString()}</b></span>
             </div>
 
             <div class="container">
