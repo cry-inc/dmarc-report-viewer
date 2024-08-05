@@ -367,6 +367,11 @@ const STATIC_FILES: &[StaticFile] = &[
         file_path: "ui/components/reports.js",
         _data: include_bytes!("../ui/components/reports.js"),
     },
+    StaticFile {
+        http_path: "/components/mails.js",
+        file_path: "ui/components/mails.js",
+        _data: include_bytes!("../ui/components/mails.js"),
+    },
 ];
 
 const MIME_TYPES: &[MimeType] = &[
