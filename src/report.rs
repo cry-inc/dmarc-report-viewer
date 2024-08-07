@@ -48,7 +48,7 @@ pub struct PolicyPublishedType {
     pub aspf: Option<AlignmentType>,
     pub p: DispositionType,
     pub sp: Option<DispositionType>,
-    pub pct: u8,
+    pub pct: Option<u8>,
     pub fo: Option<String>,
 }
 
@@ -202,7 +202,7 @@ mod tests {
         assert_eq!(report.policy_published.aspf, Some(AlignmentType::Relaxed));
         assert_eq!(report.policy_published.p, DispositionType::Reject);
         assert_eq!(report.policy_published.sp, Some(DispositionType::Reject));
-        assert_eq!(report.policy_published.pct, 100);
+        assert_eq!(report.policy_published.pct, Some(100));
 
         // Check record
         assert_eq!(report.record.len(), 1);
@@ -248,7 +248,7 @@ mod tests {
         assert_eq!(report.policy_published.aspf, Some(AlignmentType::Relaxed));
         assert_eq!(report.policy_published.p, DispositionType::Reject);
         assert_eq!(report.policy_published.sp, Some(DispositionType::Reject));
-        assert_eq!(report.policy_published.pct, 100);
+        assert_eq!(report.policy_published.pct, Some(100));
 
         // Check record
         assert_eq!(report.record.len(), 1);
@@ -313,7 +313,7 @@ mod tests {
         assert_eq!(report.policy_published.aspf, Some(AlignmentType::Relaxed));
         assert_eq!(report.policy_published.p, DispositionType::None);
         assert_eq!(report.policy_published.sp, Some(DispositionType::None));
-        assert_eq!(report.policy_published.pct, 100);
+        assert_eq!(report.policy_published.pct, Some(100));
         assert_eq!(report.policy_published.fo, Some(String::from("1")));
 
         // Check record
@@ -392,7 +392,7 @@ mod tests {
         assert_eq!(report.policy_published.aspf, Some(AlignmentType::Relaxed));
         assert_eq!(report.policy_published.p, DispositionType::None);
         assert_eq!(report.policy_published.sp, Some(DispositionType::None));
-        assert_eq!(report.policy_published.pct, 100);
+        assert_eq!(report.policy_published.pct, Some(100));
 
         // Check record
         assert_eq!(report.record.len(), 1);
@@ -445,7 +445,7 @@ mod tests {
         assert_eq!(report.policy_published.adkim, Some(AlignmentType::Relaxed));
         assert_eq!(report.policy_published.aspf, Some(AlignmentType::Relaxed));
         assert_eq!(report.policy_published.p, DispositionType::Reject);
-        assert_eq!(report.policy_published.pct, 100);
+        assert_eq!(report.policy_published.pct, Some(100));
 
         // Check record
         assert_eq!(report.record.len(), 1);
@@ -506,7 +506,7 @@ mod tests {
         assert_eq!(report.policy_published.aspf, Some(AlignmentType::Relaxed));
         assert_eq!(report.policy_published.p, DispositionType::Reject);
         assert_eq!(report.policy_published.sp, Some(DispositionType::Reject));
-        assert_eq!(report.policy_published.pct, 100);
+        assert_eq!(report.policy_published.pct, Some(100));
 
         // Check record
         assert_eq!(report.record.len(), 1);
@@ -563,7 +563,7 @@ mod tests {
         assert_eq!(report.policy_published.aspf, Some(AlignmentType::Relaxed));
         assert_eq!(report.policy_published.p, DispositionType::Reject);
         assert_eq!(report.policy_published.sp, Some(DispositionType::Reject));
-        assert_eq!(report.policy_published.pct, 100);
+        assert_eq!(report.policy_published.pct, Some(100));
         assert_eq!(report.policy_published.fo, Some(String::from("0")));
 
         // Check record #1
@@ -642,6 +642,73 @@ mod tests {
             record.auth_results.spf,
             vec![SpfAuthResultType {
                 domain: String::from("random.net"),
+                scope: Some(SpfDomainScope::MailForm),
+                result: SpfResultType::Pass,
+            }]
+        );
+    }
+
+    #[test]
+    fn web_de_report() {
+        let reader = File::open("testdata/dmarc-reports/webde.xml").unwrap();
+        let report: Report = serde_xml_rs::from_reader(reader).unwrap();
+
+        // Check metadata
+        assert_eq!(report.report_metadata.org_name, "WEB.DE");
+        assert_eq!(report.report_metadata.email, "noreply-dmarc@sicher.web.de");
+        assert_eq!(
+            report.report_metadata.report_id,
+            "a3345c7cb5fd4f26aa62144bf449a54b"
+        );
+        assert_eq!(
+            report.report_metadata.extra_contact_info.as_deref(),
+            Some("https://postmaster.web.de/en/case?c=r2002")
+        );
+        assert_eq!(report.report_metadata.date_range.begin, 1722816000);
+        assert_eq!(report.report_metadata.date_range.end, 1722902399);
+
+        // Check policy
+        assert_eq!(report.policy_published.domain, "foobar.com");
+        assert_eq!(report.policy_published.adkim, Some(AlignmentType::Relaxed));
+        assert_eq!(report.policy_published.aspf, Some(AlignmentType::Relaxed));
+        assert_eq!(report.policy_published.p, DispositionType::Reject);
+        assert_eq!(report.policy_published.sp, Some(DispositionType::None));
+        assert_eq!(report.policy_published.pct, None);
+        assert_eq!(report.policy_published.fo, None);
+
+        // Check record #1
+        assert_eq!(report.record.len(), 1);
+        let record = report.record.first().unwrap();
+        assert_eq!(record.row.source_ip.to_string(), "111.69.13.71");
+        assert_eq!(record.row.count, 1);
+        assert_eq!(
+            record.row.policy_evaluated.disposition,
+            DispositionType::None
+        );
+        assert_eq!(
+            record.row.policy_evaluated.dkim,
+            Some(DmarcResultType::Pass)
+        );
+        assert_eq!(record.row.policy_evaluated.spf, Some(DmarcResultType::Pass));
+        assert_eq!(record.identifiers.envelope_to, None);
+        assert_eq!(
+            record.identifiers.envelope_from.as_deref(),
+            Some("foobar.com")
+        );
+        assert_eq!(record.identifiers.header_from, "foobar.com");
+        assert_eq!(
+            record.auth_results.dkim,
+            Some(vec![DkimAuthResultType {
+                domain: String::from("foobar.com"),
+                selector: Some(String::from("sel123")),
+                result: DkimResultType::Pass,
+                human_result: None
+            }])
+        );
+        assert_eq!(
+            record.auth_results.spf,
+            vec![SpfAuthResultType {
+                domain: String::from("foobar.com"),
                 scope: Some(SpfDomainScope::MailForm),
                 result: SpfResultType::Pass,
             }]

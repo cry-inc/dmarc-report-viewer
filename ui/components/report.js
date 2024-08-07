@@ -164,7 +164,7 @@ export class Report extends LitElement {
                 </tr>
                 <tr>
                     <th>pct</th>
-                    <td>${this.report.policy_published.pct}</td>
+                    <td>${this.renderOptional(this.report.policy_published.pct)}</td>
                 </tr>
                 <tr>
                     <th>fo</th>
