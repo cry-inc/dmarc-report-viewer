@@ -14,6 +14,7 @@ export class Mails extends LitElement {
     async updateMails() {
         const mailsResponse = await fetch("mails");
         this.mails = await mailsResponse.json();
+        this.mails.sort((a, b) => b.date - a.date);
     }
 
     render() {
