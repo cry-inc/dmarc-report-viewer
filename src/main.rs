@@ -10,6 +10,7 @@ mod report;
 mod state;
 mod summary;
 mod xml_error;
+mod xml_file;
 
 use crate::background::start_bg_task;
 use crate::http::run_http_server;

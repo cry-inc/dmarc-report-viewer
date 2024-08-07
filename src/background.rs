@@ -5,6 +5,7 @@ use crate::state::AppState;
 use crate::summary::Summary;
 use crate::xml_error::XmlError;
 use anyhow::{Context, Result};
+use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, SystemTime};
 use tokio::sync::mpsc::Receiver;
@@ -39,11 +40,15 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
     info!("Starting background update cycle");
     let mut mails = get_mails(config).await.context("Failed to get mails")?;
 
-    let mut xml_files = Vec::new();
-    for mail in &mut mails {
+    let mut xml_files = HashMap::new();
+    for mail in &mut mails.values_mut() {
         if mail.body.is_some() {
             match extract_xml_files(mail) {
-                Ok(mut files) => xml_files.append(&mut files),
+                Ok(files) => {
+                    for xml_file in files {
+                        xml_files.insert(xml_file.hash.clone(), xml_file);
+                    }
+                }
                 Err(err) => warn!("Failed to extract XML files from mail: {err:#}"),
             }
         }
@@ -52,14 +57,15 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
 
     let mut xml_errors = Vec::new();
     let mut reports = Vec::new();
-    for xml_file in &xml_files {
-        match parse_xml_file(xml_file) {
+    for xml_file in xml_files.values() {
+        match parse_xml_file(&xml_file.data) {
             Ok(report) => reports.push(report),
             Err(err) => {
                 let error = format!("{err:#}");
                 xml_errors.push(XmlError {
+                    mail_uid: xml_file.mail_uid,
                     error,
-                    xml: String::from_utf8_lossy(xml_file).to_string(),
+                    xml: String::from_utf8_lossy(&xml_file.data).to_string(),
                 });
             }
         }

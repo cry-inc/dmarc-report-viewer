@@ -5,6 +5,7 @@ use async_imap::imap_proto::Address;
 use async_imap::types::Fetch;
 use async_imap::Client;
 use futures::StreamExt;
+use std::collections::HashMap;
 use std::net::TcpStream as StdTcpStream;
 use std::net::{SocketAddr, ToSocketAddrs};
 use std::sync::Arc;
@@ -15,7 +16,7 @@ use tokio_rustls::rustls::{ClientConfig, RootCertStore};
 use tokio_rustls::TlsConnector;
 use tracing::{debug, info, warn};
 
-pub async fn get_mails(config: &Configuration) -> Result<Vec<Mail>> {
+pub async fn get_mails(config: &Configuration) -> Result<HashMap<u32, Mail>> {
     // Prepare cert store with webpki roots
     let mut root_cert_store = RootCertStore::empty();
     let certs = webpki_roots::TLS_SERVER_ROOTS.iter().cloned();
@@ -79,7 +80,7 @@ pub async fn get_mails(config: &Configuration) -> Result<Vec<Mail>> {
     debug!("Selected INBOX successfully");
 
     // Get metadata for all all mails and filter by size
-    let mut mails = Vec::new();
+    let mut mails = HashMap::new();
     let mut size_filtered_uids = Vec::new();
     debug!("Number of mails in INBOX: {}", mailbox.exists);
     if mailbox.exists > 0 {
@@ -95,7 +96,7 @@ pub async fn get_mails(config: &Configuration) -> Result<Vec<Mail>> {
                 .context("Unable to extract mail metadata")?;
             if mail.oversized {
                 // Add oversized mails without body to result list
-                mails.push(mail);
+                mails.insert(mail.uid, mail);
             } else {
                 // Get mails with body in next step
                 size_filtered_uids.push(mail.uid.to_string());
@@ -126,7 +127,7 @@ pub async fn get_mails(config: &Configuration) -> Result<Vec<Mail>> {
             if let Some(body) = fetched.body() {
                 mail.body = Some(body.to_vec());
                 mail.size = body.len();
-                mails.push(mail);
+                mails.insert(mail.uid, mail);
             } else {
                 warn!("Mail with UID {} has no body!", mail.uid);
             }

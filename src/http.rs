@@ -1,4 +1,5 @@
 use crate::config::Configuration;
+use crate::mail::Mail;
 use crate::state::AppState;
 use anyhow::{Context, Result};
 use axum::body::Body;
@@ -313,7 +314,8 @@ async fn xml_errors(State(state): State<Arc<Mutex<AppState>>>) -> impl IntoRespo
 
 async fn mails(State(state): State<Arc<Mutex<AppState>>>) -> impl IntoResponse {
     let lock = state.lock().expect("Failed to lock app state");
-    let mails_json = serde_json::to_string(&lock.mails).expect("Failed to serialize JSON");
+    let mails: Vec<&Mail> = lock.mails.values().collect();
+    let mails_json = serde_json::to_string(&mails).expect("Failed to serialize JSON");
     (
         StatusCode::OK,
         [(header::CONTENT_TYPE, "application/json")],

@@ -1,8 +1,10 @@
 use crate::mail::Mail;
 use crate::report::Report;
+use crate::xml_file::XmlFile;
 use anyhow::{Context, Result};
 use flate2::read::GzDecoder;
 use mailparse::MailHeaderMap;
+use sha2::{Digest, Sha256};
 use std::io::{Cursor, Read};
 use tracing::warn;
 use zip::ZipArchive;
@@ -40,7 +42,14 @@ fn get_xml_from_gz(gz_bytes: &[u8]) -> Result<Vec<u8>> {
     Ok(xml_file)
 }
 
-pub fn extract_xml_files(mail: &mut Mail) -> Result<Vec<Vec<u8>>> {
+fn hash_data(data: &[u8]) -> String {
+    let mut hasher = Sha256::new();
+    hasher.update(data);
+    let hash = hasher.finalize();
+    format!("{:x?}", hash)
+}
+
+pub fn extract_xml_files(mail: &mut Mail) -> Result<Vec<XmlFile>> {
     // Consume mail body to avoid keeping the longer needed data in memory
     let body = mail.body.take().context("Missing mail body")?;
 
@@ -56,16 +65,27 @@ pub fn extract_xml_files(mail: &mut Mail) -> Result<Vec<Vec<u8>>> {
             let body = part
                 .get_body_raw()
                 .context("Failed to get raw body of attachment part")?;
-            let mut xml_files_zip =
+            let xml_files_zip =
                 get_xml_from_zip(&body).context("Failed to extract XML from ZIP attachment")?;
-            xml_files.append(&mut xml_files_zip);
+            for xml in xml_files_zip {
+                let hash = hash_data(&xml);
+                xml_files.push(XmlFile {
+                    data: xml,
+                    mail_uid: mail.uid,
+                    hash,
+                });
+            }
         } else if content_type.contains("application/gzip") {
             let body = part
                 .get_body_raw()
                 .context("Failed to get raw body of attachment part")?;
-            let xml_file =
-                get_xml_from_gz(&body).context("Failed to extract XML from GZ attachment")?;
-            xml_files.push(xml_file);
+            let xml = get_xml_from_gz(&body).context("Failed to extract XML from GZ attachment")?;
+            let hash = hash_data(&xml);
+            xml_files.push(XmlFile {
+                data: xml,
+                mail_uid: mail.uid,
+                hash,
+            });
         }
     }
 
