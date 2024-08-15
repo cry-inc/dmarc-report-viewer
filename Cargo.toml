@@ -28,6 +28,6 @@ serde = {version = "1", features = ["derive"] }
 clap = { version = "4", features = ["derive", "env"] }
 rustls-acme = { version = "0.10", features = ["axum"] }
 tower-http = { version = "0.5", features = ["compression-gzip"] }
-tokio = { version = "1.36", features = ["macros", "rt-multi-thread", "signal"] }
 zip = { version = "2", default-features = false, features = ["deflate"] }
+tokio = { version = "1.36", features = ["macros", "rt-multi-thread", "signal"] }
 async-imap = {version = "0.9.7", default-features = false, features = ["runtime-tokio"] }
