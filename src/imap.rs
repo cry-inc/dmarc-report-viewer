@@ -114,25 +114,33 @@ pub async fn get_mails(config: &Configuration) -> Result<HashMap<u32, Mail>> {
 
     // Get full mails for all selected UIDs
     if !size_filtered_uids.is_empty() {
-        let sequence: String = size_filtered_uids.join(",");
-        let mut stream = session
-            .uid_fetch(sequence, "(RFC822 RFC822.SIZE UID ENVELOPE INTERNALDATE)")
-            .await
-            .context("Failed to fetch message stream from IMAP inbox")?;
-        while let Some(fetch_result) = stream.next().await {
-            let fetched =
-                fetch_result.context("Failed to get next mail header from IMAP fetch response")?;
-            let mut mail = extract_metadata(&fetched, config.max_mail_size as usize)
-                .context("Unable to extract mail metadata")?;
-            if let Some(body) = fetched.body() {
-                mail.body = Some(body.to_vec());
-                mail.size = body.len();
-                mails.insert(mail.uid, mail);
-            } else {
-                warn!("Mail with UID {} has no body!", mail.uid);
+        let mut downloaded = 0;
+
+        // We need to get the mails in chunks.
+        // It will fail silently if the requested sequences become too big!
+        const CHUNK_SIZE: usize = 5000;
+        for chunk in size_filtered_uids.chunks(CHUNK_SIZE) {
+            let sequence: String = chunk.join(",");
+            let mut stream = session
+                .uid_fetch(sequence, "(RFC822 RFC822.SIZE UID ENVELOPE INTERNALDATE)")
+                .await
+                .context("Failed to fetch message stream from IMAP inbox")?;
+            while let Some(fetch_result) = stream.next().await {
+                let fetched = fetch_result
+                    .context("Failed to get next mail header from IMAP fetch response")?;
+                let mut mail = extract_metadata(&fetched, config.max_mail_size as usize)
+                    .context("Unable to extract mail metadata")?;
+                if let Some(body) = fetched.body() {
+                    mail.body = Some(body.to_vec());
+                    mail.size = body.len();
+                    mails.insert(mail.uid, mail);
+                    downloaded += 1;
+                } else {
+                    warn!("Mail with UID {} has no body!", mail.uid);
+                }
             }
         }
-        info!("Downloaded {} mails", size_filtered_uids.len())
+        info!("Downloaded {downloaded} mails")
     }
 
     session
