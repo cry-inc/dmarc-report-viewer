@@ -37,9 +37,17 @@ async fn main() -> Result<()> {
     tracing::subscriber::set_global_default(subscriber)
         .expect("Failed to set up default tracing subscriber");
 
+    // Log app name and version
     let version = env!("CARGO_PKG_VERSION");
     info!("DMARC Report Analyzer {version}");
-    info!("Log Level: {}", config.log_level);
+
+    // Inject git hash for logging during Github builds.
+    // Other builds, like normal local dev builds do not support this.
+    let git_hash = option_env!("GITHUB_SHA").unwrap_or("n/a");
+    info!("Git-Hash: {git_hash}");
+
+    // Make configuration visible in logs
+    config.log();
 
     // Prepare shared application state
     let state = Arc::new(Mutex::new(AppState::default()));

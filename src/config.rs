@@ -1,5 +1,5 @@
 use clap::Parser;
-use tracing::Level;
+use tracing::{info, Level};
 
 #[derive(Parser, Clone)]
 #[command(version, about, long_about = None)]
@@ -82,5 +82,26 @@ pub struct Configuration {
 impl Configuration {
     pub fn new() -> Self {
         Configuration::parse()
+    }
+
+    pub fn log(&self) {
+        info!("Log Level: {}", self.log_level);
+
+        info!("IMAP Host: {}", self.imap_host);
+        info!("IMAP Port: {}", self.imap_port);
+        info!("IMAP User: {}", self.imap_user);
+        info!("IMAP Check Interval: {} seconds", self.imap_check_interval);
+        info!("IMAP Timeout: {}", self.imap_timeout);
+
+        info!("HTTP Binding: {}", self.http_server_binding);
+        info!("HTTP Port: {}", self.http_server_port);
+        info!("HTTP User: {}", self.http_server_user);
+
+        info!("HTTPS Enabled: {}", self.https_auto_cert);
+        info!("HTTPS Domain: {:?}", self.https_auto_cert_domain);
+        info!("HTTPS Mail: {:?}", self.https_auto_cert_mail);
+        info!("HTTPS Cache Dir: {:?}", self.https_auto_cert_cache);
+
+        info!("Maximum Mail Body Size: {} bytes", self.max_mail_size);
     }
 }
