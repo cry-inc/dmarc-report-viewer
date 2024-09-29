@@ -15,7 +15,7 @@ jobs:
     - name: Execute Tests
       run: cargo test --release --all
     - name: Run Clippy
-      run: cargo clippy --release --all -- -D warnings
+      run: cargo clippy --release --all --all-targets --all-features --locked -- -D warnings
     - name: Check Formatting
       run: cargo fmt --all -- --check
   Windows:
