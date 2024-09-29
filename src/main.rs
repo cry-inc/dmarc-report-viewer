@@ -37,7 +37,8 @@ async fn main() -> Result<()> {
     tracing::subscriber::set_global_default(subscriber)
         .expect("Failed to set up default tracing subscriber");
 
-    info!("DMARC Report Analyzer");
+    let version = env!("CARGO_PKG_VERSION");
+    info!("DMARC Report Analyzer {version}");
     info!("Log Level: {}", config.log_level);
 
     // Prepare shared application state
