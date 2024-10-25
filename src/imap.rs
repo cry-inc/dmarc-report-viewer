@@ -73,16 +73,17 @@ pub async fn get_mails(config: &Configuration) -> Result<HashMap<u32, Mail>> {
         .context("Failed to log in and create IMAP session")?;
     debug!("IMAP login successful");
 
+    let imap_folder = &config.imap_folder;
     let mailbox = session
-        .select("INBOX")
+        .select(imap_folder)
         .await
-        .context("Failed to select inbox")?;
-    debug!("Selected INBOX successfully");
+        .context("Failed to select {imap_folder} folder")?;
+    debug!("Selected {imap_folder} folder successfully");
 
     // Get metadata for all all mails and filter by size
     let mut mails = HashMap::new();
     let mut size_filtered_uids = Vec::new();
-    debug!("Number of mails in INBOX: {}", mailbox.exists);
+    debug!("Number of mails in {imap_folder} folder: {}", mailbox.exists);
     if mailbox.exists > 0 {
         let sequence = format!("1:{}", mailbox.exists);
         let mut stream = session
