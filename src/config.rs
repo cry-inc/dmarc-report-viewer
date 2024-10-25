@@ -20,6 +20,10 @@ pub struct Configuration {
     #[arg(long, env, default_value_t = 993)]
     pub imap_port: u16,
 
+    /// IMAP folder with the DMARC reports
+    #[arg(long, env, default_value = "INBOX")]
+    pub imap_folder: String,
+
     /// TCP connection timeout for IMAP server in seconds
     #[arg(long, env, default_value_t = 10)]
     pub imap_timeout: u64,
