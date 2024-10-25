@@ -77,7 +77,7 @@ pub async fn get_mails(config: &Configuration) -> Result<HashMap<u32, Mail>> {
     let mailbox = session
         .select(imap_folder)
         .await
-        .context("Failed to select {imap_folder} folder")?;
+        .context(format!("Failed to select {imap_folder} folder"))?;
     debug!("Selected {imap_folder} folder successfully");
 
     // Get metadata for all all mails and filter by size
