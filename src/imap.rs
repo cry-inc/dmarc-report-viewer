@@ -83,7 +83,10 @@ pub async fn get_mails(config: &Configuration) -> Result<HashMap<u32, Mail>> {
     // Get metadata for all all mails and filter by size
     let mut mails = HashMap::new();
     let mut size_filtered_uids = Vec::new();
-    debug!("Number of mails in {imap_folder} folder: {}", mailbox.exists);
+    debug!(
+        "Number of mails in {imap_folder} folder: {}",
+        mailbox.exists
+    );
     if mailbox.exists > 0 {
         let sequence = format!("1:{}", mailbox.exists);
         let mut stream = session
