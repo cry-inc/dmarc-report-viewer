@@ -25,6 +25,18 @@ export class Reports extends LitElement {
         a {
             color: rgb(14, 117, 212);
         }
+
+        .noproblem {
+            color: #ccc;
+        }
+
+        .problem {
+            border-radius: 3px;
+            padding-left: 4px;
+            padding-right: 4px;
+            color: white;
+            background-color: #f00;
+        }
     `;
 
     static properties = {
@@ -43,6 +55,14 @@ export class Reports extends LitElement {
         this.reports.sort((a, b) => b.date_begin - a.date_begin);
     }
 
+    renderProblemsBadge(problems) {
+        if (problems) {
+            return html`<span class="problem">Yes</span>`;
+        } else {
+            return html`<span class="noproblem">No</span>`;
+        }
+    }
+
     render() {
         return html`
             <table>
@@ -50,6 +70,7 @@ export class Reports extends LitElement {
                     <th>ID</th>
                     <th>Organization</th>
                     <th>Domain</th>
+                    <th>Problems</th>
                     <th>Records</th>
                     <th>Begin</th>
                     <th>End</th>
@@ -59,6 +80,7 @@ export class Reports extends LitElement {
                         <td><a href="#/reports/${report.id}">${report.id}</a></td>
                         <td>${report.org}</td>
                         <td>${report.domain}</td>
+                        <td>${this.renderProblemsBadge(report.flagged)}</td>
                         <td>${report.records}</td>
                         <td>${new Date(report.date_begin * 1000).toLocaleString()}</td>
                         <td>${new Date(report.date_end * 1000).toLocaleString()}</td>

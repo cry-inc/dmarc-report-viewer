@@ -1,5 +1,6 @@
 use crate::config::Configuration;
 use crate::mail::Mail;
+use crate::report::{DkimResultType, DmarcResultType, Report, SpfResultType};
 use crate::state::AppState;
 use anyhow::{Context, Result};
 use axum::body::Body;
@@ -257,6 +258,47 @@ struct ReportHeader {
     date_begin: u64,
     date_end: u64,
     records: usize,
+    flagged: bool,
+}
+
+impl ReportHeader {
+    pub fn from_report(report: &Report) -> Self {
+        Self {
+            id: report.report_metadata.report_id.clone(),
+            org: report.report_metadata.org_name.clone(),
+            domain: report.policy_published.domain.clone(),
+            date_begin: report.report_metadata.date_range.begin,
+            date_end: report.report_metadata.date_range.end,
+            records: report.record.len(),
+            flagged: Self::report_has_problem(report),
+        }
+    }
+
+    fn report_has_problem(report: &Report) -> bool {
+        report.record.iter().any(|record| {
+            let policy_dkim = if let Some(dkim) = &record.row.policy_evaluated.dkim {
+                *dkim != DmarcResultType::Pass
+            } else {
+                false
+            };
+            let policy_spf = if let Some(spf) = &record.row.policy_evaluated.spf {
+                *spf != DmarcResultType::Pass
+            } else {
+                false
+            };
+            let dkim = if let Some(dkim) = &record.auth_results.dkim {
+                dkim.iter().any(|x| x.result != DkimResultType::Pass)
+            } else {
+                false
+            };
+            let spf = record
+                .auth_results
+                .spf
+                .iter()
+                .any(|x| x.result != SpfResultType::Pass);
+            dkim || spf || policy_dkim || policy_spf
+        })
+    }
 }
 
 async fn reports(State(state): State<Arc<Mutex<AppState>>>) -> impl IntoResponse {
@@ -265,14 +307,7 @@ async fn reports(State(state): State<Arc<Mutex<AppState>>>) -> impl IntoResponse
         .expect("Failed to lock app state")
         .reports
         .iter()
-        .map(|r| ReportHeader {
-            id: r.report_metadata.report_id.clone(),
-            org: r.report_metadata.org_name.clone(),
-            domain: r.policy_published.domain.clone(),
-            date_begin: r.report_metadata.date_range.begin,
-            date_end: r.report_metadata.date_range.end,
-            records: r.record.len(),
-        })
+        .map(ReportHeader::from_report)
         .collect();
     Json(reports)
 }
