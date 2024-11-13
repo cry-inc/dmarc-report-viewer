@@ -26,7 +26,7 @@ webpki-roots = "0.26"
 tracing-subscriber = "0.3"
 serde = {version = "1", features = ["derive"] }
 clap = { version = "4", features = ["derive", "env"] }
-rustls-acme = { version = "0.11", features = ["axum"] }
+rustls-acme = { version = "0.12", features = ["axum"] }
 tower-http = { version = "0.6", features = ["compression-gzip"] }
 zip = { version = "2", default-features = false, features = ["deflate"] }
 tokio = { version = "1.36", features = ["macros", "rt-multi-thread", "signal"] }
