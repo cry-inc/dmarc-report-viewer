@@ -21,6 +21,14 @@ export class MailTable extends LitElement {
         tr:hover {
             background-color: #f4f4f4;
         }
+
+        .problem {
+            border-radius: 3px;
+            padding-left: 4px;
+            padding-right: 4px;
+            color: white;
+            background-color: #f00;
+        }
     `;
 
     static properties = {
@@ -32,23 +40,41 @@ export class MailTable extends LitElement {
         this.mails = [];
     }
 
+    prepareSubject(subject) {
+        const regex = /Report Domain: |Report domain: /;
+        const prefix_removed = subject.replace(regex, "");
+        if (prefix_removed.length < 90) {
+            return prefix_removed;
+        } else {
+            return prefix_removed.substring(0, 75) + "...";
+        }
+    }
+
+    prepareSize(mail) {
+        if (mail.oversized) {
+            return html`<span class="problem">${mail.size}</span>`;
+        } else {
+            return mail.size;
+        }
+    }
+
     render() {
         return html`
             <table>
-                <tr> 
+                <tr>
+                    <th>UID</th>
+                    <th>Subject</th>
                     <th>Sender</th>
-                    <th>Recipient</th>
                     <th>Date</th>
                     <th>Size</th>
-                    <th>Subject</th>
                 </tr>
                 ${this.mails.map((mail) =>
                     html`<tr>
+                        <td><a href="#/mails/${mail.uid}">${mail.uid}</a></td>    
+                        <td><a href="#/mails/${mail.uid}">${this.prepareSubject(mail.subject)}</a></td>    
                         <td>${mail.sender}</td>
-                        <td>${mail.to}</td>
                         <td>${new Date(mail.date * 1000).toLocaleString()}</td>
-                        <td>${mail.size}</td>
-                        <td>${mail.subject.length < 90 ? mail.subject : mail.subject.substring(0, 90) + "..."}</td>
+                        <td>${this.prepareSize(mail)}</td>
                     </tr>`
                 )}
             </table>
