@@ -33,6 +33,7 @@ pub async fn run_http_server(config: &Configuration, state: Arc<Mutex<AppState>>
         .route("/reports/:id", get(report))
         .route("/xml-errors", get(xml_errors))
         .route("/mails", get(mails))
+        .route("/mails/:id", get(mail))
         .route("/", get(static_file)) // index.html
         .route("/*filepath", get(static_file)) // all other files
         .route_layer(middleware::from_fn_with_state(
@@ -333,6 +334,34 @@ async fn report(
             StatusCode::NOT_FOUND,
             [(header::CONTENT_TYPE, "text/plain")],
             format!("Cannot find report with ID {id}"),
+        )
+    }
+}
+
+async fn mail(
+    State(state): State<Arc<Mutex<AppState>>>,
+    Path(id): Path<String>,
+) -> impl IntoResponse {
+    let Ok(parsed_uid) = id.parse::<u32>() else {
+        return (
+            StatusCode::BAD_REQUEST,
+            [(header::CONTENT_TYPE, "text/plain")],
+            format!("Invalid ID {id}"),
+        );
+    };
+    let lock = state.lock().expect("Failed to lock app state");
+    if let Some((_, mail)) = lock.mails.iter().find(|(uid, _)| **uid == parsed_uid) {
+        let mail_json = serde_json::to_string(mail).expect("Failed to serialize JSON");
+        (
+            StatusCode::OK,
+            [(header::CONTENT_TYPE, "application/json")],
+            mail_json,
+        )
+    } else {
+        (
+            StatusCode::NOT_FOUND,
+            [(header::CONTENT_TYPE, "text/plain")],
+            format!("Cannot find mail with ID {id}"),
         )
     }
 }
