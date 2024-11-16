@@ -23,6 +23,18 @@ export class Mail extends LitElement {
         .bigHeader {
             font-size: 20px;
         }
+
+        .noproblem {
+            color: #ccc;
+        }
+
+        .problem {
+            border-radius: 3px;
+            padding-left: 4px;
+            padding-right: 4px;
+            color: white;
+            background-color: #f00;
+        }
     `;
 
     static get properties() {
@@ -45,6 +57,14 @@ export class Mail extends LitElement {
         }
     }
 
+    renderOversized(oversized) {
+        if (oversized) {
+            return html`<span class="problem">Yes</span>`;
+        } else {
+            return html`<span class="noproblem">No</span>`;
+        }
+    }
+
     render() {
         if (!this.mail) {
             return html`No mail loaded`;
@@ -61,11 +81,11 @@ export class Mail extends LitElement {
                 </tr>
                 <tr>
                     <th>Size</th>
-                    <td>${this.mail.size}</td>
+                    <td>${this.mail.size} bytes</td>
                 </tr>
                 <tr>
                     <th>Oversized</th>
-                    <td>${this.mail.oversized}</td>
+                    <td>${this.renderOversized(this.mail.oversized)}</td>
                 </tr>
                 <tr>
                     <th>Date</th>
@@ -80,7 +100,7 @@ export class Mail extends LitElement {
                     <td>${this.mail.sender}</td>
                 </tr>
                 <tr>
-                    <th>To</th>
+                    <th>Recipient</th>
                     <td>${this.mail.to}</td>
                 </tr>
             </table>
