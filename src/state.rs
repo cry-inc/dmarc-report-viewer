@@ -11,14 +11,14 @@ use crate::xml_error::XmlError;
 /// the web frontend running on to the embedded HTTP server.
 #[derive(Default)]
 pub struct AppState {
-    /// Number of emails in IMAP report inbox
+    /// Mails from IMAP inbox with mail UID as key
     pub mails: HashMap<u32, Mail>,
 
     /// Number of XML files found in IMAP report inbox
     pub xml_files: usize,
 
-    /// DMARC reports parsed from emails in inbox
-    pub reports: Vec<Report>,
+    /// Parsed DMARC reports as tuple of mail UID and report
+    pub reports: Vec<(u32, Report)>,
 
     /// Summary of report and other stats
     pub summary: Summary,

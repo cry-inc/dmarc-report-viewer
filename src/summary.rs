@@ -36,14 +36,19 @@ pub struct Summary {
 }
 
 impl Summary {
-    pub fn new(mails: usize, xml_files: usize, reports: &[Report], last_update: u64) -> Self {
+    pub fn new(
+        mails: usize,
+        xml_files: usize,
+        reports: &[(u32, Report)],
+        last_update: u64,
+    ) -> Self {
         let mut orgs: HashMap<String, usize> = HashMap::new();
         let mut domains = HashMap::new();
         let mut spf_policy_results: HashMap<DmarcResultType, usize> = HashMap::new();
         let mut dkim_policy_results: HashMap<DmarcResultType, usize> = HashMap::new();
         let mut spf_auth_results: HashMap<SpfResultType, usize> = HashMap::new();
         let mut dkim_auth_results: HashMap<DkimResultType, usize> = HashMap::new();
-        for report in reports {
+        for (_, report) in reports {
             for record in &report.record {
                 for r in &record.auth_results.spf {
                     if let Some(entry) = spf_auth_results.get_mut(&r.result) {

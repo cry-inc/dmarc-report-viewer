@@ -307,7 +307,7 @@ async fn reports(State(state): State<Arc<Mutex<AppState>>>) -> impl IntoResponse
         .expect("Failed to lock app state")
         .reports
         .iter()
-        .map(ReportHeader::from_report)
+        .map(|(_, r)| ReportHeader::from_report(r))
         .collect();
     Json(reports)
 }
@@ -320,7 +320,7 @@ async fn report(
     if let Some(report) = lock
         .reports
         .iter()
-        .find(|r| *r.report_metadata.report_id == id)
+        .find(|(_, r)| r.report_metadata.report_id == id)
     {
         let report_json = serde_json::to_string(report).expect("Failed to serialize JSON");
         (

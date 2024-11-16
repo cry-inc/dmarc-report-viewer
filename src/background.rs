@@ -59,7 +59,7 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
     let mut reports = Vec::new();
     for xml_file in xml_files.values() {
         match parse_xml_file(&xml_file.data) {
-            Ok(report) => reports.push(report),
+            Ok(report) => reports.push((xml_file.mail_uid, report)),
             Err(err) => {
                 let error = format!("{err:#}");
                 xml_errors.push(XmlError {
