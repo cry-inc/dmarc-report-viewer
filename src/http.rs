@@ -318,7 +318,7 @@ async fn report(
     Path(id): Path<String>,
 ) -> impl IntoResponse {
     let lock = state.lock().expect("Failed to lock app state");
-    if let Some(report) = lock
+    if let Some((_, report)) = lock
         .reports
         .iter()
         .find(|(_, r)| r.report_metadata.report_id == id)
