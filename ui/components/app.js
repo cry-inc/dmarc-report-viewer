@@ -66,8 +66,8 @@ export class App extends LitElement {
         return html`
             <p>
                 <a href="#/dashboard">Dashboard</a> |
-                <a href="#/reports">Reports</a> |
                 <a href="#/mails">Mails</a> |
+                <a href="#/reports">Reports</a> |
                 <a href="#/problems">Problems</a>
             </p>
             ${component}
