@@ -76,7 +76,7 @@ export class Mail extends LitElement {
                     <th colspan="2" class="bigHeader">Mail</th>
                 </tr>
                 <tr>
-                    <th>UId</th>
+                    <th>UID</th>
                     <td>${this.mail.uid}</td>
                 </tr>
                 <tr>
