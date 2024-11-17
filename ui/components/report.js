@@ -24,10 +24,6 @@ export class Report extends LitElement {
             color: #ccc;
         }
 
-        .bigHeader {
-            font-size: 20px;
-        }
-
         .result {
             border-radius: 3px;
             padding-left: 4px;
@@ -99,10 +95,8 @@ export class Report extends LitElement {
         }
 
         return html`
+            <h2>Report</h2>
             <table>
-                <tr>
-                    <th colspan="2" class="bigHeader">Report</th>
-                </tr>
                 <tr>
                     <th>Id</th>
                     <td>${this.report.report_metadata.report_id}</td>
@@ -170,13 +164,10 @@ export class Report extends LitElement {
                     <th>fo</th>
                     <td>${this.renderOptional(this.report.policy_published.fo)}</td>
                 </tr>
-                ${this.report.record.map((record) => html`
-                    <tr>
-                        <td colspan="2">&nbsp;</td>
-                    </tr>
-                    <tr>
-                        <th colspan="2" class="bigHeader">Record</th>
-                    </tr>
+            </table>
+            ${this.report.record.map((record) => html`
+                <h3>Record</h3>
+                <table>
                     <tr>
                         <th>Source IP</th>
                         <td>${record.row.source_ip}</td>
@@ -258,8 +249,8 @@ export class Report extends LitElement {
                             <td>${this.renderOptional(result.human_result)}</td>
                         </tr>
                     `)}
-                `)}
-            </table>
+                </table>
+            `)}
         `;
     }
 }

@@ -20,10 +20,6 @@ export class Mail extends LitElement {
             padding-bottom: 3px;
         }
 
-        .bigHeader {
-            font-size: 20px;
-        }
-
         .noproblem {
             color: #ccc;
         }
@@ -40,7 +36,8 @@ export class Mail extends LitElement {
     static get properties() {
         return {
             id: { type: String },
-            mail: { type: Object, attribute: false }
+            mail: { type: Object, attribute: false },
+            reports: { type: Array, attribute: false }
         };
     }
 
@@ -48,12 +45,15 @@ export class Mail extends LitElement {
         super();
         this.id = null;
         this.mail = null;
+        this.reports = [];
     }
 
     async updated(changedProperties) {
         if (changedProperties.has("id") && changedProperties.id !== this.id && this.id) {
-            const response = await fetch("mails/" + this.id);
-            this.mail = await response.json();
+            const mailsResponse = await fetch("mails/" + this.id);
+            this.mail = await mailsResponse.json();
+            const reportsResponse = await fetch("reports?uid=" + this.id);
+            this.reports = await reportsResponse.json();
         }
     }
 
@@ -71,10 +71,8 @@ export class Mail extends LitElement {
         }
 
         return html`
+            <h2>Mail</h2>
             <table>
-                <tr>
-                    <th colspan="2" class="bigHeader">Mail</th>
-                </tr>
                 <tr>
                     <th>UID</th>
                     <td>${this.mail.uid}</td>
@@ -104,6 +102,9 @@ export class Mail extends LitElement {
                     <td>${this.mail.to}</td>
                 </tr>
             </table>
+
+            <h3>Reports from this Mail</h3>
+            <dmarc-report-table .reports="${this.reports}"></dmarc-report-table>
         `;
     }
 }
