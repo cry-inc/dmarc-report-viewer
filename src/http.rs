@@ -443,6 +443,11 @@ const STATIC_FILES: &[StaticFile] = &[
         file_path: "ui/components/mail.js",
         _data: include_bytes!("../ui/components/mail.js"),
     },
+    StaticFile {
+        http_path: "/components/about.js",
+        file_path: "ui/components/about.js",
+        _data: include_bytes!("../ui/components/about.js"),
+    },
 ];
 
 const MIME_TYPES: &[MimeType] = &[
