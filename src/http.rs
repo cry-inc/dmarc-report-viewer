@@ -4,7 +4,7 @@ use crate::report::{DkimResultType, DmarcResultType, Report, SpfResultType};
 use crate::state::AppState;
 use anyhow::{Context, Result};
 use axum::body::Body;
-use axum::extract::{Path, Request};
+use axum::extract::{Path, Query, Request};
 use axum::http::header::{self, AUTHORIZATION, WWW_AUTHENTICATE};
 use axum::http::StatusCode;
 use axum::middleware::{self, Next};
@@ -17,7 +17,7 @@ use base64::{engine::general_purpose::STANDARD, Engine};
 use futures::StreamExt;
 use rustls_acme::caches::DirCache;
 use rustls_acme::AcmeConfig;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
@@ -312,13 +312,53 @@ impl ReportHeader {
     }
 }
 
-async fn reports(State(state): State<Arc<Mutex<AppState>>>) -> impl IntoResponse {
+#[derive(Deserialize)]
+struct ReportFilters {
+    uid: Option<u32>,
+    flagged: Option<bool>,
+    domain: Option<String>,
+    org: Option<String>,
+}
+
+async fn reports(
+    State(state): State<Arc<Mutex<AppState>>>,
+    filters: Query<ReportFilters>,
+) -> impl IntoResponse {
     let reports: Vec<ReportHeader> = state
         .lock()
         .expect("Failed to lock app state")
         .reports
         .iter()
-        .map(|(_, r)| ReportHeader::from_report(r))
+        .filter(|(uid, _)| {
+            if let Some(queried_uid) = filters.uid {
+                *uid == queried_uid
+            } else {
+                true
+            }
+        })
+        .filter(|(_, r)| {
+            if let Some(org) = &filters.org {
+                r.report_metadata.org_name == *org
+            } else {
+                true
+            }
+        })
+        .filter(|(_, r)| {
+            if let Some(domain) = &filters.domain {
+                r.policy_published.domain == *domain
+            } else {
+                true
+            }
+        })
+        .map(|(uid, r)| (*uid, ReportHeader::from_report(r)))
+        .filter(|(_, r)| {
+            if let Some(flagged) = &filters.flagged {
+                r.flagged == *flagged
+            } else {
+                true
+            }
+        })
+        .map(|(_, r)| r)
         .collect();
     Json(reports)
 }
