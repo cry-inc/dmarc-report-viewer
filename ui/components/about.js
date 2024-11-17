@@ -2,22 +2,25 @@ import { LitElement, html } from "lit";
 
 export class About extends LitElement {
     static properties = {
-        version: { type: String },
-        git: { type: String }
+        version: { type: Object },
+        hash: { type: String },
+        ref: { type: String }
     };
 
     constructor() {
         super();
         this.version = "n/a";
-        this.git = "n/a";
-        this.updateVersion();
+        this.hash = "n/a";
+        this.ref = "n/a";
+        this.updateBuild();
     }
 
-    async updateVersion() {
-        const versionResponse = await fetch("version");
+    async updateBuild() {
+        const versionResponse = await fetch("build");
         const json = await versionResponse.json();
         this.version = json.version;
-        this.git = json.git;
+        this.ref = json.ref;
+        this.hash = json.hash;
     }
 
     render() {
@@ -29,7 +32,8 @@ export class About extends LitElement {
             </p>
             <p>
                 Version: <b>${this.version}</b><br>
-                Git-Hash: <b>${this.git}</b>
+                Git Hash: <b>${this.hash}</b><br>
+                Git Ref: <b>${this.ref}</b>
             </p>
         `;
     }

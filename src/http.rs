@@ -37,7 +37,7 @@ pub async fn run_http_server(config: &Configuration, state: Arc<Mutex<AppState>>
         .route("/mails/:id", get(mail))
         .route("/", get(static_file)) // index.html
         .route("/*filepath", get(static_file)) // all other files
-        .route("/version", get(version))
+        .route("/build", get(build))
         .route_layer(middleware::from_fn_with_state(
             config.clone(),
             basic_auth_middleware,
@@ -253,10 +253,11 @@ async fn summary(State(state): State<Arc<Mutex<AppState>>>) -> impl IntoResponse
     )
 }
 
-async fn version() -> impl IntoResponse {
+async fn build() -> impl IntoResponse {
     Json(json!({
         "version": env!("CARGO_PKG_VERSION"),
-        "git": option_env!("GITHUB_SHA").unwrap_or("n/a")
+        "hash": option_env!("GITHUB_SHA").unwrap_or("n/a"),
+        "ref": option_env!("GITHUB_REF_NAME").unwrap_or("n/a"),
     }))
 }
 
