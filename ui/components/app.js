@@ -15,6 +15,7 @@ export class App extends LitElement {
     static get properties() {
         return {
             component: { type: String },
+            params: { type: Object },
             reportId: { type: String },
             mailId: { type: String },
         };
@@ -23,6 +24,7 @@ export class App extends LitElement {
     constructor() {
         super();
         this.component = "dashboard";
+        this.params = {};
         this.reportId = null;
         this.mailId = null;
         window.onhashchange = () => this.onHashChange();
@@ -30,7 +32,23 @@ export class App extends LitElement {
     }
 
     async onHashChange() {
-        const hash = document.location.hash;
+        let hash = document.location.hash;
+
+        // Split off and parse query params behind route
+        const sep = hash.indexOf("?");
+        this.params = {};
+        if (sep != -1) {
+            const param = hash.substring(sep + 1).split("&");
+            param.forEach((param) => {
+                const keyValue = param.split("=");
+                if (keyValue.length === 2) {
+                    this.params[keyValue[0]] = keyValue[1];
+                }
+            });
+            hash = hash.substring(0, sep);
+        }
+
+        // Parse routes and route parameters
         if (hash == "#/reports") {
             this.component = "reports";
         } else if (hash.startsWith("#/reports/")) {
@@ -53,7 +71,7 @@ export class App extends LitElement {
     render() {
         let component;
         if (this.component == "reports") {
-            component = html`<dmarc-reports></dmarc-reports>`;
+            component = html`<dmarc-reports .params="${this.params}"></dmarc-reports>`;
         } else if (this.component == "report") {
             component = html`<dmarc-report id="${this.reportId}"></dmarc-report>`;
         } else if (this.component == "problems") {
