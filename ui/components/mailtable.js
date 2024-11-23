@@ -77,7 +77,7 @@ export class MailTable extends LitElement {
                     <th>Sender</th>
                     <th>Date</th>
                     <th>Size</th>
-                    <th>XML Files</th>
+                    <th>XMLs</th>
                 </tr>
                 ${this.mails.length !== 0 ? this.mails.map((mail) =>
                     html`<tr> 

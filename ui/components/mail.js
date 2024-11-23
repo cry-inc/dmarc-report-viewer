@@ -95,7 +95,11 @@ export class Mail extends LitElement {
                 </tr>
                 <tr>
                     <th>Sender</th>
-                    <td>${this.mail.sender}</td>
+                    <td>
+                        <a href="#/mails?sender=${encodeURIComponent(this.mail.sender)}">
+                            ${this.mail.sender}
+                        </a>
+                    </td>
                 </tr>
                 <tr>
                     <th>Recipient</th>
@@ -103,7 +107,7 @@ export class Mail extends LitElement {
                 </tr>
             </table>
 
-            <h3>Reports from this Mail</h3>
+            <h3>Reports extracted from this Mail</h3>
             <dmarc-report-table .reports="${this.reports}"></dmarc-report-table>
         `;
     }
