@@ -29,7 +29,10 @@ export class MailTable extends LitElement {
             color: white;
             background-color: #f00;
         }
-    `;
+            
+        .noproblem {
+            color: #ccc;
+        }`;
 
     static properties = {
         mails: { type: Array },
@@ -58,6 +61,14 @@ export class MailTable extends LitElement {
         }
     }
 
+    prepareXmlFileCount(mail) {
+        if (mail.xml_file_count < 1) {
+            return html`<span class="problem">${mail.xml_file_count}</span>`;
+        } else {
+            return html`<span class="noproblem">${mail.xml_file_count}</span>`;;
+        }
+    }
+
     render() {
         return html`
             <table>
@@ -66,6 +77,7 @@ export class MailTable extends LitElement {
                     <th>Sender</th>
                     <th>Date</th>
                     <th>Size</th>
+                    <th>XML Files</th>
                 </tr>
                 ${this.mails.length !== 0 ? this.mails.map((mail) =>
                     html`<tr> 
@@ -73,6 +85,7 @@ export class MailTable extends LitElement {
                         <td><a href="#/mails?sender=${encodeURIComponent(mail.sender)}">${mail.sender}</a></td>
                         <td>${new Date(mail.date * 1000).toLocaleString()}</td>
                         <td>${this.prepareSize(mail)}</td>
+                        <td>${this.prepareXmlFileCount(mail)}</td>
                     </tr>`
                 ) : html`<tr>
                         <td colspan="4">No mails found.</td>
