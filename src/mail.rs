@@ -10,6 +10,7 @@ pub struct Mail {
     pub subject: String,
     pub sender: String,
     pub to: String,
+    pub xml_file_count: usize, // Set at later stage after IMAP client returned the struct!
     #[serde(skip)]
     pub body: Option<Vec<u8>>,
 }

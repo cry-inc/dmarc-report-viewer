@@ -186,6 +186,7 @@ fn extract_metadata(mail: &Fetch, max_size: usize) -> Result<Mail> {
         date,
         size,
         oversized: size > max_size,
+        xml_file_count: 0,
     })
 }
 

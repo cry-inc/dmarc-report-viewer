@@ -47,6 +47,7 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
                 Ok(files) => {
                     for xml_file in files {
                         xml_files.insert(xml_file.hash.clone(), xml_file);
+                        mail.xml_file_count += 1;
                     }
                 }
                 Err(err) => warn!("Failed to extract XML files from mail: {err:#}"),
