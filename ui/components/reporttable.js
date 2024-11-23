@@ -68,17 +68,21 @@ export class ReportTable extends LitElement {
                     <th>Begin</th>
                     <th>End</th>
                 </tr>
-                ${this.reports.map((report) =>
+                ${this.reports.length !== 0 ? this.reports.map((report) =>
                     html`<tr>
-                        <td><a href="#/reports/${report.id}">${report.id}</a></td>
-                        <td>${report.org}</td>
-                        <td>${report.domain}</td>
-                        <td>${this.renderProblemsBadge(report.flagged)}</td>
-                        <td>${report.records}</td>
-                        <td>${new Date(report.date_begin * 1000).toLocaleString()}</td>
-                        <td>${new Date(report.date_end * 1000).toLocaleString()}</td>
-                    </tr>`
-                )}
+                            <td><a href="#/reports/${report.id}">${report.id}</a></td>
+                            <td><a href="#/reports?org=${encodeURIComponent(report.org)}">${report.org}</a></td>
+                            <td><a href="#/reports?domain=${encodeURIComponent(report.domain)}">${report.domain}</a></td>
+                            <td>${this.renderProblemsBadge(report.flagged)}</td>
+                            <td>${report.records}</td>
+                            <td>${new Date(report.date_begin * 1000).toLocaleString()}</td>
+                            <td>${new Date(report.date_end * 1000).toLocaleString()}</td>
+                        </tr>`
+
+                ) : html`<tr>
+                            <td colspan="7">No reports found.</td>
+                        </tr>`
+                }
             </table>
         `;
     }

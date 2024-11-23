@@ -10,6 +10,7 @@ export class Reports extends LitElement {
         super();
         this.params = {};
         this.reports = [];
+        this.filtered = false;
     }
 
     updated(changedProperties) {
@@ -19,16 +20,30 @@ export class Reports extends LitElement {
     }
 
     async updateReports() {
-        const url = "reports" + (this.params.flagged ? "?flagged=true" : "");
+        const urlParams = [];
+        if (this.params.flagged) {
+            urlParams.push("flagged=true");
+        }
+        if (this.params.domain) {
+            urlParams.push("domain=" + this.params.domain);
+        }
+        if (this.params.org) {
+            urlParams.push("org=" + this.params.org);
+        }
+        let url = "reports";
+        if (urlParams.length > 0) {
+            url += "?" + urlParams.join("&");
+        }
         const response = await fetch(url);
         this.reports = await response.json();
         this.reports.sort((a, b) => b.date_begin - a.date_begin);
+        this.filtered = this.filtered = urlParams.length > 0;
     }
 
     render() {
         return html`
             <p>
-                ${this.params.flagged ?
+                ${this.filtered ?
                     html`<a href="#/reports">Show all Reports</a>` :
                     html`<a href="#/reports?flagged=true">Show only Reports with Problems</a>`
                 }
