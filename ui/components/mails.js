@@ -27,6 +27,9 @@ export class Mails extends LitElement {
         if (this.params.sender) {
             urlParams.push("sender=" + encodeURIComponent(this.params.sender));
         }
+        if (this.params.count) {
+            urlParams.push("count=" + encodeURIComponent(this.params.count));
+        }
         let url = "mails";
         if (urlParams.length > 0) {
             url += "?" + urlParams.join("&");
@@ -42,7 +45,7 @@ export class Mails extends LitElement {
             <p>
                 ${this.filtered ?
                     html`<a href="#/mails">Show all Mails</a>` :
-                    html`<a href="#/mails?oversized=true">Show only Oversize Mails</a>`
+                    html`<a href="#/mails?oversized=true">Show only Oversize Mails</a> | <a href="#/mails?count=0">Show only Mails without valid XML Files</a>`
                 }
             </p>
             <dmarc-mail-table .mails="${this.mails}"></dmarc-mail-table>

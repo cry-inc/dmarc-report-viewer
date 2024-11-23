@@ -451,6 +451,7 @@ async fn xml_errors(State(state): State<Arc<Mutex<AppState>>>) -> impl IntoRespo
 #[derive(Deserialize, Debug)]
 struct MailFilters {
     sender: Option<String>,
+    count: Option<usize>,
     oversized: Option<bool>,
 }
 
@@ -458,6 +459,7 @@ impl MailFilters {
     fn decode(&self) -> Self {
         Self {
             oversized: self.oversized,
+            count: self.count,
             sender: self
                 .sender
                 .as_ref()
@@ -488,6 +490,13 @@ async fn mails(
         .filter(|m| {
             if let Some(queried_oversized) = &filters.oversized {
                 m.oversized == *queried_oversized
+            } else {
+                true
+            }
+        })
+        .filter(|m| {
+            if let Some(queried_count) = &filters.count {
+                m.xml_file_count == *queried_count
             } else {
                 true
             }
