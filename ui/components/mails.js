@@ -21,8 +21,8 @@ export class Mails extends LitElement {
 
     async updateMails() {
         const urlParams = [];
-        if (this.params.oversized) {
-            urlParams.push("oversized=true");
+        if (this.params.oversized === "true" || this.params.oversized === "false") {
+            urlParams.push("oversized=" + this.params.oversized);
         }
         if (this.params.sender) {
             urlParams.push("sender=" + encodeURIComponent(this.params.sender));

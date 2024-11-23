@@ -21,8 +21,8 @@ export class Reports extends LitElement {
 
     async updateReports() {
         const urlParams = [];
-        if (this.params.flagged) {
-            urlParams.push("flagged=true");
+        if (this.params.flagged === "true" || this.params.flagged === "false") {
+            urlParams.push("flagged=" + this.params.flagged);
         }
         if (this.params.domain) {
             urlParams.push("domain=" + encodeURIComponent(this.params.domain));
