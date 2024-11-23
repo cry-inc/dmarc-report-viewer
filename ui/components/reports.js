@@ -25,10 +25,10 @@ export class Reports extends LitElement {
             urlParams.push("flagged=true");
         }
         if (this.params.domain) {
-            urlParams.push("domain=" + this.params.domain);
+            urlParams.push("domain=" + encodeURIComponent(this.params.domain));
         }
         if (this.params.org) {
-            urlParams.push("org=" + this.params.org);
+            urlParams.push("org=" + encodeURIComponent(this.params.org));
         }
         let url = "reports";
         if (urlParams.length > 0) {

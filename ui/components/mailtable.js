@@ -67,14 +67,17 @@ export class MailTable extends LitElement {
                     <th>Date</th>
                     <th>Size</th>
                 </tr>
-                ${this.mails.map((mail) =>
+                ${this.mails.length !== 0 ? this.mails.map((mail) =>
                     html`<tr> 
                         <td><a href="#/mails/${mail.uid}">${this.prepareSubject(mail.subject)}</a></td>    
-                        <td>${mail.sender}</td>
+                        <td><a href="#/mails?sender=${encodeURIComponent(mail.sender)}">${mail.sender}</a></td>
                         <td>${new Date(mail.date * 1000).toLocaleString()}</td>
                         <td>${this.prepareSize(mail)}</td>
                     </tr>`
-                )}
+                ) : html`<tr>
+                        <td colspan="4">No mails found.</td>
+                    </tr>`
+                }
             </table>
         `;
     }

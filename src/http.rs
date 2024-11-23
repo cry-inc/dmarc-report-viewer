@@ -320,10 +320,32 @@ struct ReportFilters {
     org: Option<String>,
 }
 
+impl ReportFilters {
+    fn decode(&self) -> Self {
+        Self {
+            uid: self.uid,
+            flagged: self.flagged,
+            domain: self
+                .domain
+                .as_ref()
+                .and_then(|d| urlencoding::decode(d).ok())
+                .and_then(|d| Some(d.to_string())),
+            org: self
+                .org
+                .as_ref()
+                .and_then(|o| urlencoding::decode(o).ok())
+                .and_then(|o| Some(o.to_string())),
+        }
+    }
+}
+
 async fn reports(
     State(state): State<Arc<Mutex<AppState>>>,
     filters: Query<ReportFilters>,
 ) -> impl IntoResponse {
+    // Remove URL encoding from strings in filters
+    let filters = filters.decode();
+
     let reports: Vec<ReportHeader> = state
         .lock()
         .expect("Failed to lock app state")
@@ -426,9 +448,51 @@ async fn xml_errors(State(state): State<Arc<Mutex<AppState>>>) -> impl IntoRespo
     )
 }
 
-async fn mails(State(state): State<Arc<Mutex<AppState>>>) -> impl IntoResponse {
+#[derive(Deserialize, Debug)]
+struct MailFilters {
+    sender: Option<String>,
+    oversized: Option<bool>,
+}
+
+impl MailFilters {
+    fn decode(&self) -> Self {
+        Self {
+            oversized: self.oversized,
+            sender: self
+                .sender
+                .as_ref()
+                .and_then(|s| urlencoding::decode(s).ok())
+                .and_then(|s| Some(s.to_string())),
+        }
+    }
+}
+
+async fn mails(
+    State(state): State<Arc<Mutex<AppState>>>,
+    filters: Query<MailFilters>,
+) -> impl IntoResponse {
+    // Remove URL encoding from strings in filters
+    let filters = filters.decode();
+
     let lock = state.lock().expect("Failed to lock app state");
-    let mails: Vec<&Mail> = lock.mails.values().collect();
+    let mails: Vec<&Mail> = lock
+        .mails
+        .values()
+        .filter(|m| {
+            if let Some(queried_sender) = &filters.sender {
+                m.sender == *queried_sender
+            } else {
+                true
+            }
+        })
+        .filter(|m| {
+            if let Some(queried_oversized) = &filters.oversized {
+                m.oversized == *queried_oversized
+            } else {
+                true
+            }
+        })
+        .collect();
     let mails_json = serde_json::to_string(&mails).expect("Failed to serialize JSON");
     (
         StatusCode::OK,

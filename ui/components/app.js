@@ -77,7 +77,7 @@ export class App extends LitElement {
         } else if (this.component == "problems") {
             component = html`<dmarc-problems></dmarc-problems>`;
         } else if (this.component == "mails") {
-            component = html`<dmarc-mails></dmarc-mails>`;
+            component = html`<dmarc-mails .params="${this.params}"></dmarc-mails>`;
         } else if (this.component == "mail") {
             component = html`<dmarc-mail id="${this.mailId}"></dmarc-mail>`;
         } else if (this.component == "about") {
