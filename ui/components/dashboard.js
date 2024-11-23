@@ -56,15 +56,19 @@ export class Dashboard extends LitElement {
         this.reports = summary.reports;
         this.lastUpdate = summary.last_update;
 
-        this.createPieChart("orgs_chart", summary.orgs);
-        this.createPieChart("domains_chart", summary.domains);
+        this.createPieChart("orgs_chart", summary.orgs, function (label) {
+            window.location.hash = "#/reports?org=" + encodeURIComponent(label);
+        });
+        this.createPieChart("domains_chart", summary.domains, function (label) {
+            window.location.hash = "#/reports?domain=" + encodeURIComponent(label);
+        });
         this.createPieChart("spf_policy_chart", summary.spf_policy_results);
         this.createPieChart("dkim_policy_chart", summary.dkim_policy_results);
         this.createPieChart("spf_auth_chart", summary.spf_auth_results);
         this.createPieChart("dkim_auth_chart", summary.dkim_auth_results);
     }
 
-    async createPieChart(canvasId, dataMap) {
+    async createPieChart(canvasId, dataMap, onLabelClick) {
         const element = this.renderRoot.querySelector("." + canvasId);
         const labels = Object.keys(dataMap);
         const data = labels.map(k => dataMap[k]);
@@ -73,6 +77,14 @@ export class Dashboard extends LitElement {
             data: {
                 labels,
                 datasets: [{ data }]
+            },
+            options: {
+                onClick: function (event, element, chart) {
+                    if (onLabelClick) {
+                        const label = labels[element[0].index];
+                        onLabelClick(label);
+                    }
+                }
             }
         });
     }
