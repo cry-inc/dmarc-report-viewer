@@ -329,12 +329,12 @@ impl ReportFilters {
                 .domain
                 .as_ref()
                 .and_then(|d| urlencoding::decode(d).ok())
-                .and_then(|d| Some(d.to_string())),
+                .map(|d| d.to_string()),
             org: self
                 .org
                 .as_ref()
                 .and_then(|o| urlencoding::decode(o).ok())
-                .and_then(|o| Some(o.to_string())),
+                .map(|o| o.to_string()),
         }
     }
 }
@@ -462,7 +462,7 @@ impl MailFilters {
                 .sender
                 .as_ref()
                 .and_then(|s| urlencoding::decode(s).ok())
-                .and_then(|s| Some(s.to_string())),
+                .map(|s| s.to_string()),
         }
     }
 }

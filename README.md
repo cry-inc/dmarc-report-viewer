@@ -20,15 +20,16 @@ Alternatively, you can use the tiny 10 MB Docker image to deploy the application
 - [x] Automatic fetching of reports from IMAP inbox
 - [x] Robust parsing of XML DMARC reports
 - [x] Embedded HTTP server for web UI
+- [x] Automatic HTTPS via ACME/Let's Encrypt
 - [x] Basic Auth password protection for HTTP server
 - [x] Easy configuration via command line arguments or ENV variables
-- [x] Summary with charts for domains, organizations and passed/failed checks
-- [x] Automatic HTTPS via ACME/Let's Encrypt
-- [x] Viewing of individual DMARC reports
-- [x] List all mails in the IMAP inbox (with sender, size, date and subject)
-- [x] List all parsing errors for XML DMARC reports
 - [x] Configurable maximum size of mails (prevents downloading and parsing)
-- [ ] Viewing filtered lists of reports
+- [x] Summary with charts for domains, organizations and passed/failed checks
+- [x] Viewing filtered lists of reports
+- [x] Viewing of individual DMARC reports
+- [x] Show all parsing errors for DMARC reports
+- [x] List all mails in the IMAP inbox
+- [x] Viewing of individual mail metadata with a list of extracted reports
 
 ## Run with Docker
 The latest version is always published automatically as Docker image in the GitHub container registry.
