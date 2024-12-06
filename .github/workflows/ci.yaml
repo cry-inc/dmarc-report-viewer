@@ -2,7 +2,7 @@ name: CI
 on: [push, pull_request]
 jobs:
   Linux:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -34,7 +34,7 @@ jobs:
     - name: Execute Tests
       run: cargo test --release --all
   Docker:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       packages: write
