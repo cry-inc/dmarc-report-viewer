@@ -113,23 +113,9 @@ pub async fn get_mails(config: &Configuration) -> Result<HashMap<u32, Mail>> {
 
 /// Creates an encrypted IMAP client
 async fn create_client(config: &Configuration) -> Result<Client<TlsStream<TcpStream>>> {
-    // Prepare cert store with webpki roots
-    let mut root_cert_store = RootCertStore::empty();
-    let certs = webpki_roots::TLS_SERVER_ROOTS.iter().cloned();
-    root_cert_store.extend(certs);
-    debug!("Created Root CA cert store");
-
-    // Create async TLS connection
-    let client_config = ClientConfig::builder()
-        .with_root_certificates(root_cert_store)
-        .with_no_client_auth();
-    debug!("Created TLS client config");
-
-    let connector = TlsConnector::from(Arc::new(client_config));
-    debug!("Created TLS connector");
-
     let host_port = format!("{}:{}", config.imap_host.as_str(), config.imap_port);
     debug!("Parsing IMAP address {host_port} as socket address...");
+
     let addrs = host_port
         .to_socket_addrs()
         .context("Failed to convert host name and port to socket address")?
@@ -149,20 +135,67 @@ async fn create_client(config: &Configuration) -> Result<Client<TlsStream<TcpStr
         .context("Failed to create TCP stream to IMAP server")?;
     debug!("Created async TCP stream");
 
+    let tls_stream = if config.imap_starttls {
+        debug!("Sending STARTTLS command over plain connection...");
+
+        let mut plain_client = Client::new(tcp_stream);
+        plain_client
+            .read_response()
+            .await
+            .context("Failed to read greeting")?
+            .context("Failed parse greeting response")?;
+        debug!("Received greeting");
+
+        plain_client
+            .run_command_and_check_ok("STARTTLS", None)
+            .await
+            .context("Failed to run STARTTLS command")?;
+        debug!("Requested STARTTLS, upgrading...");
+
+        create_tls_stream(config, plain_client.into_inner())
+            .await
+            .context("Failed to upgrade to TLS stream")?
+    } else {
+        debug!("Directly creating TLS stream...");
+
+        create_tls_stream(config, tcp_stream)
+            .await
+            .context("Failed to create TLS stream")?
+    };
+
+    let client = Client::new(tls_stream);
+    debug!("Created IMAP client");
+    Ok(client)
+}
+
+async fn create_tls_stream(
+    config: &Configuration,
+    tcp_stream: TcpStream,
+) -> Result<TlsStream<TcpStream>> {
+    let mut root_cert_store = RootCertStore::empty();
+    let certs = webpki_roots::TLS_SERVER_ROOTS.iter().cloned();
+    root_cert_store.extend(certs);
+    debug!("Created Root CA cert store");
+
+    let client_config = ClientConfig::builder()
+        .with_root_certificates(root_cert_store)
+        .with_no_client_auth();
+    debug!("Created TLS client config");
+
+    let connector = TlsConnector::from(Arc::new(client_config));
+    debug!("Created TLS connector");
+
     let dns_name = ServerName::try_from(config.imap_host.clone())
-        .context("Failed to get DNS name from IMAP host")?;
+        .context("Failed to get DNS name from host")?;
     debug!("Got DNS name: {dns_name:?}");
 
     let tls_stream = connector
         .connect(dns_name, tcp_stream)
         .await
-        .context("Failed to create TLS stream with IMAP server")?;
+        .context("Failed to create TLS stream")?;
     debug!("Created TLS stream");
 
-    let client = Client::new(tls_stream);
-    debug!("Created IMAP client");
-
-    Ok(client)
+    Ok(tls_stream)
 }
 
 fn extract_metadata(mail: &Fetch, max_size: usize) -> Result<Mail> {

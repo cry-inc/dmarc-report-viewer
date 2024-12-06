@@ -20,6 +20,10 @@ pub struct Configuration {
     #[arg(long, env, default_value_t = 993)]
     pub imap_port: u16,
 
+    /// Use STARTTLS (IMAP port should be set to 143!)
+    #[arg(long, env)]
+    pub imap_starttls: bool,
+
     /// IMAP folder with the DMARC reports
     #[arg(long, env, default_value = "INBOX")]
     pub imap_folder: String,
@@ -93,6 +97,7 @@ impl Configuration {
 
         info!("IMAP Host: {}", self.imap_host);
         info!("IMAP Port: {}", self.imap_port);
+        info!("IMAP STARTTLS: {}", self.imap_starttls);
         info!("IMAP User: {}", self.imap_user);
         info!("IMAP Check Interval: {} seconds", self.imap_check_interval);
         info!("IMAP Timeout: {}", self.imap_timeout);
