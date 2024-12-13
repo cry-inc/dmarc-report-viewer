@@ -99,7 +99,6 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
     {
         let mut locked_state = state.lock().expect("Failed to lock app state");
         locked_state.mails = mails;
-        locked_state.xml_files = xml_files.len();
         locked_state.summary = summary;
         locked_state.reports = reports;
         locked_state.last_update = timestamp;

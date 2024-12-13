@@ -21,9 +21,6 @@ pub struct AppState {
     /// Mails from IMAP inbox with mail UID as key
     pub mails: HashMap<u32, Mail>,
 
-    /// Number of XML files found in IMAP report inbox
-    pub xml_files: usize,
-
     /// Parsed DMARC reports with mail UID and corresponding hash as key
     pub reports: HashMap<String, ReportWithUid>,
 
