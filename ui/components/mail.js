@@ -35,7 +35,7 @@ export class Mail extends LitElement {
 
     static get properties() {
         return {
-            id: { type: String },
+            uid: { type: String },
             mail: { type: Object, attribute: false },
             reports: { type: Array, attribute: false }
         };
@@ -43,16 +43,16 @@ export class Mail extends LitElement {
 
     constructor() {
         super();
-        this.id = null;
+        this.uid = null;
         this.mail = null;
         this.reports = [];
     }
 
     async updated(changedProperties) {
-        if (changedProperties.has("id") && changedProperties.id !== this.id && this.id) {
-            const mailsResponse = await fetch("mails/" + this.id);
+        if (changedProperties.has("uid") && changedProperties.uid !== this.uid && this.uid) {
+            const mailsResponse = await fetch("mails/" + this.uid);
             this.mail = await mailsResponse.json();
-            const reportsResponse = await fetch("reports?uid=" + this.id);
+            const reportsResponse = await fetch("reports?uid=" + this.uid);
             this.reports = await reportsResponse.json();
         }
     }

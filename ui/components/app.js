@@ -17,7 +17,7 @@ export class App extends LitElement {
             component: { type: String },
             params: { type: Object },
             reportHash: { type: String },
-            mailId: { type: String },
+            mailUid: { type: String },
         };
     }
 
@@ -26,7 +26,7 @@ export class App extends LitElement {
         this.component = "dashboard";
         this.params = {};
         this.reportHash = null;
-        this.mailId = null;
+        this.mailUid = null;
         window.onhashchange = () => this.onHashChange();
         this.onHashChange();
     }
@@ -60,7 +60,7 @@ export class App extends LitElement {
             this.component = "mails";
         } else if (hash.startsWith("#/mails/")) {
             this.component = "mail";
-            this.mailId = hash.substring(8);
+            this.mailUid = hash.substring(8);
         } else if (hash == "#/about") {
             this.component = "about";
         } else {
@@ -79,7 +79,7 @@ export class App extends LitElement {
         } else if (this.component == "mails") {
             component = html`<dmarc-mails .params="${this.params}"></dmarc-mails>`;
         } else if (this.component == "mail") {
-            component = html`<dmarc-mail id="${this.mailId}"></dmarc-mail>`;
+            component = html`<dmarc-mail uid="${this.mailUid}"></dmarc-mail>`;
         } else if (this.component == "about") {
             component = html`<dmarc-about></dmarc-about>`;
         } else {
