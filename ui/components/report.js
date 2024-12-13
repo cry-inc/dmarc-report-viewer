@@ -102,6 +102,10 @@ export class Report extends LitElement {
             <h2>Report</h2>
             <table>
                 <tr>
+                    <th>Mail</th>
+                    <td><a href="#/mails/${this.uid}">${this.uid}</a></td>
+                </tr>
+                <tr>
                     <th>Id</th>
                     <td>${this.report.report_metadata.report_id}</td>
                 </tr>
