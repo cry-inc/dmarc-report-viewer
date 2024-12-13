@@ -1,10 +1,10 @@
+use crate::hasher::hash_data;
 use crate::mail::Mail;
 use crate::report::Report;
 use crate::xml_file::XmlFile;
 use anyhow::{Context, Result};
 use flate2::read::GzDecoder;
 use mailparse::MailHeaderMap;
-use sha2::{Digest, Sha256};
 use std::io::{Cursor, Read};
 use tracing::warn;
 use zip::ZipArchive;
@@ -40,13 +40,6 @@ fn get_xml_from_gz(gz_bytes: &[u8]) -> Result<Vec<u8>> {
     gz.read_to_end(&mut xml_file)
         .context("Failed to read file from GZ archive")?;
     Ok(xml_file)
-}
-
-fn hash_data(data: &[u8]) -> String {
-    let mut hasher = Sha256::new();
-    hasher.update(data);
-    let hash = hasher.finalize();
-    format!("{:x?}", hash)
 }
 
 pub fn extract_xml_files(mail: &mut Mail) -> Result<Vec<XmlFile>> {

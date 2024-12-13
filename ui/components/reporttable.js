@@ -70,7 +70,7 @@ export class ReportTable extends LitElement {
                 </tr>
                 ${this.reports.length !== 0 ? this.reports.map((report) =>
                     html`<tr>
-                            <td><a href="#/reports/${report.id}">${report.id}</a></td>
+                            <td><a href="#/reports/${report.hash}">${report.id}</a></td>
                             <td><a href="#/reports?org=${encodeURIComponent(report.org)}">${report.org}</a></td>
                             <td><a href="#/reports?domain=${encodeURIComponent(report.domain)}">${report.domain}</a></td>
                             <td>${this.renderProblemsBadge(report.flagged)}</td>

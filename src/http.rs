@@ -263,6 +263,7 @@ async fn build() -> impl IntoResponse {
 
 #[derive(Serialize)]
 struct ReportHeader {
+    hash: String,
     id: String,
     org: String,
     domain: String,
@@ -273,8 +274,9 @@ struct ReportHeader {
 }
 
 impl ReportHeader {
-    pub fn from_report(report: &Report) -> Self {
+    pub fn from_report(hash: &str, report: &Report) -> Self {
         Self {
+            hash: hash.to_string(),
             id: report.report_metadata.report_id.clone(),
             org: report.report_metadata.org_name.clone(),
             domain: report.policy_published.domain.clone(),
@@ -351,36 +353,35 @@ async fn reports(
         .expect("Failed to lock app state")
         .reports
         .iter()
-        .filter(|(uid, _)| {
+        .filter(|(_, rwu)| {
             if let Some(queried_uid) = filters.uid {
-                *uid == queried_uid
+                rwu.uid == queried_uid
             } else {
                 true
             }
         })
-        .filter(|(_, r)| {
+        .filter(|(_, rwu)| {
             if let Some(org) = &filters.org {
-                r.report_metadata.org_name == *org
+                rwu.report.report_metadata.org_name == *org
             } else {
                 true
             }
         })
-        .filter(|(_, r)| {
+        .filter(|(_, rwu)| {
             if let Some(domain) = &filters.domain {
-                r.policy_published.domain == *domain
+                rwu.report.policy_published.domain == *domain
             } else {
                 true
             }
         })
-        .map(|(uid, r)| (*uid, ReportHeader::from_report(r)))
-        .filter(|(_, r)| {
+        .map(|(hash, rwu)| ReportHeader::from_report(hash, &rwu.report))
+        .filter(|rh| {
             if let Some(flagged) = &filters.flagged {
-                r.flagged == *flagged
+                rh.flagged == *flagged
             } else {
                 true
             }
         })
-        .map(|(_, r)| r)
         .collect();
     Json(reports)
 }
@@ -390,12 +391,8 @@ async fn report(
     Path(id): Path<String>,
 ) -> impl IntoResponse {
     let lock = state.lock().expect("Failed to lock app state");
-    if let Some((_, report)) = lock
-        .reports
-        .iter()
-        .find(|(_, r)| r.report_metadata.report_id == id)
-    {
-        let report_json = serde_json::to_string(report).expect("Failed to serialize JSON");
+    if let Some(rwu) = lock.reports.get(&id) {
+        let report_json = serde_json::to_string(rwu).expect("Failed to serialize JSON");
         (
             StatusCode::OK,
             [(header::CONTENT_TYPE, "application/json")],

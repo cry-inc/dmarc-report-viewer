@@ -2,6 +2,7 @@
 
 mod background;
 mod config;
+mod hasher;
 mod http;
 mod imap;
 mod mail;

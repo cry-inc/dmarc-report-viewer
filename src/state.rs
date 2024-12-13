@@ -1,9 +1,16 @@
-use std::collections::HashMap;
-
 use crate::mail::Mail;
 use crate::report::Report;
 use crate::summary::Summary;
 use crate::xml_error::XmlError;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+
+/// Report with UID of the mail that contained the report
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ReportWithUid {
+    pub uid: u32,
+    pub report: Report,
+}
 
 /// Shared state between the different parts of the application.
 /// Connects the background task that collects mails via IMAP,
@@ -17,8 +24,8 @@ pub struct AppState {
     /// Number of XML files found in IMAP report inbox
     pub xml_files: usize,
 
-    /// Parsed DMARC reports as tuple of mail UID and report
-    pub reports: Vec<(u32, Report)>,
+    /// Parsed DMARC reports with mail UID and corresponding hash as key
+    pub reports: HashMap<String, ReportWithUid>,
 
     /// Summary of report and other stats
     pub summary: Summary,

@@ -43,21 +43,25 @@ export class Report extends LitElement {
 
     static get properties() {
         return {
-            id: { type: String },
+            hash: { type: String },
+            uid: { type: String, attribute: false },
             report: { type: Object, attribute: false }
         };
     }
 
     constructor() {
         super();
-        this.id = null;
+        this.hash = null;
+        this.uid = null;
         this.report = null;
     }
 
     async updated(changedProperties) {
-        if (changedProperties.has("id") && changedProperties.id !== this.id && this.id) {
-            const response = await fetch("reports/" + this.id);
-            this.report = await response.json();
+        if (changedProperties.has("hash") && changedProperties.hash !== this.hash && this.hash) {
+            const response = await fetch("reports/" + this.hash);
+            const rwu = await response.json();
+            this.report = rwu.report;
+            this.uid = rwu.uid;
         }
     }
 
