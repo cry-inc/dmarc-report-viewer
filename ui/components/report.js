@@ -100,11 +100,12 @@ export class Report extends LitElement {
 
         return html`
             <h2>Report</h2>
+            <p>
+                <a href="#/mails/${this.uid}">Show Mail</a> |
+                <a href="/reports/${this.hash}/xml" target="_blank">Show XML</a> |
+                <a href="/reports/${this.hash}/json" target="_blank">Show JSON</a>
+            </p>
             <table>
-                <tr>
-                    <th>Mail</th>
-                    <td><a href="#/mails/${this.uid}">${this.uid}</a></td>
-                </tr>
                 <tr>
                     <th>Id</th>
                     <td>${this.report.report_metadata.report_id}</td>
