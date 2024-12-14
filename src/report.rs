@@ -16,9 +16,11 @@ pub struct DateRangeType {
 pub struct ReportMetadataType {
     pub org_name: String,
     pub email: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub extra_contact_info: Option<String>,
     pub report_id: String,
     pub date_range: DateRangeType,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub error: Option<Vec<String>>,
 }
 
@@ -44,11 +46,16 @@ pub enum DispositionType {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PolicyPublishedType {
     pub domain: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub adkim: Option<AlignmentType>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub aspf: Option<AlignmentType>,
     pub p: DispositionType,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub sp: Option<DispositionType>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub pct: Option<u8>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub fo: Option<String>,
 }
 
@@ -74,14 +81,18 @@ pub enum PolicyOverrideType {
 pub struct PolicyOverrideReason {
     #[serde(rename = "type")]
     pub kind: PolicyOverrideType,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PolicyEvaluatedType {
     pub disposition: DispositionType,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub dkim: Option<DmarcResultType>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub spf: Option<DmarcResultType>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub reason: Option<Vec<PolicyOverrideReason>>,
 }
 
@@ -94,7 +105,9 @@ pub struct RowType {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct IdentifierType {
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub envelope_to: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub envelope_from: Option<String>,
     pub header_from: String,
 }
@@ -116,8 +129,10 @@ pub enum DkimResultType {
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct DkimAuthResultType {
     pub domain: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub selector: Option<String>,
     pub result: DkimResultType,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub human_result: Option<String>,
 }
 
@@ -147,12 +162,14 @@ pub enum SpfResultType {
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct SpfAuthResultType {
     pub domain: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub scope: Option<SpfDomainScope>,
     pub result: SpfResultType,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AuthResultType {
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub dkim: Option<Vec<DkimAuthResultType>>,
     pub spf: Vec<SpfAuthResultType>,
 }
@@ -165,7 +182,9 @@ pub struct RecordType {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename = "feedback")]
 pub struct Report {
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub version: Option<String>,
     pub report_metadata: ReportMetadataType,
     pub policy_published: PolicyPublishedType,
@@ -176,11 +195,12 @@ pub struct Report {
 mod tests {
     use super::*;
     use std::fs::File;
+    use std::io::BufReader;
 
     #[test]
     fn mailru_report() {
-        let reader = File::open("testdata/dmarc-reports/mailru.xml").unwrap();
-        let report: Report = serde_xml_rs::from_reader(reader).unwrap();
+        let reader = BufReader::new(File::open("testdata/dmarc-reports/mailru.xml").unwrap());
+        let report: Report = quick_xml::de::from_reader(reader).unwrap();
 
         // Check metadata
         assert_eq!(report.report_metadata.org_name, "Mail.Ru");
@@ -232,8 +252,8 @@ mod tests {
 
     #[test]
     fn aol_report() {
-        let reader = File::open("testdata/dmarc-reports/aol.xml").unwrap();
-        let report: Report = serde_xml_rs::from_reader(reader).unwrap();
+        let reader = BufReader::new(File::open("testdata/dmarc-reports/aol.xml").unwrap());
+        let report: Report = quick_xml::de::from_reader(reader).unwrap();
 
         // Check metadata
         assert_eq!(report.report_metadata.org_name, "AOL");
@@ -286,8 +306,8 @@ mod tests {
 
     #[test]
     fn acme_report() {
-        let reader = File::open("testdata/dmarc-reports/acme.xml").unwrap();
-        let report: Report = serde_xml_rs::from_reader(reader).unwrap();
+        let reader = BufReader::new(File::open("testdata/dmarc-reports/acme.xml").unwrap());
+        let report: Report = quick_xml::de::from_reader(reader).unwrap();
 
         // Check metadata
         assert_eq!(report.report_metadata.org_name, "acme.com");
@@ -369,8 +389,8 @@ mod tests {
 
     #[test]
     fn solamora_report() {
-        let reader = File::open("testdata/dmarc-reports/solamora.xml").unwrap();
-        let report: Report = serde_xml_rs::from_reader(reader).unwrap();
+        let reader = BufReader::new(File::open("testdata/dmarc-reports/solamora.xml").unwrap());
+        let report: Report = quick_xml::de::from_reader(reader).unwrap();
 
         // Check metadata
         assert_eq!(report.report_metadata.org_name, "solarmora.com");
@@ -430,8 +450,8 @@ mod tests {
 
     #[test]
     fn yahoo_report() {
-        let reader = File::open("testdata/dmarc-reports/yahoo.xml").unwrap();
-        let report: Report = serde_xml_rs::from_reader(reader).unwrap();
+        let reader = BufReader::new(File::open("testdata/dmarc-reports/yahoo.xml").unwrap());
+        let report: Report = quick_xml::de::from_reader(reader).unwrap();
 
         // Check metadata
         assert_eq!(report.report_metadata.org_name, "Yahoo");
@@ -483,8 +503,8 @@ mod tests {
 
     #[test]
     fn google_report() {
-        let reader = File::open("testdata/dmarc-reports/google.xml").unwrap();
-        let report: Report = serde_xml_rs::from_reader(reader).unwrap();
+        let reader = BufReader::new(File::open("testdata/dmarc-reports/google.xml").unwrap());
+        let report: Report = quick_xml::de::from_reader(reader).unwrap();
 
         // Check metadata
         assert_eq!(report.report_metadata.org_name, "google.com");
@@ -544,8 +564,8 @@ mod tests {
 
     #[test]
     fn outlook_report() {
-        let reader = File::open("testdata/dmarc-reports/outlook.xml").unwrap();
-        let report: Report = serde_xml_rs::from_reader(reader).unwrap();
+        let reader = BufReader::new(File::open("testdata/dmarc-reports/outlook.xml").unwrap());
+        let report: Report = quick_xml::de::from_reader(reader).unwrap();
 
         // Check metadata
         assert_eq!(report.report_metadata.org_name, "Outlook.com");
@@ -650,8 +670,8 @@ mod tests {
 
     #[test]
     fn web_de_report() {
-        let reader = File::open("testdata/dmarc-reports/webde.xml").unwrap();
-        let report: Report = serde_xml_rs::from_reader(reader).unwrap();
+        let reader = BufReader::new(File::open("testdata/dmarc-reports/webde.xml").unwrap());
+        let report: Report = quick_xml::de::from_reader(reader).unwrap();
 
         // Check metadata
         assert_eq!(report.report_metadata.org_name, "WEB.DE");

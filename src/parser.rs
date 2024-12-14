@@ -91,5 +91,5 @@ pub fn extract_xml_files(mail: &mut Mail) -> Result<Vec<XmlFile>> {
 
 pub fn parse_xml_file(xml_file: &[u8]) -> Result<Report> {
     let mut cursor = Cursor::new(xml_file);
-    serde_xml_rs::from_reader(&mut cursor).context("Failed to parse XML as DMARC report")
+    quick_xml::de::from_reader(&mut cursor).context("Failed to parse XML as DMARC report")
 }
