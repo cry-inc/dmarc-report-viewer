@@ -7,8 +7,9 @@
 A lightweight selfhosted standalone DMARC report viewer that automatically fetches input data periodically from an IMAP mailbox.
 
 Ideal for smaller selfhosted mailservers.
-The application is a single executable written in Rust.
-It combines the DMARC report parser with an IMAP client and an HTTP server for easy access of the reports.
+The application is a single fully statically linked executable written in Rust.
+It combines a DMARC report parser with an IMAP client and an HTTP server.
+The HTTP server serves a web UI for easy access and filtering of the reports.
 You can run the executable directly on any Linux, Windows or MacOS system.
 Alternatively, you can use the tiny 10 MB Docker image to deploy the application.
 
@@ -16,20 +17,21 @@ Alternatively, you can use the tiny 10 MB Docker image to deploy the application
 
 ## Features
 - [x] Lightweight Docker image for easy deployment
-- [x] Secure IMAP client
+- [x] Secure IMAP client (TLS & STARTTLS)
 - [x] Automatic fetching of reports from IMAP inbox
 - [x] Robust parsing of XML DMARC reports
 - [x] Embedded HTTP server for web UI
 - [x] Automatic HTTPS via ACME/Let's Encrypt
 - [x] Basic Auth password protection for HTTP server
 - [x] Easy configuration via command line arguments or ENV variables
-- [x] Configurable maximum size of mails (prevents downloading and parsing)
+- [x] Configurable maximum size of mails (to skip oversized documents)
 - [x] Summary with charts for domains, organizations and passed/failed checks
 - [x] Viewing filtered lists of reports
 - [x] Viewing of individual DMARC reports
-- [x] Show all parsing errors for DMARC reports
+- [x] Export DMARC reports as XML or JSON documents
 - [x] List all mails in the IMAP inbox
 - [x] Viewing of individual mail metadata with a list of extracted reports
+- [x] Show parsing errors for DMARC reports
 
 ## Run with Docker
 The latest version is always published automatically as Docker image in the GitHub container registry.
