@@ -198,6 +198,23 @@ mod tests {
     use std::io::BufReader;
 
     #[test]
+    fn serde_roundtrip() {
+        let reader = BufReader::new(File::open("testdata/dmarc-reports/outlook.xml").unwrap());
+        let report: Report = quick_xml::de::from_reader(reader).unwrap();
+
+        let org_json = serde_json::to_string(&report).unwrap();
+        let xml = quick_xml::se::to_string(&report).unwrap();
+
+        let second: Report = quick_xml::de::from_str(&xml).unwrap();
+        let sec_json = serde_json::to_string(&second).unwrap();
+        assert_eq!(org_json, sec_json);
+
+        let third: Report = serde_json::from_str(&org_json).unwrap();
+        let third_json = serde_json::to_string(&third).unwrap();
+        assert_eq!(org_json, third_json);
+    }
+
+    #[test]
     fn mailru_report() {
         let reader = BufReader::new(File::open("testdata/dmarc-reports/mailru.xml").unwrap());
         let report: Report = quick_xml::de::from_reader(reader).unwrap();
