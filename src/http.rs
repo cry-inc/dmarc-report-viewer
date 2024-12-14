@@ -32,6 +32,8 @@ pub async fn run_http_server(config: &Configuration, state: Arc<Mutex<AppState>>
         .route("/summary", get(summary))
         .route("/reports", get(reports))
         .route("/reports/:id", get(report))
+        .route("/reports/:id/json", get(report_json))
+        .route("/reports/:id/xml", get(report_xml))
         .route("/xml-errors", get(xml_errors))
         .route("/mails", get(mails))
         .route("/mails/:id", get(mail))
@@ -397,6 +399,54 @@ async fn report(
             StatusCode::OK,
             [(header::CONTENT_TYPE, "application/json")],
             report_json,
+        )
+    } else {
+        (
+            StatusCode::NOT_FOUND,
+            [(header::CONTENT_TYPE, "text/plain")],
+            format!("Cannot find report with ID {id}"),
+        )
+    }
+}
+
+async fn report_json(
+    State(state): State<Arc<Mutex<AppState>>>,
+    Path(id): Path<String>,
+) -> impl IntoResponse {
+    let lock = state.lock().expect("Failed to lock app state");
+    if let Some(rwu) = lock.reports.get(&id) {
+        let report_json = serde_json::to_string(&rwu.report).expect("Failed to serialize JSON");
+        (
+            StatusCode::OK,
+            [(header::CONTENT_TYPE, "application/json")],
+            report_json,
+        )
+    } else {
+        (
+            StatusCode::NOT_FOUND,
+            [(header::CONTENT_TYPE, "text/plain")],
+            format!("Cannot find report with ID {id}"),
+        )
+    }
+}
+
+async fn report_xml(
+    State(state): State<Arc<Mutex<AppState>>>,
+    Path(id): Path<String>,
+) -> impl IntoResponse {
+    let lock = state.lock().expect("Failed to lock app state");
+    if let Some(rwu) = lock.reports.get(&id) {
+        let mut report_xml = String::new();
+        let mut serializer = quick_xml::se::Serializer::new(&mut report_xml);
+        serializer.indent(' ', 2);
+        rwu.report
+            .serialize(serializer)
+            .expect("Failed to serialize XML");
+        report_xml = String::from("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n") + &report_xml;
+        (
+            StatusCode::OK,
+            [(header::CONTENT_TYPE, "text/xml")],
+            report_xml,
         )
     } else {
         (
