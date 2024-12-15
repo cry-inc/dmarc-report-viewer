@@ -54,8 +54,6 @@ export class App extends LitElement {
         } else if (hash.startsWith("#/reports/")) {
             this.component = "report";
             this.reportHash = hash.substring(10);
-        } else if (hash == "#/problems") {
-            this.component = "problems";
         } else if (hash == "#/mails") {
             this.component = "mails";
         } else if (hash.startsWith("#/mails/")) {
@@ -74,8 +72,6 @@ export class App extends LitElement {
             component = html`<dmarc-reports .params="${this.params}"></dmarc-reports>`;
         } else if (this.component == "report") {
             component = html`<dmarc-report hash="${this.reportHash}"></dmarc-report>`;
-        } else if (this.component == "problems") {
-            component = html`<dmarc-problems></dmarc-problems>`;
         } else if (this.component == "mails") {
             component = html`<dmarc-mails .params="${this.params}"></dmarc-mails>`;
         } else if (this.component == "mail") {
@@ -90,7 +86,6 @@ export class App extends LitElement {
                 <a href="#/dashboard">Dashboard</a> |
                 <a href="#/mails">Mails</a> |
                 <a href="#/reports">Reports</a> |
-                <a href="#/problems">Problems</a> |
                 <a href="#/about">About</a>
             </p>
             ${component}

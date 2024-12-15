@@ -57,7 +57,7 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
     }
     info!("Extracted {} XML files from mails", xml_files.len());
 
-    let mut xml_errors = Vec::new();
+    let mut xml_errors = HashMap::new();
     let mut reports = HashMap::new();
     for xml_file in xml_files.values() {
         match parse_xml_file(&xml_file.data) {
@@ -72,12 +72,18 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
                 reports.insert(hash, rwu);
             }
             Err(err) => {
-                let error = format!("{err:#}");
-                xml_errors.push(XmlError {
-                    mail_uid: xml_file.mail_uid,
-                    error,
+                // Prepare error information
+                let error_str = format!("{err:#}");
+                let error = XmlError {
+                    error: error_str,
                     xml: String::from_utf8_lossy(&xml_file.data).to_string(),
-                });
+                };
+
+                // Store in error hashmap for fast lookup
+                let entry: &mut Vec<XmlError> = xml_errors.entry(xml_file.mail_uid).or_default();
+                entry.push(error);
+
+                // Increase error counter for mail
                 let mail = mails
                     .get_mut(&xml_file.mail_uid)
                     .context("Failed to find mail")?;

@@ -30,16 +30,16 @@ pub async fn run_http_server(config: &Configuration, state: Arc<Mutex<AppState>>
     }
     let make_service = Router::new()
         .route("/summary", get(summary))
+        .route("/mails", get(mails))
+        .route("/mails/:id", get(mail))
+        .route("/mails/:id/errors", get(mail_errors))
         .route("/reports", get(reports))
         .route("/reports/:id", get(report))
         .route("/reports/:id/json", get(report_json))
         .route("/reports/:id/xml", get(report_xml))
-        .route("/xml-errors", get(xml_errors))
-        .route("/mails", get(mails))
-        .route("/mails/:id", get(mail))
+        .route("/build", get(build))
         .route("/", get(static_file)) // index.html
         .route("/*filepath", get(static_file)) // all other files
-        .route("/build", get(build))
         .route_layer(middleware::from_fn_with_state(
             config.clone(),
             basic_auth_middleware,
@@ -485,14 +485,39 @@ async fn mail(
     }
 }
 
-async fn xml_errors(State(state): State<Arc<Mutex<AppState>>>) -> impl IntoResponse {
+async fn mail_errors(
+    State(state): State<Arc<Mutex<AppState>>>,
+    Path(id): Path<String>,
+) -> impl IntoResponse {
+    let Ok(parsed_uid) = id.parse::<u32>() else {
+        return (
+            StatusCode::BAD_REQUEST,
+            [(header::CONTENT_TYPE, "text/plain")],
+            format!("Invalid ID {id}"),
+        );
+    };
     let lock = state.lock().expect("Failed to lock app state");
-    let errors_json = serde_json::to_string(&lock.xml_errors).expect("Failed to serialize JSON");
-    (
-        StatusCode::OK,
-        [(header::CONTENT_TYPE, "application/json")],
-        errors_json,
-    )
+    if !lock.mails.contains_key(&parsed_uid) {
+        return (
+            StatusCode::NOT_FOUND,
+            [(header::CONTENT_TYPE, "text/plain")],
+            format!("Cannot find mail with ID {id}"),
+        );
+    }
+    if let Some(errors) = lock.xml_errors.get(&parsed_uid) {
+        let errors_json = serde_json::to_string(errors).expect("Failed to serialize JSON");
+        (
+            StatusCode::OK,
+            [(header::CONTENT_TYPE, "application/json")],
+            errors_json,
+        )
+    } else {
+        (
+            StatusCode::OK,
+            [(header::CONTENT_TYPE, "application/json")],
+            String::from("[]"),
+        )
+    }
 }
 
 #[derive(Deserialize, Debug)]
@@ -596,11 +621,6 @@ const STATIC_FILES: &[StaticFile] = &[
         http_path: "/components/mailtable.js",
         file_path: "ui/components/mailtable.js",
         _data: include_bytes!("../ui/components/mailtable.js"),
-    },
-    StaticFile {
-        http_path: "/components/problems.js",
-        file_path: "ui/components/problems.js",
-        _data: include_bytes!("../ui/components/problems.js"),
     },
     StaticFile {
         http_path: "/components/report.js",

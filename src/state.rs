@@ -30,6 +30,6 @@ pub struct AppState {
     /// Time of last update from IMAP inbox as Unix timestamp
     pub last_update: u64,
 
-    /// XML parsing errors
-    pub xml_errors: Vec<XmlError>,
+    /// XML parsing errors keyed by mail UID
+    pub xml_errors: HashMap<u32, Vec<XmlError>>,
 }

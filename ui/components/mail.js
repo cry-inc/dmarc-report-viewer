@@ -20,6 +20,10 @@ export class Mail extends LitElement {
             padding-bottom: 3px;
         }
 
+        h3 {
+            padding-top: 30px;
+        }
+
         .noproblem {
             color: #ccc;
         }
@@ -31,13 +35,21 @@ export class Mail extends LitElement {
             color: white;
             background-color: #f00;
         }
+
+        .error pre {
+            border: 1px solid #e0e0e0;
+            border-radius: 3px;
+            background-color: #efefef;
+            padding: 5px;
+        }
     `;
 
     static get properties() {
         return {
             uid: { type: String },
             mail: { type: Object, attribute: false },
-            reports: { type: Array, attribute: false }
+            reports: { type: Array, attribute: false },
+            errors: { type: Array, attribute: false }
         };
     }
 
@@ -46,6 +58,7 @@ export class Mail extends LitElement {
         this.uid = null;
         this.mail = null;
         this.reports = [];
+        this.errors = [];
     }
 
     async updated(changedProperties) {
@@ -54,6 +67,8 @@ export class Mail extends LitElement {
             this.mail = await mailsResponse.json();
             const reportsResponse = await fetch("reports?uid=" + this.uid);
             this.reports = await reportsResponse.json();
+            const errorsResponse = await fetch("mails/" + this.uid + "/errors");
+            this.errors = await errorsResponse.json();
         }
     }
 
@@ -109,6 +124,19 @@ export class Mail extends LitElement {
 
             <h3>Reports extracted from this Mail</h3>
             <dmarc-report-table .reports="${this.reports}"></dmarc-report-table>
+
+            ${this.errors.length > 0 ?
+                html`
+                    <h3>XML Parsing Errors</h3>
+                    ${this.errors.map((e) =>
+                    html`
+                        <div class="error">
+                            ${e.error}
+                            <pre>${e.xml}</pre>
+                        </div>`
+                    )}`
+                : html``
+            }
         `;
     }
 }
