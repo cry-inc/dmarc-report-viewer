@@ -10,9 +10,16 @@ pub struct Mail {
     pub subject: String,
     pub sender: String,
     pub to: String,
-    pub xml_file_count: usize, // Set at later stage after IMAP client returned the struct!
+
+    // Body is removed after parsing to save memory
     #[serde(skip)]
     pub body: Option<Vec<u8>>,
+
+    // Set at later stage when extracting the XML files from the body
+    pub xml_files: usize,
+
+    // Set at later stage during parsing
+    pub parsing_errors: usize,
 }
 
 /// Basic decoder for MIME Encoded Words with UTF8 and Base64

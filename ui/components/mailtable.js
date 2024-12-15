@@ -62,10 +62,18 @@ export class MailTable extends LitElement {
     }
 
     prepareXmlFileCount(mail) {
-        if (mail.xml_file_count < 1) {
-            return html`<span class="problem">${mail.xml_file_count}</span>`;
+        if (mail.xml_files < 1) {
+            return html`<span class="problem">${mail.xml_files}</span>`;
         } else {
-            return html`<span class="noproblem">${mail.xml_file_count}</span>`;;
+            return html`<span class="noproblem">${mail.xml_files}</span>`;;
+        }
+    }
+
+    prepareParsingErrorCount(mail) {
+        if (mail.parsing_errors > 0) {
+            return html`<span class="problem">${mail.parsing_errors}</span>`;
+        } else {
+            return html`<span class="noproblem">${mail.parsing_errors}</span>`;;
         }
     }
 
@@ -77,7 +85,8 @@ export class MailTable extends LitElement {
                     <th>Sender</th>
                     <th>Date</th>
                     <th>Size</th>
-                    <th>XMLs</th>
+                    <th title="XML File Count">XMLs</th>
+                    <th title="Number of XML DMARC Parsing Errors">Errors</th>
                 </tr>
                 ${this.mails.length !== 0 ? this.mails.map((mail) =>
                     html`<tr> 
@@ -86,6 +95,7 @@ export class MailTable extends LitElement {
                         <td>${new Date(mail.date * 1000).toLocaleString()}</td>
                         <td>${this.prepareSize(mail)}</td>
                         <td>${this.prepareXmlFileCount(mail)}</td>
+                        <td>${this.prepareParsingErrorCount(mail)}</td>
                     </tr>`
                 ) : html`<tr>
                         <td colspan="4">No mails found.</td>

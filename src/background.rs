@@ -48,7 +48,7 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
                 Ok(files) => {
                     for xml_file in files {
                         xml_files.insert(xml_file.hash.clone(), xml_file);
-                        mail.xml_file_count += 1;
+                        mail.xml_files += 1;
                     }
                 }
                 Err(err) => warn!("Failed to extract XML files from mail: {err:#}"),
@@ -78,6 +78,10 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
                     error,
                     xml: String::from_utf8_lossy(&xml_file.data).to_string(),
                 });
+                let mail = mails
+                    .get_mut(&xml_file.mail_uid)
+                    .context("Failed to find mail")?;
+                mail.parsing_errors += 1;
             }
         }
     }

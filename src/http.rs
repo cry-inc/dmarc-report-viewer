@@ -543,7 +543,7 @@ async fn mails(
         })
         .filter(|m| {
             if let Some(queried_count) = &filters.count {
-                m.xml_file_count == *queried_count
+                m.xml_files == *queried_count
             } else {
                 true
             }
