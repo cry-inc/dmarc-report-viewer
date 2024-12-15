@@ -325,7 +325,7 @@ struct ReportFilters {
 }
 
 impl ReportFilters {
-    fn decode(&self) -> Self {
+    fn url_decode(&self) -> Self {
         Self {
             uid: self.uid,
             flagged: self.flagged,
@@ -348,7 +348,7 @@ async fn reports(
     filters: Query<ReportFilters>,
 ) -> impl IntoResponse {
     // Remove URL encoding from strings in filters
-    let filters = filters.decode();
+    let filters = filters.url_decode();
 
     let reports: Vec<ReportHeader> = state
         .lock()
@@ -500,13 +500,15 @@ struct MailFilters {
     sender: Option<String>,
     count: Option<usize>,
     oversized: Option<bool>,
+    errors: Option<bool>,
 }
 
 impl MailFilters {
-    fn decode(&self) -> Self {
+    fn url_decode(&self) -> Self {
         Self {
             oversized: self.oversized,
             count: self.count,
+            errors: self.errors,
             sender: self
                 .sender
                 .as_ref()
@@ -521,7 +523,7 @@ async fn mails(
     filters: Query<MailFilters>,
 ) -> impl IntoResponse {
     // Remove URL encoding from strings in filters
-    let filters = filters.decode();
+    let filters = filters.url_decode();
 
     let lock = state.lock().expect("Failed to lock app state");
     let mails: Vec<&Mail> = lock
@@ -544,6 +546,13 @@ async fn mails(
         .filter(|m| {
             if let Some(queried_count) = &filters.count {
                 m.xml_files == *queried_count
+            } else {
+                true
+            }
+        })
+        .filter(|m| {
+            if let Some(queried_errors) = &filters.errors {
+                (m.parsing_errors > 0) == *queried_errors
             } else {
                 true
             }

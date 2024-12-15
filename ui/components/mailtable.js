@@ -62,18 +62,22 @@ export class MailTable extends LitElement {
     }
 
     prepareXmlFileCount(mail) {
-        if (mail.xml_files < 1) {
+        if (mail.oversized) {
+            return html`<span class="noproblem">n/a</span>`;
+        } else if (mail.xml_files < 1) {
             return html`<span class="problem">${mail.xml_files}</span>`;
         } else {
-            return html`<span class="noproblem">${mail.xml_files}</span>`;;
+            return html`<span class="noproblem">${mail.xml_files}</span>`;
         }
     }
 
     prepareParsingErrorCount(mail) {
-        if (mail.parsing_errors > 0) {
+        if (mail.oversized) {
+            return html`<span class="noproblem">n/a</span>`;
+        } else if (mail.parsing_errors > 0) {
             return html`<span class="problem">${mail.parsing_errors}</span>`;
         } else {
-            return html`<span class="noproblem">${mail.parsing_errors}</span>`;;
+            return html`<span class="noproblem">${mail.parsing_errors}</span>`;
         }
     }
 
