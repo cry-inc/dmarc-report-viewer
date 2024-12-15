@@ -713,7 +713,7 @@ mod tests {
         assert_eq!(report.policy_published.pct, None);
         assert_eq!(report.policy_published.fo, None);
 
-        // Check record #1
+        // Check record
         assert_eq!(report.record.len(), 1);
         let record = report.record.first().unwrap();
         assert_eq!(record.row.source_ip.to_string(), "111.69.13.71");
@@ -746,6 +746,70 @@ mod tests {
             record.auth_results.spf,
             vec![SpfAuthResultType {
                 domain: String::from("foobar.com"),
+                scope: Some(SpfDomainScope::MailForm),
+                result: SpfResultType::Pass,
+            }]
+        );
+    }
+
+    #[test]
+    fn gmx_net_report() {
+        let reader = BufReader::new(File::open("testdata/dmarc-reports/gmxnet.xml").unwrap());
+        let report: Report = quick_xml::de::from_reader(reader).unwrap();
+
+        // Check metadata
+        assert_eq!(report.report_metadata.org_name, "GMX");
+        assert_eq!(report.report_metadata.email, "noreply-dmarc@sicher.gmx.net");
+        assert_eq!(
+            report.report_metadata.report_id,
+            "6d2be94cbabf4e838a3cf58fb4a42ab5"
+        );
+        assert_eq!(
+            report.report_metadata.extra_contact_info.as_deref(),
+            Some("https://postmaster.gmx.net/en/case?c=r2002")
+        );
+        assert_eq!(report.report_metadata.date_range.begin, 1733184000);
+        assert_eq!(report.report_metadata.date_range.end, 1733270399);
+
+        // Check policy
+        assert_eq!(report.policy_published.domain, "myserver.com");
+        assert_eq!(report.policy_published.adkim, Some(AlignmentType::Relaxed));
+        assert_eq!(report.policy_published.aspf, Some(AlignmentType::Relaxed));
+        assert_eq!(report.policy_published.p, DispositionType::Reject);
+        assert_eq!(report.policy_published.sp, Some(DispositionType::Reject));
+
+        // Check record
+        assert_eq!(report.record.len(), 1);
+        let record = report.record.first().unwrap();
+        assert_eq!(record.row.source_ip.to_string(), "11.222.33.44");
+        assert_eq!(record.row.count, 1);
+        assert_eq!(
+            record.row.policy_evaluated.disposition,
+            DispositionType::None
+        );
+        assert_eq!(
+            record.row.policy_evaluated.dkim,
+            Some(DmarcResultType::Pass)
+        );
+        assert_eq!(record.row.policy_evaluated.spf, Some(DmarcResultType::Pass));
+        assert_eq!(
+            record.identifiers.envelope_from.as_deref(),
+            Some("myserver.com")
+        );
+        assert_eq!(record.identifiers.header_from, "myserver.com");
+        assert_eq!(
+            record.auth_results.dkim,
+            Some(vec![DkimAuthResultType {
+                domain: String::from("myserver.com"),
+                selector: Some(String::from("abc123")),
+                result: DkimResultType::Pass,
+                human_result: None
+            }])
+        );
+        assert_eq!(
+            record.auth_results.spf,
+            vec![SpfAuthResultType {
+                domain: String::from("myserver.com"),
                 scope: Some(SpfDomainScope::MailForm),
                 result: SpfResultType::Pass,
             }]
