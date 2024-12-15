@@ -63,7 +63,7 @@ export class ReportTable extends LitElement {
                     <th>ID</th>
                     <th>Organization</th>
                     <th>Domain</th>
-                    <th>Problems</th>
+                    <th style="cursor:help" title="Reports that indicate possible problems">Problems</th>
                     <th>Records</th>
                     <th>Begin</th>
                     <th>End</th>

@@ -89,8 +89,8 @@ export class MailTable extends LitElement {
                     <th>Sender</th>
                     <th>Date</th>
                     <th>Size</th>
-                    <th title="XML File Count">XMLs</th>
-                    <th title="Number of XML DMARC Parsing Errors">Errors</th>
+                    <th style="cursor:help" title="XML File Count">XMLs</th>
+                    <th style="cursor:help" title="Number of XML DMARC Parsing Errors">Errors</th>
                 </tr>
                 ${this.mails.length !== 0 ? this.mails.map((mail) =>
                     html`<tr> 
