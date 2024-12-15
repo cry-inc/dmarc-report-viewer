@@ -53,12 +53,18 @@ jobs:
       run: docker build . --pull --tag dmarc-report-viewer
     - name: Test Docker Image
       run: docker run --rm dmarc-report-viewer ./dmarc-report-viewer --help
-    - name: Publish Docker Image
+    - name: Publish Latest Docker Image
       if: ${{github.ref == 'refs/heads/master'}}
       run: |
         echo ${{secrets.GITHUB_TOKEN}} | docker login ghcr.io -u ${{github.actor}} --password-stdin
         docker tag dmarc-report-viewer ghcr.io/${{github.actor}}/dmarc-report-viewer:latest
         docker push ghcr.io/${{github.actor}}/dmarc-report-viewer:latest
+    - name: Publish Tagged Docker Image
+      if: startsWith(github.ref, 'refs/tags/')
+      run: |
+        echo ${{secrets.GITHUB_TOKEN}} | docker login ghcr.io -u ${{github.actor}} --password-stdin
+        docker tag dmarc-report-viewer ghcr.io/${{github.actor}}/dmarc-report-viewer:${{github.ref_name}}
+        docker push ghcr.io/${{github.actor}}/dmarc-report-viewer:${{github.ref_name}}
     - name: Save Docker Image
       run: docker save -o dmarc-report-viewer.tar dmarc-report-viewer
     - uses: actions/upload-artifact@v4
@@ -71,3 +77,35 @@ jobs:
       with:
         name: x86_64-linux-musl
         path: dmarc-report-viewer
+  Release:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [Linux, Windows, Docker]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    - name: Download Artifacts
+      uses: actions/download-artifact@v4
+    - name: Display Downloaded Files
+      run: ls -R
+    - name: Pack Artifacts for Release
+      run: |
+        zip -r x86_64-windows.zip x86_64-windows
+        zip -r x86_64-linux-gnu.zip x86_64-linux-gnu
+        zip -r x86_64-linux-musl.zip x86_64-linux-musl
+        mv x86_64-linux-docker/dmarc-report-viewer.tar x86_64-linux-docker.tar
+    - name: Display Packed Release Artifacts
+      run: ls -R
+    - name: Publish Release
+      uses: softprops/action-gh-release@v2
+      with:
+        body: Release created automatically from git tag ${{github.ref_name}}. See CHANGELOG.md for more details.
+        files: |
+          CHANGELOG.md
+          LICENSE
+          x86_64-windows.zip
+          x86_64-linux-gnu.zip
+          x86_64-linux-musl.zip
+          x86_64-linux-docker.tar
