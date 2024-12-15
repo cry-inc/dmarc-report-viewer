@@ -18,6 +18,10 @@ jobs:
       run: cargo clippy --release --all --all-targets --all-features --locked -- -D warnings
     - name: Check Formatting
       run: cargo fmt --all -- --check
+    - uses: actions/upload-artifact@v4
+      with:
+        name: x86_64-linux-gnu
+        path: target/release/dmarc-report-viewer
   Windows:
     runs-on: windows-latest
     steps:
@@ -33,6 +37,10 @@ jobs:
       run: cargo build --release --all
     - name: Execute Tests
       run: cargo test --release --all
+    - uses: actions/upload-artifact@v4
+      with:
+        name: x86_64-windows
+        path: target/release/dmarc-report-viewer.exe
   Docker:
     runs-on: ubuntu-24.04
     permissions:
@@ -51,3 +59,15 @@ jobs:
         echo ${{secrets.GITHUB_TOKEN}} | docker login ghcr.io -u ${{github.actor}} --password-stdin
         docker tag dmarc-report-viewer ghcr.io/${{github.actor}}/dmarc-report-viewer:latest
         docker push ghcr.io/${{github.actor}}/dmarc-report-viewer:latest
+    - name: Save Docker Image
+      run: docker save -o dmarc-report-viewer.tar dmarc-report-viewer
+    - uses: actions/upload-artifact@v4
+      with:
+        name: x86_64-linux-docker
+        path: dmarc-report-viewer.tar
+    - name: Extract MUSL Binary
+      run: container_id=$(docker create dmarc-report-viewer) && docker cp "$container_id:/dmarc-report-viewer" ./dmarc-report-viewer && docker rm "$container_id"
+    - uses: actions/upload-artifact@v4
+      with:
+        name: x86_64-linux-musl
+        path: dmarc-report-viewer
