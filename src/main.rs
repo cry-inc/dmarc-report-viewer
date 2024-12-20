@@ -45,7 +45,8 @@ async fn main() -> Result<()> {
     // Inject git hash for logging during Github builds.
     // Other builds, like normal local dev builds do not support this.
     let git_hash = option_env!("GITHUB_SHA").unwrap_or("n/a");
-    info!("Git-Hash: {git_hash}");
+    let git_ref = option_env!("GITHUB_REF_NAME").unwrap_or("n/a");
+    info!("Git-Hash: {git_hash} ({git_ref})");
 
     // Make configuration visible in logs
     config.log();
