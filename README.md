@@ -33,6 +33,9 @@ Alternatively, you can use the tiny 10 MB Docker image to deploy the application
 - [x] Viewing of individual mail metadata with a list of extracted reports
 - [x] Show parsing errors for DMARC reports
 
+## Changelog
+Read the [CHANGELOG.md](CHANGELOG.md) file for a list of all released versions and their corresponding changes.
+
 ## Run with Docker
 The latest version is automatically published as Docker image in the GitHub container registry.
 You can download the image using the command `sudo docker pull ghcr.io/cry-inc/dmarc-report-viewer`.
