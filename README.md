@@ -34,9 +34,15 @@ Alternatively, you can use the tiny 10 MB Docker image to deploy the application
 - [x] Show parsing errors for DMARC reports
 
 ## Run with Docker
-The latest version is always published automatically as Docker image in the GitHub container registry.
+The latest version is automatically published as Docker image in the GitHub container registry.
 You can download the image using the command `sudo docker pull ghcr.io/cry-inc/dmarc-report-viewer`.
 
+### Available Docker Tags
+The followng tags are available aside from the versioned tag for all individual releases:
+* `latest` (Latest stable release)
+* `develop` (Last build from master branch)
+
+### Configuration
 List all available configuration parameters with the corresponding environment variables by running this command:
 `sudo docker run --rm ghcr.io/cry-inc/dmarc-report-viewer ./dmarc-report-viewer --help`.
 
@@ -56,7 +62,11 @@ Here is an example:
       -p 8123:8123 \
       ghcr.io/cry-inc/dmarc-report-viewer
 
-### HTTPS
+### IMAP with STARTTLS
+By default the IMAP client will attempt to use a TLS encrypted connection using port 993.
+For STARTTLS set the ENV variables `IMAP_STARTTLS=TRUE` and `IMAP_PORT=143`.
+
+### HTTPS for UI
 By default, the application will start an unencrypted and unsecure HTTP server.
 It is *strongly* recommended use the automatic HTTPS feature that will automatically fetch and renew a certificate from Let's Encrypt.
 This feature uses the TLS-ALPN-01 challenge, which uses the HTTPS port 443 also for the challenge. No port 80 required!
