@@ -1,10 +1,26 @@
+# Temporary build container
 FROM rust:1-alpine as builder
+
+# Get ENV variables for build info from build args
+ARG GITHUB_SHA="n/a"
+ARG GITHUB_REF_NAME="n/a"
+ENV GITHUB_SHA=$GITHUB_SHA
+ENV GITHUB_REF_NAME=$GITHUB_REF_NAME
+
+# Install build dependencies
 RUN apk add --no-cache musl-dev make cmake g++
+
+# Copy source code into container
 WORKDIR /usr/src
 COPY . .
+
+# Build Rust binary
 RUN cargo build --target x86_64-unknown-linux-musl --release
+
+# Remove debug symboles
 RUN strip /usr/src/target/x86_64-unknown-linux-musl/release/dmarc-report-viewer
 
+# Build final minimal image with only the binary
 FROM scratch
 COPY --from=builder /usr/src/target/x86_64-unknown-linux-musl/release/dmarc-report-viewer /
 CMD ["./dmarc-report-viewer"]

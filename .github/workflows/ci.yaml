@@ -50,7 +50,7 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
     - name: Build Docker Image
-      run: docker build . --pull --tag dmarc-report-viewer
+      run: docker build . --build-arg GITHUB_SHA --build-arg GITHUB_REF_NAME --pull --tag dmarc-report-viewer
     - name: Test Docker Image
       run: docker run --rm dmarc-report-viewer ./dmarc-report-viewer --help
     - name: Publish Latest Docker Image
