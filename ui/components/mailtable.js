@@ -3,6 +3,7 @@ import { LitElement, html, css } from "lit";
 export class MailTable extends LitElement {
     static styles = css`
         table {
+            margin-top: 15px;
             width: 100%;
         }
 

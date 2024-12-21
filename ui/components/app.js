@@ -2,13 +2,38 @@ import { LitElement, html, css } from "lit";
 
 export class App extends LitElement {
     static styles = css`
-        :host {
-            font-family: sans-serif;
-            font-size: 16px;
+        a, a:visited {
+            padding-right: 15px;
+            color: rgba(255, 255, 255, 0.5);
+            text-decoration: none;
+        }
+        
+        a:hover {
+            color: rgba(255, 255, 255, 0.75);
         }
 
-        a {
-            color: rgb(14, 117, 212);
+        .navbar {
+            background-color: #343a40;
+            padding: 15px;
+        }
+
+        .navbar a.active {
+            color: white;
+        }
+
+        .navbar a.right {
+            position: relative;
+            float: right;
+        }
+
+        .content {
+            position: fixed;
+            top: 51px;
+            bottom: 0px;
+            left: 0px;
+            right: 0px;
+            padding: 15px;
+            overflow-y: auto;
         }
     `;
 
@@ -81,14 +106,15 @@ export class App extends LitElement {
         } else {
             component = html`<dmarc-dashboard></dmarc-dashboard>`;
         }
+
         return html`
-            <p>
-                <a href="#/dashboard">Dashboard</a> |
-                <a href="#/mails">Mails</a> |
-                <a href="#/reports">Reports</a> |
-                <a href="#/about">About</a>
-            </p>
-            ${component}
+            <div class="navbar">
+                <a class="${this.component === "dashboard" ? "active" : ""}" href="#/dashboard">Dashboard</a>
+                <a class="${this.component === "mails" ? "active" : ""}" href="#/mails">Mails</a>
+                <a class="${this.component === "reports" ? "active" : ""}" href="#/reports">Reports</a>
+                <a class="${this.component === "about" ? "active" : ""} right" href="#/about">About</a>
+            </div>
+            <div class="content">${component}</div>
         `;
     }
 }

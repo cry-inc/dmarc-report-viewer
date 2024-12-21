@@ -4,6 +4,7 @@ export class ReportTable extends LitElement {
     static styles = css`
         table {
             width: 100%;
+            margin-top: 15px;
         }
 
         th {

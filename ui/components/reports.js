@@ -42,12 +42,12 @@ export class Reports extends LitElement {
 
     render() {
         return html`
-            <p>
+            <div>
                 ${this.filtered ?
                     html`Filter active! Go back and <a href="#/reports">Show all Reports</a>` :
                     html`<a href="#/reports?flagged=true">Show only Reports with Problems</a>`
                 }
-            </p>
+            </div>
             <dmarc-report-table .reports="${this.reports}"></dmarc-report-table>
         `;
     }

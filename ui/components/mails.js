@@ -45,14 +45,14 @@ export class Mails extends LitElement {
 
     render() {
         return html`
-            <p>
+            <div>
                 ${this.filtered ?
                     html`Filter active! Go back and <a href="#/mails">Show all Mails</a>` :
                     html`<a href="#/mails?oversized=true">Show Oversized Mails</a> |
                          <a href="#/mails?count=0&oversized=false">Show Mails without XML Files</a> |
                          <a href="#/mails?errors=true">Show Mails with XML Parsing Errors</a>`
             }
-            </p>
+            </div>
             <dmarc-mail-table .mails="${this.mails}"></dmarc-mail-table>
         `;
     }

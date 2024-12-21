@@ -2,6 +2,11 @@ import { LitElement, html, css } from "lit";
 
 export class Report extends LitElement {
     static styles = css`
+        h2 {
+            margin-top: 0px;
+            padding-top: 0px;
+        }
+    
         table {
             width: 100%;
             margin-bottom: 20px;

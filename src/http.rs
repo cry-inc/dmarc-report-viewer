@@ -598,6 +598,11 @@ const STATIC_FILES: &[StaticFile] = &[
         _data: include_bytes!("../ui/index.html"),
     },
     StaticFile {
+        http_path: "/style.css",
+        file_path: "ui/style.css",
+        _data: include_bytes!("../ui/style.css"),
+    },
+    StaticFile {
         http_path: "/chart.js",
         file_path: "ui/chart.umd.4.4.2.min.js",
         _data: include_bytes!("../ui/chart.umd.4.4.2.min.js"),
@@ -662,6 +667,10 @@ const MIME_TYPES: &[MimeType] = &[
     MimeType {
         ext: ".js",
         mime_type: "text/javascript",
+    },
+    MimeType {
+        ext: ".css",
+        mime_type: "text/css",
     },
 ];
 
