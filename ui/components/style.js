@@ -58,4 +58,14 @@ export const globalStyle = css`
     table.vertical th {
         width: 175px;
     }
+
+    h1, h2, h3 {
+        padding: 0px;
+        margin-top: 15px;
+        margin-bottom: 15px;
+    }
+
+    h1 {
+        margin-top: 0px;
+    }
 `;
