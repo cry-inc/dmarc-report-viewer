@@ -41,13 +41,13 @@ export class MailTable extends LitElement {
         }
     }
 
-    prepareParsingErrorCount(mail) {
+    prepareParsingError(mail) {
         if (mail.oversized) {
             return html`<span class="noproblem">n/a</span>`;
         } else if (mail.parsing_errors > 0) {
-            return html`<span class="badge badge-negative">${mail.parsing_errors}</span>`;
+            return html`<span class="badge badge-negative">Yes</span>`;
         } else {
-            return html`<span class="noproblem">${mail.parsing_errors}</span>`;
+            return html`<span class="noproblem">No</span>`;
         }
     }
 
@@ -59,8 +59,8 @@ export class MailTable extends LitElement {
                     <th>Sender</th>
                     <th>Date</th>
                     <th class="help" title="Size of E-Mail in Bytes">Size</th>
-                    <th class="help" title="XML File Count">XMLs</th>
-                    <th class="help" title="Number of XML DMARC Parsing Errors">Errors</th>
+                    <th class="help" title="Number of XML files in the Mail">XMLs</th>
+                    <th class="help" title="Did the Mail cause DMARC Parsing Errors?">Errors</th>
                 </tr>
                 ${this.mails.length !== 0 ? this.mails.map((mail) =>
                     html`<tr> 
@@ -69,7 +69,7 @@ export class MailTable extends LitElement {
                         <td>${new Date(mail.date * 1000).toLocaleString()}</td>
                         <td>${this.prepareSize(mail)}</td>
                         <td>${this.prepareXmlFileCount(mail)}</td>
-                        <td>${this.prepareParsingErrorCount(mail)}</td>
+                        <td>${this.prepareParsingError(mail)}</td>
                     </tr>`
                 ) : html`<tr>
                         <td colspan="4">No mails found.</td>
