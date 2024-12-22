@@ -2,25 +2,7 @@ import { LitElement, html, css } from "lit";
 import { globalStyle } from "./style.js";
 
 export class Report extends LitElement {
-    static styles = [globalStyle, css`
-        table {
-            width: 100%;
-            margin-bottom: 20px;
-        }
-    
-        th {
-            text-align: left;
-            background-color: #efefef;
-            width: 200px;
-        }
-
-        td, th {
-            padding-left: 10px;
-            padding-right: 10px;
-            padding-top: 3px;
-            padding-bottom: 3px;
-        }
-    `];
+    static styles = [globalStyle];
 
     static get properties() {
         return {
@@ -86,7 +68,7 @@ export class Report extends LitElement {
                 <a href="/reports/${this.hash}/xml" target="_blank">Show XML</a> |
                 <a href="/reports/${this.hash}/json" target="_blank">Show JSON</a>
             </p>
-            <table>
+            <table class="vertical">
                 <tr>
                     <th>Id</th>
                     <td>${this.report.report_metadata.report_id}</td>
@@ -157,7 +139,7 @@ export class Report extends LitElement {
             </table>
             ${this.report.record.map((record) => html`
                 <h2>Record</h2>
-                <table>
+                <table class="vertical">
                     <tr>
                         <th>Source IP</th>
                         <td>${record.row.source_ip}</td>

@@ -2,28 +2,7 @@ import { LitElement, html, css } from "lit";
 import { globalStyle } from "./style.js";
 
 export class ReportTable extends LitElement {
-    static styles = [globalStyle, css`
-        table {
-            width: 100%;
-            margin-top: 15px;
-        }
-
-        th {
-            text-align: left;
-            background-color: #efefef;
-        }
-
-        td, th {
-            padding-left: 10px;
-            padding-right: 10px;
-            padding-top: 3px;
-            padding-bottom: 3px;
-        }
-
-        tr:hover {
-            background-color: #f4f4f4;
-        }
-    `];
+    static styles = [globalStyle];
 
     static properties = {
         reports: { type: Array },

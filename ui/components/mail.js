@@ -3,24 +3,6 @@ import { globalStyle } from "./style.js";
 
 export class Mail extends LitElement {
     static styles = [globalStyle, css`
-        table {
-            width: 100%;
-            margin-bottom: 20px;
-        }
-    
-        th {
-            text-align: left;
-            background-color: #efefef;
-            width: 200px;
-        }
-
-        td, th {
-            padding-left: 10px;
-            padding-right: 10px;
-            padding-top: 3px;
-            padding-bottom: 3px;
-        }
-
         .error pre {
             border: 1px solid #e0e0e0;
             border-radius: 3px;
@@ -72,7 +54,7 @@ export class Mail extends LitElement {
 
         return html`
             <h1>Mail Details</h1>
-            <table>
+            <table class="vertical">
                 <tr>
                     <th>UID</th>
                     <td>${this.mail.uid}</td>

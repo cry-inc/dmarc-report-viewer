@@ -33,4 +33,29 @@ export const globalStyle = css`
     .help {
         cursor: help;
     }
+
+    table {
+        width: 100%;
+        margin-top: 15px;
+    }
+
+    th {
+        text-align: left;
+        background-color: #efefef;
+    }
+
+    td, th {
+        padding-left: 15px;
+        padding-right: 15px;
+        padding-top: 3px;
+        padding-bottom: 3px;
+    }
+
+    table:not(.vertical) tr:hover {
+        background-color: #f4f4f4;
+    }
+
+    table.vertical th {
+        width: 175px;
+    }
 `;
