@@ -30,18 +30,6 @@ export class Mail extends LitElement {
             padding-top: 30px;
         }
 
-        .noproblem {
-            color: #ccc;
-        }
-
-        .problem {
-            border-radius: 3px;
-            padding-left: 4px;
-            padding-right: 4px;
-            color: white;
-            background-color: #f00;
-        }
-
         .error pre {
             border: 1px solid #e0e0e0;
             border-radius: 3px;
@@ -80,7 +68,7 @@ export class Mail extends LitElement {
 
     renderOversized(oversized) {
         if (oversized) {
-            return html`<span class="problem">Yes</span>`;
+            return html`<span class="badge badge-negative">Yes</span>`;
         } else {
             return html`<span class="noproblem">No</span>`;
         }

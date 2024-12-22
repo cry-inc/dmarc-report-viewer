@@ -23,18 +23,6 @@ export class MailTable extends LitElement {
         tr:hover {
             background-color: #f4f4f4;
         }
-
-        .problem {
-            border-radius: 3px;
-            padding-left: 4px;
-            padding-right: 4px;
-            color: white;
-            background-color: #f00;
-        }
-            
-        .noproblem {
-            color: #ccc;
-        }
     `];
 
     static properties = {
@@ -58,7 +46,7 @@ export class MailTable extends LitElement {
 
     prepareSize(mail) {
         if (mail.oversized) {
-            return html`<span class="problem">${mail.size}</span>`;
+            return html`<span class="badge badge-negative">${mail.size}</span>`;
         } else {
             return mail.size;
         }
@@ -68,7 +56,7 @@ export class MailTable extends LitElement {
         if (mail.oversized) {
             return html`<span class="noproblem">n/a</span>`;
         } else if (mail.xml_files < 1) {
-            return html`<span class="problem">${mail.xml_files}</span>`;
+            return html`<span class="badge badge-negative>${mail.xml_files}</span>`;
         } else {
             return html`<span class="noproblem">${mail.xml_files}</span>`;
         }
@@ -78,7 +66,7 @@ export class MailTable extends LitElement {
         if (mail.oversized) {
             return html`<span class="noproblem">n/a</span>`;
         } else if (mail.parsing_errors > 0) {
-            return html`<span class="problem">${mail.parsing_errors}</span>`;
+            return html`<span class="badge badge-negative">${mail.parsing_errors}</span>`;
         } else {
             return html`<span class="noproblem">${mail.parsing_errors}</span>`;
         }
@@ -91,9 +79,9 @@ export class MailTable extends LitElement {
                     <th>Subject</th>
                     <th>Sender</th>
                     <th>Date</th>
-                    <th>Size</th>
-                    <th style="cursor:help" title="XML File Count">XMLs</th>
-                    <th style="cursor:help" title="Number of XML DMARC Parsing Errors">Errors</th>
+                    <th class="help" title="Size of E-Mail in Bytes">Size</th>
+                    <th class="help" title="XML File Count">XMLs</th>
+                    <th class="help" title="Number of XML DMARC Parsing Errors">Errors</th>
                 </tr>
                 ${this.mails.length !== 0 ? this.mails.map((mail) =>
                     html`<tr> 

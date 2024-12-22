@@ -25,26 +25,6 @@ export class Report extends LitElement {
             padding-top: 3px;
             padding-bottom: 3px;
         }
-
-        .na {
-            color: #ccc;
-        }
-
-        .result {
-            border-radius: 3px;
-            padding-left: 4px;
-            padding-right: 4px;
-            background-color: #888;
-            color: white;
-        }
-
-        .result.negative {
-            background-color: #f00;
-        }
-
-        .result.positive {
-            background-color: #090;
-        }
     `];
 
     static get properties() {
@@ -75,7 +55,7 @@ export class Report extends LitElement {
         if (value !== null && value !== undefined) {
             return html`${value}`;
         } else {
-            return html`<span class="na">n/a</span>`;
+            return html`<span class="noproblem">n/a</span>`;
         }
     }
 
@@ -84,13 +64,13 @@ export class Report extends LitElement {
             result === "permerror" || result === "softfail" ||
             result === "quarantine" || result === "reject"
         ) {
-            return html`<span class="result negative">${result}</span>`;
+            return html`<span class="badge badge-negative">${result}</span>`;
         } else if (result === "pass") {
-            return html`<span class="result positive">${result}</span>`;
+            return html`<span class="badge badge-positive">${result}</span>`;
         } else if (result !== null || result !== undefined) {
-            return html`<span class="na">n/a</span>`;
+            return html`<span class="noproblem">n/a</span>`;
         } else {
-            return html`<span class="result neutral">${result}</span>`;
+            return html`<span class="badge">${result}</span>`;
         }
     }
 

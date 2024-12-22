@@ -23,22 +23,6 @@ export class ReportTable extends LitElement {
         tr:hover {
             background-color: #f4f4f4;
         }
-
-        a {
-            color: rgb(14, 117, 212);
-        }
-
-        .noproblem {
-            color: #ccc;
-        }
-
-        .problem {
-            border-radius: 3px;
-            padding-left: 4px;
-            padding-right: 4px;
-            color: white;
-            background-color: #f00;
-        }
     `];
 
     static properties = {
@@ -52,7 +36,7 @@ export class ReportTable extends LitElement {
 
     renderProblemsBadge(problems) {
         if (problems) {
-            return html`<span class="problem">Yes</span>`;
+            return html`<span class="badge badge-negative">Yes</span>`;
         } else {
             return html`<span class="noproblem">No</span>`;
         }
@@ -65,7 +49,7 @@ export class ReportTable extends LitElement {
                     <th>ID</th>
                     <th>Organization</th>
                     <th>Domain</th>
-                    <th style="cursor:help" title="Reports that indicate possible problems">Problems</th>
+                    <th class="help" title="Reports that indicate possible problems">Problems</th>
                     <th>Records</th>
                     <th>Begin</th>
                     <th>End</th>
