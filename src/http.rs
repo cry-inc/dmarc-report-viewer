@@ -598,11 +598,6 @@ const STATIC_FILES: &[StaticFile] = &[
         _data: include_bytes!("../ui/index.html"),
     },
     StaticFile {
-        http_path: "/style.css",
-        file_path: "ui/style.css",
-        _data: include_bytes!("../ui/style.css"),
-    },
-    StaticFile {
         http_path: "/chart.js",
         file_path: "ui/chart.umd.4.4.2.min.js",
         _data: include_bytes!("../ui/chart.umd.4.4.2.min.js"),
@@ -611,6 +606,11 @@ const STATIC_FILES: &[StaticFile] = &[
         http_path: "/lit.js",
         file_path: "ui/lit-core.3.1.4.min.js",
         _data: include_bytes!("../ui/lit-core.3.1.4.min.js"),
+    },
+    StaticFile {
+        http_path: "/components/style.js",
+        file_path: "ui/components/style.js",
+        _data: include_bytes!("../ui/components/style.js"),
     },
     StaticFile {
         http_path: "/components/app.js",

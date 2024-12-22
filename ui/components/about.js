@@ -1,6 +1,9 @@
 import { LitElement, html } from "lit";
+import { globalStyle } from "./style.js";
 
 export class About extends LitElement {
+    static styles = [globalStyle];
+
     static properties = {
         version: { type: Object },
         hash: { type: String },

@@ -1,7 +1,8 @@
 import { LitElement, html, css } from "lit";
+import { globalStyle } from "./style.js";
 
 export class App extends LitElement {
-    static styles = css`
+    static styles = [globalStyle, css`
         a, a:visited {
             padding-right: 15px;
             color: rgba(255, 255, 255, 0.5);
@@ -35,7 +36,7 @@ export class App extends LitElement {
             padding: 15px;
             overflow-y: auto;
         }
-    `;
+    `];
 
     static get properties() {
         return {

@@ -1,7 +1,8 @@
 import { LitElement, html, css } from "lit";
+import { globalStyle } from "./style.js";
 
 export class MailTable extends LitElement {
-    static styles = css`
+    static styles = [globalStyle, css`
         table {
             margin-top: 15px;
             width: 100%;
@@ -33,7 +34,8 @@ export class MailTable extends LitElement {
             
         .noproblem {
             color: #ccc;
-        }`;
+        }
+    `];
 
     static properties = {
         mails: { type: Array },

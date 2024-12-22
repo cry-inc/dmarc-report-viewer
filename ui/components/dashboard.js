@@ -1,7 +1,8 @@
 import { LitElement, html, css } from "lit";
+import { globalStyle } from "./style.js";
 
 export class Dashboard extends LitElement {
-    static styles = css`
+    static styles = [globalStyle, css`
         .container {
             display: grid;
             column-gap: 10px;
@@ -29,7 +30,7 @@ export class Dashboard extends LitElement {
             margin-left: 15px;
             margin-right: 15px;
         }
-    `;
+    `];
 
     static properties = {
         mails: { type: Number },

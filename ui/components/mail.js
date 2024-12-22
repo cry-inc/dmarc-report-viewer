@@ -1,7 +1,8 @@
 import { LitElement, html, css } from "lit";
+import { globalStyle } from "./style.js";
 
 export class Mail extends LitElement {
-    static styles = css`
+    static styles = [globalStyle, css`
         h2 {
             margin-top: 0px;
             padding-top: 0px;
@@ -47,7 +48,7 @@ export class Mail extends LitElement {
             background-color: #efefef;
             padding: 5px;
         }
-    `;
+    `];
 
     static get properties() {
         return {

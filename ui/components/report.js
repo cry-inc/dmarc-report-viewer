@@ -1,7 +1,8 @@
 import { LitElement, html, css } from "lit";
+import { globalStyle } from "./style.js";
 
 export class Report extends LitElement {
-    static styles = css`
+    static styles = [globalStyle, css`
         h2 {
             margin-top: 0px;
             padding-top: 0px;
@@ -44,7 +45,7 @@ export class Report extends LitElement {
         .result.positive {
             background-color: #090;
         }
-    `;
+    `];
 
     static get properties() {
         return {
