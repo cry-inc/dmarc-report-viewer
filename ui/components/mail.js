@@ -3,11 +3,6 @@ import { globalStyle } from "./style.js";
 
 export class Mail extends LitElement {
     static styles = [globalStyle, css`
-        h2 {
-            margin-top: 0px;
-            padding-top: 0px;
-        }
-    
         table {
             width: 100%;
             margin-bottom: 20px;
@@ -24,10 +19,6 @@ export class Mail extends LitElement {
             padding-right: 10px;
             padding-top: 3px;
             padding-bottom: 3px;
-        }
-
-        h3 {
-            padding-top: 30px;
         }
 
         .error pre {
@@ -80,7 +71,7 @@ export class Mail extends LitElement {
         }
 
         return html`
-            <h2>Mail</h2>
+            <h1>Mail Details</h1>
             <table>
                 <tr>
                     <th>UID</th>
@@ -88,7 +79,7 @@ export class Mail extends LitElement {
                 </tr>
                 <tr>
                     <th>Size</th>
-                    <td>${this.mail.size} bytes</td>
+                    <td>${this.mail.size} Bytes</td>
                 </tr>
                 <tr>
                     <th>Oversized</th>
@@ -116,7 +107,7 @@ export class Mail extends LitElement {
                 </tr>
             </table>
 
-            <h3>Reports extracted from this Mail</h3>
+            <h2>Reports extracted from this Mail</h2>
             <dmarc-report-table .reports="${this.reports}"></dmarc-report-table>
 
             ${this.errors.length > 0 ?

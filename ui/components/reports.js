@@ -45,6 +45,7 @@ export class Reports extends LitElement {
 
     render() {
         return html`
+            <h1>Reports</h1>
             <div>
                 ${this.filtered ?
                     html`Filter active! Go back and <a href="#/reports">Show all Reports</a>` :

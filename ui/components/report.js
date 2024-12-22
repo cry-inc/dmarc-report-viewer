@@ -3,11 +3,6 @@ import { globalStyle } from "./style.js";
 
 export class Report extends LitElement {
     static styles = [globalStyle, css`
-        h2 {
-            margin-top: 0px;
-            padding-top: 0px;
-        }
-    
         table {
             width: 100%;
             margin-bottom: 20px;
@@ -85,7 +80,7 @@ export class Report extends LitElement {
         }
 
         return html`
-            <h2>Report</h2>
+            <h1>Report Details</h1>
             <p>
                 <a href="#/mails/${this.uid}">Show Mail</a> |
                 <a href="/reports/${this.hash}/xml" target="_blank">Show XML</a> |
@@ -161,7 +156,7 @@ export class Report extends LitElement {
                 </tr>
             </table>
             ${this.report.record.map((record) => html`
-                <h3>Record</h3>
+                <h2>Record</h2>
                 <table>
                     <tr>
                         <th>Source IP</th>

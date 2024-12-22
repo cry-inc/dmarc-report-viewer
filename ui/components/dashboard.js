@@ -92,6 +92,7 @@ export class Dashboard extends LitElement {
 
     render() {
         return html`
+            <h1>Dashboard</h1>
             <div class="module stats">
                 <span>Mails: <b>${this.mails}</b></span>
                 <span>XML Files: <b>${this.xmlFiles}</b></span>

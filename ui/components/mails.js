@@ -48,6 +48,7 @@ export class Mails extends LitElement {
 
     render() {
         return html`
+            <h1>Mails</h1>
             <div>
                 ${this.filtered ?
                     html`Filter active! Go back and <a href="#/mails">Show all Mails</a>` :
