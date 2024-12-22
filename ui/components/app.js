@@ -8,26 +8,26 @@ export class App extends LitElement {
             color: rgba(255, 255, 255, 0.5);
             text-decoration: none;
         }
-        
+
         a:hover {
             color: rgba(255, 255, 255, 0.75);
         }
 
-        .navbar {
-            background-color: #343a40;
-            padding: 15px;
-        }
-
-        .navbar a.active {
+        a.active {
             color: white;
         }
 
-        .navbar a.right {
+        a.right {
             position: relative;
             float: right;
         }
 
-        .content {
+        nav {
+            background-color: #343a40;
+            padding: 15px;
+        }
+
+        main {
             position: fixed;
             top: 51px;
             bottom: 0px;
@@ -109,13 +109,13 @@ export class App extends LitElement {
         }
 
         return html`
-            <div class="navbar">
+            <nav>
                 <a class="${this.component === "dashboard" ? "active" : ""}" href="#/dashboard">Dashboard</a>
                 <a class="${this.component === "mails" ? "active" : ""}" href="#/mails">Mails</a>
                 <a class="${this.component === "reports" ? "active" : ""}" href="#/reports">Reports</a>
                 <a class="${this.component === "about" ? "active" : ""} right" href="#/about">About</a>
-            </div>
-            <div class="content">${component}</div>
+            </nav>
+            <main>${component}</main>
         `;
     }
 }
