@@ -68,100 +68,106 @@ export class Report extends LitElement {
                 <a class="button" href="/reports/${this.hash}/xml" target="_blank">Open XML</a>
                 <a class="button" href="/reports/${this.hash}/json" target="_blank">Open JSON</a>
             </p>
-            <table class="vertical">
+            <table>
                 <tr>
-                    <th>Id</th>
+                    <th colspan="2">Report Header</td>
+                </tr>
+                <tr>
+                    <td class="name">Id</td>
                     <td>${this.report.report_metadata.report_id}</td>
                 </tr>
                 <tr>
-                    <th>Org</th>
+                    <td class="name">Org</td>
                     <td>${this.report.report_metadata.org_name}</td>
                 </tr>
                 <tr>
-                    <th>Records</th>
+                    <td class="name">Records</td>
                     <td>${this.report.record.length}</td>
                 </tr>
                 <tr>
-                    <th>Date Range Begin</th>
+                    <td class="name">Date Range Begin</td>
                     <td>${new Date(this.report.report_metadata.date_range.begin * 1000).toLocaleString()}</td>
                 </tr>
                 <tr>
-                    <th>Date Range End</th>
+                    <td class="name">Date Range End</td>
                     <td>${new Date(this.report.report_metadata.date_range.end * 1000).toLocaleString()}</td>
                 </tr>
                 <tr>
-                    <th>E-Mail</th>
+                    <td class="name">E-Mail</td>
                     <td>${this.report.report_metadata.email}</td>
                 </tr>
                 <tr>
-                    <th>Extra Contact Info</th>
+                    <td class="name">Extra Contact Info</td>
                     <td>${this.renderOptional(this.report.report_metadata.extra_contact_info)}</td>
                 </tr>
                 <tr>
-                    <th>Errors</th>
+                    <td class="name">Errors</td>
                     <td>${this.renderOptional(errors)}</td>
                 </tr>
                 <tr>
-                    <th>Version</th>
+                    <td class="name">Version</td>
                     <td>${this.renderOptional(this.report.version)}</td>
                 </tr>
                 <tr>
-                    <th colspan="2">Published Policy</th>
+                    <th class="name" colspan="2">Published Policy</th>
                 </tr>
                 <tr>
-                    <th>Domain</th>
+                    <td class="name">Domain</td>
                     <td>${this.report.policy_published.domain}</td>
                 </tr>
                 <tr>
-                    <th>adkim</th>
+                    <td class="name">adkim</td>
                     <td>${this.renderOptional(this.report.policy_published.adkim)}</td>
                 </tr>
                 <tr>
-                    <th>aspf</th>
+                    <td class="name">aspf</td>
                     <td>${this.renderOptional(this.report.policy_published.aspf)}</td>
                 </tr>
                 <tr>
-                    <th>p</th>
+                    <td class="name">p</td>
                     <td>${this.report.policy_published.p}</td>
                 </tr>
                 <tr>
-                    <th>sp</th>
+                    <td class="name">sp</td>
                     <td>${this.renderOptional(this.report.policy_published.sp)}</td>
                 </tr>
                 <tr>
-                    <th>pct</th>
+                    <td class="name">pct</td>
                     <td>${this.renderOptional(this.report.policy_published.pct)}</td>
                 </tr>
                 <tr>
-                    <th>fo</th>
+                    <td class="name">fo</td>
                     <td>${this.renderOptional(this.report.policy_published.fo)}</td>
                 </tr>
             </table>
             ${this.report.record.map((record) => html`
                 <h2>Record</h2>
-                <table class="vertical">
+                <table>
                     <tr>
-                        <th>Source IP</th>
+                        <th colspan="2">Record Header</td>
+                    </tr>
+                    <tr>
+                        <td class="name">Source IP</td>
                         <td>${record.row.source_ip}</td>
                     </tr>
                     <tr>
-                        <th>Count</th>
+                        <td class="name">Count</td>
                         <td>${record.row.count}</td>
                     </tr>
                     <tr>
-                        <th>Policy Disposition</th>
+                        <td class="name">Policy Disposition</td>
                         <td>${this.renderResultBadge(record.row.policy_evaluated.disposition)}</td>
                     </tr>
                     <tr>
-                        <th>Policy DKIM</th>
+                        <td class="name">Policy DKIM</td>
                         <td>${this.renderResultBadge(record.row.policy_evaluated.dkim)}</td>
                     </tr>
                     <tr>
-                        <th>Policy SPF</th>
+                        <td class="name">Policy SPF</td>
                         <td>${this.renderResultBadge(record.row.policy_evaluated.spf)}</td>
                     </tr>
                     <tr>
-                        <th>Policy Reason</th>
+                        <td class="name">Policy Reason</td>
                         <td>
                             ${record.row.policy_evaluated.reason ?
                                 record.row.policy_evaluated.reason.map(
@@ -171,53 +177,53 @@ export class Report extends LitElement {
                         </td>
                     </tr>
                     <tr>
-                        <th>Header From</th>
+                        <td class="name">Header From</td>
                         <td>${record.identifiers.header_from}</td>
                     </tr>
                     <tr>
-                        <th>Envelope From</th>
+                        <td class="name">Envelope From</td>
                         <td>${this.renderOptional(record.identifiers.envelope_from)}</td>
                     </tr>
                     <tr>
-                        <th>Envelope To</th>
+                        <td class="name">Envelope To</td>
                         <td>${this.renderOptional(record.identifiers.envelope_to)}</td>
                     </tr>
                     ${record.auth_results.spf.map((result) => html`
                         <tr>
-                            <th colspan="2">SPF Auth Result</th>
+                            <th colspan="2">SPF Auth Result</td>
                         </tr>
                         <tr>
-                            <th>Domain</th>
+                            <td class="name">Domain</td>
                             <td>${result.domain}</td>
                         </tr>
                         <tr>
-                            <th>Scope</th>
+                            <td class="name">Scope</td>
                             <td>${this.renderOptional(result.scope)}</td>
                         </tr>
                         <tr>
-                            <th>Result</th>
+                            <td class="name">Result</td>
                             <td>${this.renderResultBadge(result.result)}</td>
                         </tr>
                     `)}
                     ${(record.auth_results.dkim ?
                         record.auth_results.dkim : []).map((result) => html`
                         <tr>
-                            <th colspan="2">DKIM Auth Result</th>
+                            <th colspan="2">DKIM Auth Result</td>
                         </tr>
                         <tr>
-                            <th>Domain</th>
+                            <td class="name">Domain</td>
                             <td>${result.domain}</td>
                         </tr>
                         <tr>
-                            <th>Scope</th>
+                            <td class="name">Scope</td>
                             <td>${this.renderOptional(result.selector)}</td>
                         </tr>
                         <tr>
-                            <th>Result</th>
+                            <td class="name">Result</td>
                             <td>${this.renderResultBadge(result.result)}</td>
                         </tr>
                         <tr>
-                            <th>Human Result</th>
+                            <td class="name">Human Result</td>
                             <td>${this.renderOptional(result.human_result)}</td>
                         </tr>
                     `)}

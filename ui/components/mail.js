@@ -54,29 +54,29 @@ export class Mail extends LitElement {
 
         return html`
             <h1>Mail Details</h1>
-            <table class="vertical">
+            <table>
                 <tr>
-                    <th>UID</th>
+                    <td class="name">UID</td>
                     <td>${this.mail.uid}</td>
                 </tr>
                 <tr>
-                    <th>Size</th>
+                    <td class="name">Size</td>
                     <td>${this.mail.size} Bytes</td>
                 </tr>
                 <tr>
-                    <th>Oversized</th>
+                    <td class="name">Oversized</td>
                     <td>${this.renderOversized(this.mail.oversized)}</td>
                 </tr>
                 <tr>
-                    <th>Date</th>
+                    <td class="name">Date</td>
                     <td>${new Date(this.mail.date * 1000).toLocaleString()}</td>
                 </tr>
                 <tr>
-                    <th>Subject</th>
+                    <td class="name">Subject</td>
                     <td>${this.mail.subject}</td>
                 </tr>
                 <tr>
-                    <th>Sender</th>
+                    <td class="name">Sender</td>
                     <td>
                         <a href="#/mails?sender=${encodeURIComponent(this.mail.sender)}">
                             ${this.mail.sender}
@@ -84,7 +84,7 @@ export class Mail extends LitElement {
                     </td>
                 </tr>
                 <tr>
-                    <th>Recipient</th>
+                    <td class="name">Recipient</td>
                     <td>${this.mail.to}</td>
                 </tr>
             </table>

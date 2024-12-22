@@ -37,26 +37,37 @@ export const globalStyle = css`
     table {
         width: 100%;
         margin-top: 15px;
+        border-collapse: collapse;
     }
 
     th {
+        color: #495057;
+        background-color: #e9ecef;
+        border-bottom: 2px solid #dee2e6;
         text-align: left;
-        background-color: #efefef;
+        font-weight: 700;
+        font-size: 17px;
+    }
+
+    td {
+        border-top: 1px solid #dee2e6;
     }
 
     td, th {
         padding-left: 15px;
         padding-right: 15px;
-        padding-top: 3px;
-        padding-bottom: 3px;
+        padding-top: 5px;
+        padding-bottom: 5px;
     }
 
-    table:not(.vertical) tr:hover {
+    tr:hover {
         background-color: #f4f4f4;
     }
 
-    table.vertical th {
+    td.name {
+        font-weight: 700;
         width: 175px;
+        color: rgb(73, 80, 87);
     }
 
     h1, h2, h3 {
