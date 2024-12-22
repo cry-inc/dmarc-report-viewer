@@ -32,7 +32,7 @@ export class Report extends LitElement {
         if (value !== null && value !== undefined) {
             return html`${value}`;
         } else {
-            return html`<span class="noproblem">n/a</span>`;
+            return html`<span class="faded">n/a</span>`;
         }
     }
 
@@ -45,7 +45,7 @@ export class Report extends LitElement {
         } else if (result === "pass") {
             return html`<span class="badge badge-positive">${result}</span>`;
         } else if (result !== null || result !== undefined) {
-            return html`<span class="noproblem">n/a</span>`;
+            return html`<span class="faded">n/a</span>`;
         } else {
             return html`<span class="badge">${result}</span>`;
         }

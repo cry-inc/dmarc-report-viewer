@@ -17,7 +17,7 @@ export class ReportTable extends LitElement {
         if (problems) {
             return html`<span class="badge badge-negative">Yes</span>`;
         } else {
-            return html`<span class="noproblem">No</span>`;
+            return html`<span class="faded">No</span>`;
         }
     }
 

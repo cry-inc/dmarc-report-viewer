@@ -26,7 +26,7 @@ export const globalStyle = css`
         background-color: rgb(25, 135, 84);
     }
 
-    .noproblem {
+    .faded {
         color: #ccc;
     }
 
