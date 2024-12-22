@@ -64,9 +64,9 @@ export class Report extends LitElement {
         return html`
             <h1>Report Details</h1>
             <p>
-                <a href="#/mails/${this.uid}">Show Mail</a> |
-                <a href="/reports/${this.hash}/xml" target="_blank">Show XML</a> |
-                <a href="/reports/${this.hash}/json" target="_blank">Show JSON</a>
+                <a class="button" href="#/mails/${this.uid}">Show Mail</a>
+                <a class="button" href="/reports/${this.hash}/xml" target="_blank">Open XML</a>
+                <a class="button" href="/reports/${this.hash}/json" target="_blank">Open JSON</a>
             </p>
             <table class="vertical">
                 <tr>

@@ -19,11 +19,11 @@ export const globalStyle = css`
     }
 
     .badge-negative {
-        background-color: #f00;
+        background-color: rgb(220, 53, 69);
     }
 
     .badge-positive {
-        background-color: #090;
+        background-color: rgb(25, 135, 84);
     }
 
     .noproblem {
@@ -67,5 +67,25 @@ export const globalStyle = css`
 
     h1 {
         margin-top: 0px;
+    }
+
+    .button {
+        display: inline-block;
+        padding: 5px;
+        padding-left: 8px;
+        padding-right: 8px;
+        margin-right: 10px;
+        color: white;
+        border-radius: 3px;
+        background-color: rgb(108, 117, 125);
+    }
+
+    .button:hover {
+        color: white;
+        background-color: rgb(90, 98, 104);
+    }
+
+    .ml {
+        margin-left: 10px;
     }
 `;

@@ -48,8 +48,8 @@ export class Reports extends LitElement {
             <h1>Reports</h1>
             <div>
                 ${this.filtered ?
-                    html`Filter active! Go back and <a href="#/reports">Show all Reports</a>` :
-                    html`<a href="#/reports?flagged=true">Show only Reports with Problems</a>`
+                    html`Filter active! <a class="ml button" href="#/reports">Show all Reports</a>` :
+                    html`Filters: <a class="ml button" href="#/reports?flagged=true">Reports with Problems</a>`
                 }
             </div>
             <dmarc-report-table .reports="${this.reports}"></dmarc-report-table>
