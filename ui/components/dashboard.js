@@ -89,6 +89,17 @@ export class Dashboard extends LitElement {
         let colors = undefined;
         if (colorMap !== undefined && colorMap !== null) {
             colors = labels.map(l => colorMap[l]);
+        } else {
+            colors = [
+                "rgb(13, 202, 240)",
+                "rgb(253, 126, 20)",
+                "rgb(25, 135, 84)",
+                "rgb(220, 53, 69)",
+                "rgb(13, 110, 253)",
+                "rgb(255, 193, 7)",
+                "rgb(108, 117, 125)",
+                "rgb(132, 32, 41)"
+            ];
         }
 
         new Chart(element, {
@@ -123,13 +134,13 @@ export class Dashboard extends LitElement {
 
             <div class="container">
                 <div class="module" style="grid-column: 1; grid-row: 1;">
-                    <h2>Domains</h2>
-                    <canvas class="domains_chart"></canvas>
+                    <h2>Organizations</h2>
+                    <canvas class="orgs_chart"></canvas>
                 </div>
 
                 <div class="module" style="grid-column: 2; grid-row: 1;">
-                    <h2>Organizations</h2>
-                    <canvas class="orgs_chart"></canvas>
+                    <h2>Domains</h2>
+                    <canvas class="domains_chart"></canvas>
                 </div>
 
                 <div class="module" style="grid-column: 3; grid-row: 1;">
