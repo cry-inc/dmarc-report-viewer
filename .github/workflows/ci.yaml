@@ -2,7 +2,7 @@ name: CI
 on: [push, pull_request]
 jobs:
   linux_x86_64:
-    name: Linux
+    name: Linux (x86-64)
     runs-on: ubuntu-24.04
     steps:
     - name: Checkout
@@ -24,7 +24,7 @@ jobs:
         name: x86_64-linux-gnu
         path: target/release/dmarc-report-viewer
   windows_x86_64:
-    name: Windows
+    name: Windows (x86-64)
     runs-on: windows-latest
     steps:
     - name: Checkout
@@ -43,6 +43,44 @@ jobs:
       with:
         name: x86_64-windows
         path: target/release/dmarc-report-viewer.exe
+  mac_x86_64:
+    name: Mac (x86-64)
+    runs-on: macos-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    - name: Update Rust
+      run: rustup toolchain install stable --profile minimal --no-self-update
+    - name: Install x64 target
+      run: rustup target add x86_64-apple-darwin
+    - name: Enable Rust Caching
+      uses: Swatinem/rust-cache@v2
+    - name: Release Build
+      run: cargo build --release --all --target x86_64-apple-darwin
+    - name: Execute Tests
+      run: cargo test --release --all --target x86_64-apple-darwin
+    - uses: actions/upload-artifact@v4
+      with:
+        name: x86_64-mac
+        path: target/x86_64-apple-darwin/release/dmarc-report-viewer
+  mac_aarch64:
+    name: Mac (aarch64)
+    runs-on: macos-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    - name: Update Rust
+      run: rustup toolchain install stable --profile minimal --no-self-update
+    - name: Enable Rust Caching
+      uses: Swatinem/rust-cache@v2
+    - name: Release Build
+      run: cargo build --release --all --target aarch64-apple-darwin
+    - name: Execute Tests
+      run: cargo test --release --all --target aarch64-apple-darwin
+    - uses: actions/upload-artifact@v4
+      with:
+        name: aarch64-mac
+        path: target/aarch64-apple-darwin/release/dmarc-report-viewer
   docker:
     name: Docker
     runs-on: ubuntu-24.04
@@ -85,7 +123,7 @@ jobs:
   release:
     name: Release
     if: startsWith(github.ref, 'refs/tags/')
-    needs: [linux_x86_64, windows_x86_64, docker]
+    needs: [linux_x86_64, windows_x86_64, mac_x86_64, mac_aarch64, docker]
     runs-on: ubuntu-24.04
     permissions:
       contents: write
@@ -94,24 +132,24 @@ jobs:
       uses: actions/checkout@v4
     - name: Download Artifacts
       uses: actions/download-artifact@v4
-    - name: Display Downloaded Files
-      run: ls -R
     - name: Pack Artifacts for Release
       run: |
         zip -r x86_64-windows.zip x86_64-windows
         zip -r x86_64-linux-gnu.zip x86_64-linux-gnu
         zip -r x86_64-linux-musl.zip x86_64-linux-musl
+        zip -r x86_64-mac.zip x86_64-mac
+        zip -r aarch64-mac.zip aarch64-mac
         mv x86_64-linux-docker/dmarc-report-viewer.tar x86_64-linux-docker.tar
-    - name: Display Packed Release Artifacts
-      run: ls -R
     - name: Publish Release
       uses: softprops/action-gh-release@v2
       with:
-        body: Release created automatically from git tag ${{github.ref_name}}. See CHANGELOG.md for more details.
+        body: Release created automatically from git tag ${{github.ref_name}}, see CHANGELOG.md for more details.
         files: |
           CHANGELOG.md
           LICENSE
           x86_64-windows.zip
           x86_64-linux-gnu.zip
           x86_64-linux-musl.zip
+          x86_64-mac.zip
+          aarch64-mac.zip
           x86_64-linux-docker.tar

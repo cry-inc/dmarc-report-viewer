@@ -10,8 +10,10 @@ Ideal for smaller selfhosted mailservers.
 The application is a single fully statically linked executable written in Rust.
 It combines a DMARC report parser with an IMAP client and an HTTP server.
 The HTTP server serves a web UI for easy access and filtering of the reports.
-You can run the executable directly on any Linux, Windows or MacOS system.
+
+You can run the precompiled executable directly on any Linux, Windows or MacOS system.
 Alternatively, you can use the tiny 10 MB Docker image to deploy the application.
+It is also easy to [build the application](#build-from-source) directly from source.
 
 ![Screenshot of Dashboard](screenshots/dashboard.png "Screenshot of Dashboard")
 
@@ -94,8 +96,8 @@ You should also persist the certificate caching directory on your host file syst
       ghcr.io/cry-inc/dmarc-report-viewer
 
 ## Build from Source
-1. Install Rust (see https://rustup.rs/)
-2. Check out this repository or download and extract the ZIP
+1. Install Rust toolchain (see https://rustup.rs/)
+2. Check out this repository (or download and extract the ZIP file)
 3. Run the command `cargo build --release` in the folder with this README file
 4. Find the compiled executable in the folder `target/release`
 5. Use the help argument to list all possible configuration parameters: `dmarc-report-viewer --help`
