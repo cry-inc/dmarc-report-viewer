@@ -38,7 +38,7 @@ export class MailTable extends LitElement {
         if (mail.oversized) {
             return html`<span class="faded">n/a</span>`;
         } else if (mail.xml_files < 1) {
-            return html`<span class="badge badge-negative>${mail.xml_files}</span>`;
+            return html`<span class="badge badge-negative">${mail.xml_files}</span>`;
         } else {
             return html`<span class="faded">${mail.xml_files}</span>`;
         }
