@@ -32,6 +32,8 @@ export const globalStyle = css`
 
     .help {
         cursor: help;
+        text-decoration-line: underline;
+        text-decoration-style: dotted;
     }
 
     table {
