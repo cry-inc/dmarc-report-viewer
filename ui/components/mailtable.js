@@ -14,12 +14,15 @@ export class MailTable extends LitElement {
     }
 
     prepareSubject(subject) {
-        const regex = /Report Domain: |Report domain: /;
-        const prefix_removed = subject.replace(regex, "");
-        if (prefix_removed.length < 90) {
-            return prefix_removed;
+        subject = subject.replace(/Report Domain: |Report domain: /, "D: ");
+        subject = subject.replace(/Submitter: /, "S: ");
+        subject = subject.replace(/Report-ID: /, "ID: ");
+
+        const limit = 70;
+        if (subject.length <= limit) {
+            return subject;
         } else {
-            return prefix_removed.substring(0, 75) + "...";
+            return subject.substring(0, limit) + "...";
         }
     }
 
