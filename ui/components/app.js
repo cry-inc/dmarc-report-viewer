@@ -29,7 +29,7 @@ export class App extends LitElement {
 
         main {
             position: fixed;
-            top: 51px;
+            top: 52px;
             bottom: 0px;
             left: 0px;
             right: 0px;
