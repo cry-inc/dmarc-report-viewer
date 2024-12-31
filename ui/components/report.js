@@ -116,27 +116,27 @@ export class Report extends LitElement {
                     <td>${this.report.policy_published.domain}</td>
                 </tr>
                 <tr>
-                    <td class="name">adkim</td>
+                    <td class="name help" title="DKIM alignment mode">adkim</td>
                     <td>${this.renderOptional(this.report.policy_published.adkim)}</td>
                 </tr>
                 <tr>
-                    <td class="name">aspf</td>
+                    <td class="name help" title="SPF alignment mode">aspf</td>
                     <td>${this.renderOptional(this.report.policy_published.aspf)}</td>
                 </tr>
                 <tr>
-                    <td class="name">p</td>
+                    <td class="name help" title="Policy to apply to messages from the domain">p</td>
                     <td>${this.report.policy_published.p}</td>
                 </tr>
                 <tr>
-                    <td class="name">sp</td>
+                    <td class="name help" title="Policy to apply to messages from subdomains">sp</td>
                     <td>${this.renderOptional(this.report.policy_published.sp)}</td>
                 </tr>
                 <tr>
-                    <td class="name">pct</td>
+                    <td class="name help" title="Percent of messages to which policy applies">pct</td>
                     <td>${this.renderOptional(this.report.policy_published.pct)}</td>
                 </tr>
                 <tr>
-                    <td class="name">fo</td>
+                    <td class="name help" title="Failure reporting options in effect">fo</td>
                     <td>${this.renderOptional(this.report.policy_published.fo)}</td>
                 </tr>
             </table>
