@@ -94,7 +94,7 @@ export class Mail extends LitElement {
 
             ${this.errors.length > 0 ?
                 html`
-                    <h3>XML Parsing Errors</h3>
+                    <h2>XML Parsing Errors</h2>
                     ${this.errors.map((e) =>
                     html`
                         <div class="error">
