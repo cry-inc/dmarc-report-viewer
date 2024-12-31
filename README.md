@@ -16,6 +16,7 @@ Alternatively, you can use the tiny 10 MB Docker image to deploy the application
 It is also easy to [build the application](#build-from-source) directly from source.
 
 ![Screenshot of Dashboard](screenshots/dashboard.png "Screenshot of Dashboard")
+You can find more screenshots [here](screenshots/screenshots.md).
 
 ## Features
 - [x] Lightweight Docker image for easy deployment
