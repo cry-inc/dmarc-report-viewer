@@ -82,7 +82,11 @@ pub async fn get_mails(config: &Configuration) -> Result<HashMap<u32, Mail>> {
         for chunk in size_filtered_uids.chunks(CHUNK_SIZE) {
             let sequence: String = chunk.join(",");
             let mut stream = session
-                .uid_fetch(sequence, "(RFC822 RFC822.SIZE UID ENVELOPE INTERNALDATE)")
+                .uid_fetch(
+                    sequence,
+                    // Some servers (like iCloud Mail) seem to require BODY[] instead of just RFC822...
+                    "(RFC822 BODY[] RFC822.SIZE UID ENVELOPE INTERNALDATE)",
+                )
                 .await
                 .context("Failed to fetch message stream from IMAP inbox")?;
             while let Some(fetch_result) = stream.next().await {
