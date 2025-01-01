@@ -8,7 +8,7 @@ use crate::xml_error::XmlError;
 use anyhow::{Context, Result};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
-use std::time::{Duration, SystemTime};
+use std::time::{Duration, Instant, SystemTime};
 use tokio::sync::mpsc::Receiver;
 use tokio::task::JoinHandle;
 use tracing::{error, info, warn};
@@ -24,10 +24,16 @@ pub fn start_bg_task(
             config.imap_check_interval
         );
         loop {
+            let start = Instant::now();
+            info!("Starting background update...");
             match bg_update(&config, &state).await {
-                Ok(..) => info!("Finished update cycle without errors"),
-                Err(err) => error!("Failed updated cycle: {err:#}"),
+                Ok(..) => info!(
+                    "Finished background update after {:.3}s",
+                    start.elapsed().as_secs_f64()
+                ),
+                Err(err) => error!("Failed background update: {err:#}"),
             };
+
             let duration = Duration::from_secs(config.imap_check_interval);
             tokio::select! {
                 _ = tokio::time::sleep(duration) => {},
@@ -38,7 +44,6 @@ pub fn start_bg_task(
 }
 
 async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Result<()> {
-    info!("Starting background update cycle");
     let mut mails = get_mails(config).await.context("Failed to get mails")?;
 
     let mut xml_files = HashMap::new();
@@ -121,7 +126,6 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
         locked_state.last_update = timestamp;
         locked_state.xml_errors = xml_errors;
     }
-    info!("Finished updating shared state");
 
     Ok(())
 }
