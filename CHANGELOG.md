@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.2] - 2025-01-01
+* Fix issue with iCloud Mail server not returning the mail body
+* Improved log messages for mails without XML report data
+* Extended log messages with time needed for background updates
+
 ## [1.1.1] - 2024-12-31
 * Some minor UI styling improvements and fixes
 * Fixed XML count bug in mails table
