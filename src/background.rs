@@ -42,10 +42,14 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
     let mut mails = get_mails(config).await.context("Failed to get mails")?;
 
     let mut xml_files = HashMap::new();
+    let mut mails_without_xml = 0;
     for mail in &mut mails.values_mut() {
         if mail.body.is_some() {
             match extract_xml_files(mail) {
                 Ok(files) => {
+                    if files.is_empty() {
+                        mails_without_xml += 1;
+                    }
                     for xml_file in files {
                         xml_files.insert(xml_file.hash.clone(), xml_file);
                         mail.xml_files += 1;
@@ -55,7 +59,10 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
             }
         }
     }
-    info!("Extracted {} XML files from mails", xml_files.len());
+    if mails_without_xml > 0 {
+        warn!("Found {mails_without_xml} mail(s) without XML files");
+    }
+    info!("Extracted {} XML file(s)", xml_files.len());
 
     let mut xml_errors = HashMap::new();
     let mut reports = HashMap::new();

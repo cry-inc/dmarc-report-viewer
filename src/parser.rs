@@ -82,10 +82,6 @@ pub fn extract_xml_files(mail: &mut Mail) -> Result<Vec<XmlFile>> {
         }
     }
 
-    if xml_files.is_empty() {
-        warn!("Mail did not include XML file");
-    }
-
     Ok(xml_files)
 }
 
