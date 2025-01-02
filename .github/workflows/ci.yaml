@@ -23,6 +23,28 @@ jobs:
       with:
         name: x86_64-linux-gnu
         path: target/release/dmarc-report-viewer
+  linux_aarch64:
+    name: Linux (AArch64)
+    runs-on: ubuntu-24.04
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    - name: Update Rust
+      run: rustup toolchain install stable --profile minimal --no-self-update
+    - name: Install Cargo Binary Install
+      run: curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
+    - name: Install Cargo Cross
+      run: cargo binstall cross --no-confirm
+    - name: Enable Rust Caching
+      uses: Swatinem/rust-cache@v2
+    - name: Release Build
+      run: cross build --release --all --target aarch64-unknown-linux-musl
+    - name: Execute Tests
+      run: cross test --release --all --target aarch64-unknown-linux-musl
+    - uses: actions/upload-artifact@v4
+      with:
+        name: aarch64-linux-musl
+        path: target/aarch64-unknown-linux-musl/release/dmarc-report-viewer
   windows_x86_64:
     name: Windows (x86-64)
     runs-on: windows-latest
@@ -81,8 +103,8 @@ jobs:
       with:
         name: aarch64-mac
         path: target/aarch64-apple-darwin/release/dmarc-report-viewer
-  docker:
-    name: Docker
+  docker_linux_x86_64:
+    name: Linux Docker (x86-64)
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -123,7 +145,7 @@ jobs:
   release:
     name: Release
     if: startsWith(github.ref, 'refs/tags/')
-    needs: [linux_x86_64, windows_x86_64, mac_x86_64, mac_aarch64, docker]
+    needs: [linux_x86_64, linux_aarch64, windows_x86_64, mac_x86_64, mac_aarch64, docker_linux_x86_64]
     runs-on: ubuntu-24.04
     permissions:
       contents: write
@@ -137,6 +159,7 @@ jobs:
         zip -r x86_64-windows.zip x86_64-windows
         zip -r x86_64-linux-gnu.zip x86_64-linux-gnu
         zip -r x86_64-linux-musl.zip x86_64-linux-musl
+        zip -r aarch64-linux-musl.zip aarch64-linux-musl
         zip -r x86_64-mac.zip x86_64-mac
         zip -r aarch64-mac.zip aarch64-mac
         mv x86_64-linux-docker/dmarc-report-viewer.tar x86_64-linux-docker.tar
@@ -150,6 +173,7 @@ jobs:
           x86_64-windows.zip
           x86_64-linux-gnu.zip
           x86_64-linux-musl.zip
+          aarch64-linux-musl.zip
           x86_64-mac.zip
           aarch64-mac.zip
           x86_64-linux-docker.tar
