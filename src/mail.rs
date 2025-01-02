@@ -23,13 +23,15 @@ pub struct Mail {
     pub parsing_errors: usize,
 }
 
-/// Basic decoder for MIME Encoded Words (only UTF-8 and Base64 are supported)
+/// Basic decoder for MIME Encoded Words.
+/// Currently only UTF-8 and Base64 are supported.
+/// Works only if the whole subject is encoded as a single word.
 pub fn decode_subject(value: String) -> String {
-    const PREFIX: &str = "=?utf-8?B?";
+    const PREFIX: &str = "=?utf-8?b?";
     const SUFFIX: &str = "?=";
-    if value.starts_with(PREFIX) && value.ends_with(SUFFIX) {
-        let b64 = value.strip_prefix(PREFIX).expect("Failed to remove prefix");
-        let b64 = b64.strip_suffix(SUFFIX).expect("Failed to remove suffix");
+    let lowercase = value.to_lowercase();
+    if lowercase.starts_with(PREFIX) && lowercase.ends_with(SUFFIX) {
+        let b64 = &value[PREFIX.len()..(value.len() - SUFFIX.len())];
         if let Ok(bytes) = STANDARD.decode(b64) {
             String::from_utf8(bytes).unwrap_or(value)
         } else {
@@ -48,10 +50,9 @@ mod tests {
     fn decode_subject_test() {
         assert_eq!(decode_subject(String::from("")), "");
         assert_eq!(decode_subject(String::from("basic 123")), "basic 123");
+        assert_eq!(decode_subject(String::from("=?utf-8?B??=")), "");
         assert_eq!(decode_subject(String::from("=?utf-8?B?dGV4dA==?=")), "text");
-        assert_eq!(
-            decode_subject(String::from("=?utf-8?B?YWJjZGVm?=")),
-            "abcdef"
-        );
+        assert_eq!(decode_subject(String::from("=?utf-8?B?YWJj?=")), "abc");
+        assert_eq!(decode_subject(String::from("=?UTF-8?b?YWJj?=")), "abc");
     }
 }
