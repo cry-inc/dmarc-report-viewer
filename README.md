@@ -44,7 +44,7 @@ The latest version is automatically published as Docker image in the GitHub cont
 You can download the image using the command `sudo docker pull ghcr.io/cry-inc/dmarc-report-viewer`.
 
 ### Available Docker Tags
-The followng tags are available aside from the versioned tag for all individual releases:
+The following tags are available (aside from the versioned tag for all individual releases):
 * `latest` (Latest stable release)
 * `develop` (Last build from master branch)
 
@@ -104,7 +104,11 @@ You should also persist the certificate caching directory on your host file syst
 5. Use the help argument to list all possible configuration parameters: `dmarc-report-viewer --help`
 
 ### Docker Builds (Linux only)
-Use the command `docker build . --pull --tag dmarc-report-viewer` to build the tiny Docker image.
+The Dockerfile works for X86-64 and AArch64 (Raspberry Pi & Apple Silicon) architectures.
+1. Install Docker
+2. Check out this repository (or download and extract the ZIP file)
+3. Run the command `sudo docker build . --pull --tag dmarc-report-viewer` in the folder with this README file
+4. You should now be able to see the new Docker image using the command `sudo docker images`
 
 ## Acknowledgments
 - https://github.com/bbustin/dmarc_aggregate_parser was used as foundation for the slightly modified DMARC report parser

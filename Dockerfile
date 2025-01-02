@@ -15,12 +15,13 @@ WORKDIR /usr/src
 COPY . .
 
 # Build Rust binary
-RUN cargo build --target x86_64-unknown-linux-musl --release
+ENV CARGO_TARGET_DIR=/usr/src/target
+RUN cargo build --release
 
 # Remove debug symboles
-RUN strip /usr/src/target/x86_64-unknown-linux-musl/release/dmarc-report-viewer
+RUN strip /usr/src/target/release/dmarc-report-viewer
 
 # Build final minimal image with only the binary
 FROM scratch
-COPY --from=builder /usr/src/target/x86_64-unknown-linux-musl/release/dmarc-report-viewer /
+COPY --from=builder /usr/src/target/release/dmarc-report-viewer /
 CMD ["./dmarc-report-viewer"]
