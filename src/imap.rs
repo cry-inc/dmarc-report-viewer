@@ -222,7 +222,7 @@ fn extract_metadata(mail: &Fetch, max_size: usize) -> Result<Mail> {
             .as_deref()
             .map(|s| String::from_utf8_lossy(s))
             .unwrap_or("n/a".into())
-            .to_string(),
+            .as_ref(),
     );
     Ok(Mail {
         body: None,

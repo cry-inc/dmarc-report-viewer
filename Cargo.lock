@@ -743,6 +743,7 @@ dependencies = [
  "futures",
  "mailparse",
  "quick-xml",
+ "regex",
  "rustls-acme",
  "serde",
  "serde_json",

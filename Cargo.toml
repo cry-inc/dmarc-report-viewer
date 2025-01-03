@@ -10,6 +10,7 @@ version = "1.1.2"
 edition = "2021"
 
 [dependencies]
+regex = "1"
 axum = "0.7"
 anyhow = "1"
 flate2 = "1"
