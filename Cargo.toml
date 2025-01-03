@@ -11,7 +11,7 @@ edition = "2021"
 
 [dependencies]
 regex = "1"
-axum = "0.7"
+axum = "0.8"
 anyhow = "1"
 flate2 = "1"
 sha2 = "0.10"

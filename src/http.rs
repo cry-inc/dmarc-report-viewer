@@ -31,15 +31,15 @@ pub async fn run_http_server(config: &Configuration, state: Arc<Mutex<AppState>>
     let make_service = Router::new()
         .route("/summary", get(summary))
         .route("/mails", get(mails))
-        .route("/mails/:id", get(mail))
-        .route("/mails/:id/errors", get(mail_errors))
+        .route("/mails/{id}", get(mail))
+        .route("/mails/{id}/errors", get(mail_errors))
         .route("/reports", get(reports))
-        .route("/reports/:id", get(report))
-        .route("/reports/:id/json", get(report_json))
-        .route("/reports/:id/xml", get(report_xml))
+        .route("/reports/{id}", get(report))
+        .route("/reports/{id}/json", get(report_json))
+        .route("/reports/{id}/xml", get(report_xml))
         .route("/build", get(build))
         .route("/", get(static_file)) // index.html
-        .route("/*filepath", get(static_file)) // all other files
+        .route("/{*filepath}", get(static_file)) // all other files
         .route_layer(middleware::from_fn_with_state(
             config.clone(),
             basic_auth_middleware,
