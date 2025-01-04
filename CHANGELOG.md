@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.0] - 2025-01-04
+* Fixed bugs and improved E-Mail subject decoding
+* Added Linux ARM 64bit binary artifacts and restructured builds
+* Added support for ARM 64bit Linux Docker images and publish them to Github registry
+* Updated Cargo dependencies
+
 ## [1.1.2] - 2025-01-01
 * Fix issue with iCloud Mail server not returning the mail body
 * Improved log messages for mails without XML report data
