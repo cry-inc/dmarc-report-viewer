@@ -107,8 +107,9 @@ jobs:
       with:
         name: mac-aarch64
         path: target/aarch64-apple-darwin/release/dmarc-report-viewer
-  docker_linux_x86_64:
-    name: Docker (Linux, x86-64)
+  docker_linux:
+    name: Docker (Linux, x86-64, aarch64)
+    needs: [linux_x86_64, linux_aarch64]
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -116,34 +117,37 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v4
-    - name: Build Docker Image
-      run: docker build . --build-arg GITHUB_SHA --build-arg GITHUB_REF_NAME --pull --tag dmarc-report-viewer
-    - name: Test Docker Image
-      run: docker run --rm dmarc-report-viewer ./dmarc-report-viewer --help
-    - name: Publish Latest Docker Image
+    - name: Download Artifacts
+      uses: actions/download-artifact@v4
+    - name: Prepare Binary Artifacts
+      run: |
+        mv linux-x86_64 .github/docker/linux-amd64
+        mv linux-aarch64 .github/docker/linux-arm64
+        chmod +x .github/docker/linux-amd64/dmarc-report-viewer
+        chmod +x .github/docker/linux-arm64/dmarc-report-viewer
+    - name: Build Docker Images
+      run: |
+        cd .github/docker/
+        docker builder create --name builder
+        docker buildx build --builder builder --platform=linux/amd64,linux/arm64 --pull .
+    - name: Build Develop Docker Images
       if: ${{github.ref == 'refs/heads/master'}}
       run: |
+        cd .github/docker/
         echo ${{secrets.GITHUB_TOKEN}} | docker login ghcr.io -u ${{github.actor}} --password-stdin
-        docker tag dmarc-report-viewer ghcr.io/${{github.actor}}/dmarc-report-viewer:develop
-        docker push ghcr.io/${{github.actor}}/dmarc-report-viewer:develop
-    - name: Publish Tagged Docker Image
+        docker buildx build --builder builder --platform=linux/amd64,linux/arm64 --pull --push --tag ghcr.io/${{github.actor}}/dmarc-report-viewer:develop .
+        docker run --rm ghcr.io/${{github.actor}}/dmarc-report-viewer:develop ./dmarc-report-viewer --version
+    - name: Build Release Docker Images
       if: startsWith(github.ref, 'refs/tags/')
       run: |
+        cd .github/docker/
         echo ${{secrets.GITHUB_TOKEN}} | docker login ghcr.io -u ${{github.actor}} --password-stdin
-        docker tag dmarc-report-viewer ghcr.io/${{github.actor}}/dmarc-report-viewer:latest
-        docker push ghcr.io/${{github.actor}}/dmarc-report-viewer:latest
-        docker tag dmarc-report-viewer ghcr.io/${{github.actor}}/dmarc-report-viewer:${{github.ref_name}}
-        docker push ghcr.io/${{github.actor}}/dmarc-report-viewer:${{github.ref_name}}
-    - name: Save Docker Image
-      run: docker save -o dmarc-report-viewer.tar dmarc-report-viewer
-    - uses: actions/upload-artifact@v4
-      with:
-        name: docker-linux-x86_64
-        path: dmarc-report-viewer.tar
+        docker buildx build --builder builder --platform=linux/amd64,linux/arm64 --pull --push --tag ghcr.io/${{github.actor}}/dmarc-report-viewer:latest --tag ghcr.io/${{github.actor}}/dmarc-report-viewer:${{github.ref_name}} .
+        docker run --rm ghcr.io/${{github.actor}}/dmarc-report-viewer:latest ./dmarc-report-viewer --version
   release:
     name: Release
     if: startsWith(github.ref, 'refs/tags/')
-    needs: [linux_x86_64, linux_aarch64, windows_x86_64, mac_x86_64, mac_aarch64, docker_linux_x86_64]
+    needs: [linux_x86_64, linux_aarch64, windows_x86_64, mac_x86_64, mac_aarch64, docker_linux]
     runs-on: ubuntu-24.04
     permissions:
       contents: write
@@ -159,7 +163,6 @@ jobs:
         zip -r linux-aarch64.zip linux-aarch64
         zip -r mac-x86_64.zip mac-x86_64
         zip -r mac-aarch64.zip mac-aarch64
-        mv docker-linux-x86_64/dmarc-report-viewer.tar docker-linux-x86_64.tar
     - name: Publish Release
       uses: softprops/action-gh-release@v2
       with:
@@ -172,4 +175,3 @@ jobs:
           linux-aarch64.zip
           mac-x86_64.zip
           mac-aarch64.zip
-          docker-linux-x86_64.tar
