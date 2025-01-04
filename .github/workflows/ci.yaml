@@ -9,22 +9,26 @@ jobs:
       uses: actions/checkout@v4
     - name: Update Rust
       run: rustup toolchain install stable --profile minimal --no-self-update
+    - name: Install MUSL Toolchain
+      run: rustup target add x86_64-unknown-linux-musl
+    - name: Install MUSL dependencies
+      run: sudo apt-get install musl-tools
     - name: Enable Rust Caching
       uses: Swatinem/rust-cache@v2
     - name: Release Build
-      run: cargo build --release --all
+      run: cargo build --release --all --target x86_64-unknown-linux-musl
     - name: Execute Tests
-      run: cargo test --release --all
+      run: cargo test --release --all --target x86_64-unknown-linux-musl
     - name: Run Clippy
-      run: cargo clippy --release --all --all-targets --all-features --locked -- -D warnings
+      run: cargo clippy --release --all --target x86_64-unknown-linux-musl --all-targets --all-features --locked -- -D warnings
     - name: Check Formatting
       run: cargo fmt --all -- --check
     - uses: actions/upload-artifact@v4
       with:
-        name: x86_64-linux-gnu
-        path: target/release/dmarc-report-viewer
+        name: linux-x86_64
+        path: target/x86_64-unknown-linux-musl/release/dmarc-report-viewer
   linux_aarch64:
-    name: Linux (AArch64)
+    name: Linux (aarch64)
     runs-on: ubuntu-24.04
     steps:
     - name: Checkout
@@ -43,7 +47,7 @@ jobs:
       run: cross test --release --all --target aarch64-unknown-linux-musl
     - uses: actions/upload-artifact@v4
       with:
-        name: aarch64-linux-musl
+        name: linux-aarch64
         path: target/aarch64-unknown-linux-musl/release/dmarc-report-viewer
   windows_x86_64:
     name: Windows (x86-64)
@@ -63,7 +67,7 @@ jobs:
       run: cargo test --release --all
     - uses: actions/upload-artifact@v4
       with:
-        name: x86_64-windows
+        name: windows-x86_64
         path: target/release/dmarc-report-viewer.exe
   mac_x86_64:
     name: Mac (x86-64)
@@ -83,7 +87,7 @@ jobs:
       run: cargo test --release --all --target x86_64-apple-darwin
     - uses: actions/upload-artifact@v4
       with:
-        name: x86_64-mac
+        name: mac-x86_64
         path: target/x86_64-apple-darwin/release/dmarc-report-viewer
   mac_aarch64:
     name: Mac (aarch64)
@@ -101,10 +105,10 @@ jobs:
       run: cargo test --release --all --target aarch64-apple-darwin
     - uses: actions/upload-artifact@v4
       with:
-        name: aarch64-mac
+        name: mac-aarch64
         path: target/aarch64-apple-darwin/release/dmarc-report-viewer
   docker_linux_x86_64:
-    name: Linux Docker (x86-64)
+    name: Docker (Linux, x86-64)
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -134,14 +138,8 @@ jobs:
       run: docker save -o dmarc-report-viewer.tar dmarc-report-viewer
     - uses: actions/upload-artifact@v4
       with:
-        name: x86_64-linux-docker
+        name: docker-linux-x86_64
         path: dmarc-report-viewer.tar
-    - name: Extract MUSL Binary
-      run: container_id=$(docker create dmarc-report-viewer) && docker cp "$container_id:/dmarc-report-viewer" ./dmarc-report-viewer && docker rm "$container_id"
-    - uses: actions/upload-artifact@v4
-      with:
-        name: x86_64-linux-musl
-        path: dmarc-report-viewer
   release:
     name: Release
     if: startsWith(github.ref, 'refs/tags/')
@@ -156,13 +154,12 @@ jobs:
       uses: actions/download-artifact@v4
     - name: Pack Artifacts for Release
       run: |
-        zip -r x86_64-windows.zip x86_64-windows
-        zip -r x86_64-linux-gnu.zip x86_64-linux-gnu
-        zip -r x86_64-linux-musl.zip x86_64-linux-musl
-        zip -r aarch64-linux-musl.zip aarch64-linux-musl
-        zip -r x86_64-mac.zip x86_64-mac
-        zip -r aarch64-mac.zip aarch64-mac
-        mv x86_64-linux-docker/dmarc-report-viewer.tar x86_64-linux-docker.tar
+        zip -r windows-x86_64.zip windows-x86_64
+        zip -r linux-x86_64.zip linux-x86_64
+        zip -r linux-aarch64.zip linux-aarch64
+        zip -r mac-x86_64.zip mac-x86_64
+        zip -r mac-aarch64.zip mac-aarch64
+        mv docker-linux-x86_64/dmarc-report-viewer.tar docker-linux-x86_64.tar
     - name: Publish Release
       uses: softprops/action-gh-release@v2
       with:
@@ -170,10 +167,9 @@ jobs:
         files: |
           CHANGELOG.md
           LICENSE
-          x86_64-windows.zip
-          x86_64-linux-gnu.zip
-          x86_64-linux-musl.zip
-          aarch64-linux-musl.zip
-          x86_64-mac.zip
-          aarch64-mac.zip
-          x86_64-linux-docker.tar
+          windows-x86_64.zip
+          linux-x86_64.zip
+          linux-aarch64.zip
+          mac-x86_64.zip
+          mac-aarch64.zip
+          docker-linux-x86_64.tar
