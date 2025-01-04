@@ -1,5 +1,5 @@
 # Temporary build container
-FROM rust:1-alpine as builder
+FROM rust:1-alpine AS builder
 
 # Get ENV variables for build info from build args
 ARG GITHUB_SHA="n/a"
@@ -18,7 +18,7 @@ COPY . .
 ENV CARGO_TARGET_DIR=/usr/src/target
 RUN cargo build --release
 
-# Remove debug symboles
+# Remove debug symbols
 RUN strip /usr/src/target/release/dmarc-report-viewer
 
 # Build final minimal image with only the binary
