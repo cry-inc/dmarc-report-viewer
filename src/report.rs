@@ -3,7 +3,7 @@
 // Its based upon appendix C of the DMARC RFC:
 // https://tools.ietf.org/html/rfc7489#appendix-C
 
-use serde::{Deserialize, Serialize};
+use serde::{de, Deserialize, Deserializer, Serialize};
 use std::net::IpAddr;
 
 /// The time range in UTC covered by messages in this report.
@@ -37,7 +37,7 @@ pub enum AlignmentType {
 }
 
 /// The policy actions specified by `p` and `sp` in the DMARC record.
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Serialize, PartialEq)]
 #[serde(rename_all = "snake_case")]
 pub enum DispositionType {
     /// There is no preference on how a failed DMARC should be handled.
@@ -47,6 +47,27 @@ pub enum DispositionType {
     Quarantine,
     /// The message should be rejected.
     Reject,
+}
+
+// Custom Deserialize to allow the empty string value that
+// some reports contain. For some reason the serde alias marco
+// does not work in that case.
+impl<'de> Deserialize<'de> for DispositionType {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        match s.as_str() {
+            "quarantine" => Ok(Self::Quarantine),
+            "reject" => Ok(Self::Reject),
+            "none" => Ok(Self::None),
+            "" => Ok(Self::None), // Some reports have an empty `sp` field
+            _ => Err(de::Error::custom(format!(
+                "'{s}' is not a known disposition type"
+            ))),
+        }
+    }
 }
 
 /// The DMARC policy that applied to the messages in this report.
