@@ -6,12 +6,15 @@
 use serde::{Deserialize, Serialize};
 use std::net::IpAddr;
 
+/// The time range in UTC covered by messages in this report.
+/// Specified in seconds since epoch.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DateRangeType {
     pub begin: u64,
     pub end: u64,
 }
 
+/// Report generator metadata.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ReportMetadataType {
     pub org_name: String,
@@ -24,6 +27,7 @@ pub struct ReportMetadataType {
     pub error: Option<Vec<String>>,
 }
 
+/// Alignment mode for DKIM and SPF.
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub enum AlignmentType {
     #[serde(rename = "r")]
@@ -32,33 +36,44 @@ pub enum AlignmentType {
     Strict,
 }
 
+/// The policy actions specified by `p` and `sp` in the DMARC record.
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "snake_case")]
 pub enum DispositionType {
     /// There is no preference on how a failed DMARC should be handled.
     None,
-    /// The message should be quarantined. This usually means it will be placed in the `spam` folder of the user.
+    /// The message should be quarantined.
+    /// This usually means it will be placed in the spam folder of the user.
     Quarantine,
     /// The message should be rejected.
     Reject,
 }
 
+/// The DMARC policy that applied to the messages in this report.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PolicyPublishedType {
+    /// The domain at which the DMARC record was found.
     pub domain: String,
+    /// The DKIM alignment mode.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub adkim: Option<AlignmentType>,
+    /// The SPF alignment mode.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub aspf: Option<AlignmentType>,
+    /// The policy to apply to messages from the domain.
     pub p: DispositionType,
+    /// The policy to apply to messages from subdomains.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub sp: Option<DispositionType>,
+    /// The percent of messages to which policy applies.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub pct: Option<u8>,
+    /// Failure reporting options in effect.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub fo: Option<String>,
 }
 
+/// The DMARC-aligned authentication result.
 #[derive(Debug, Clone, Serialize, Deserialize, Hash, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum DmarcResultType {
@@ -66,17 +81,36 @@ pub enum DmarcResultType {
     Fail,
 }
 
+/// Reasons that may affect DMARC disposition or execution thereof.
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "snake_case")]
 pub enum PolicyOverrideType {
+    /// The message was relayed via a known forwarder, or local
+    /// heuristics identified the message as likely having been forwarded.
+    /// There is no expectation that authentication would pass.
     Forwarded,
+    /// The message was exempted from application of policy by
+    /// the `pct` setting in the DMARC policy record.
     SampledOut,
+    /// Message authentication failure was anticipated by
+    /// other evidence linking the message to a locally maintained list of
+    /// known and trusted forwarders.
     TrustedForwarder,
+    /// Local heuristics determined that the message arrived
+    /// via a mailing list, and thus authentication of the original
+    /// message was not expected to succeed.
     MailingList,
+    /// The Mail Receiver's local policy exempted the message from
+    /// being subjected to the Domain Owner's requested policy action.
     LocalPolicy,
+    /// Some policy exception not covered by the other entries in
+    /// this list occurred.  Additional detail can be found in the
+    /// PolicyOverrideReason `comment` field.
     Other,
 }
 
+/// How do we allow report generators to include new classes of override
+/// reasons if they want to be more specific than `other`?
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct PolicyOverrideReason {
     #[serde(rename = "type")]
@@ -85,6 +119,8 @@ pub struct PolicyOverrideReason {
     pub comment: Option<String>,
 }
 
+/// Taking into account everything else in the record,
+/// the results of applying DMARC.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PolicyEvaluatedType {
     pub disposition: DispositionType,
@@ -98,20 +134,27 @@ pub struct PolicyEvaluatedType {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct RowType {
+    /// The connecting IP.
     pub source_ip: IpAddr,
+    /// The number of matching messages.
     pub count: usize,
+    /// The DMARC disposition applying to matching messages.
     pub policy_evaluated: PolicyEvaluatedType,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct IdentifierType {
+    /// The envelope recipient domain.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub envelope_to: Option<String>,
+    /// The RFC5321.MailFrom domain.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub envelope_from: Option<String>,
+    /// The RFC5322.From domain.
     pub header_from: String,
 }
 
+/// DKIM verification result, according to RFC 7001 Section 2.6.1.
 #[derive(Debug, Clone, Serialize, Deserialize, Hash, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum DkimResultType {
@@ -128,11 +171,15 @@ pub enum DkimResultType {
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct DkimAuthResultType {
+    /// The `d` parameter in the signature.
     pub domain: String,
+    /// The `s` parameter in the signature.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub selector: Option<String>,
+    /// The DKIM verification result.
     pub result: DkimResultType,
     #[serde(skip_serializing_if = "Option::is_none")]
+    /// Any extra information.
     pub human_result: Option<String>,
 }
 
@@ -161,19 +208,27 @@ pub enum SpfResultType {
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct SpfAuthResultType {
+    /// The checked domain.
     pub domain: String,
+    /// The scope of the checked domain.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub scope: Option<SpfDomainScope>,
+    /// The SPF verification result.
     pub result: SpfResultType,
 }
 
+/// This element contains DKIM and SPF results, uninterpreted with respect to DMARC.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AuthResultType {
+    /// There may be no DKIM signatures, or multiple DKIM signatures.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub dkim: Option<Vec<DkimAuthResultType>>,
+    /// There will always be at least one SPF result.
     pub spf: Vec<SpfAuthResultType>,
 }
 
+/// This element contains all the authentication results that were
+/// evaluated by the receiving system for the given set of messages.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct RecordType {
     pub row: RowType,
