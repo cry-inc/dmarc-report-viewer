@@ -9,7 +9,7 @@ A lightweight selfhosted standalone DMARC report viewer that automatically fetch
 Ideal for smaller selfhosted mailservers.
 The application is a single fully statically linked executable written in Rust.
 It combines a DMARC report parser with an IMAP client and an HTTP server.
-The HTTP server serves a web UI for easy access and filtering of the reports.
+The embedded HTTP server offers a web UI for easy access and filtering of the reports.
 
 You can run the precompiled executable directly on any Linux, Windows or MacOS system.
 Alternatively, you can use the tiny 10 MB Docker image to deploy the application.
@@ -20,14 +20,16 @@ You can find more screenshots [here](screenshots/screenshots.md).
 
 ## Features
 - [x] Lightweight Docker image for easy deployment
+- [x] Prebuilt binaries and Docker images
+- [x] Runs out of the box on a Raspberry Pi
 - [x] Secure IMAP client (TLS & STARTTLS)
 - [x] Automatic fetching of reports from IMAP inbox
 - [x] Robust parsing of XML DMARC reports
-- [x] Embedded HTTP server for web UI
+- [x] Embedded HTTP server for Web UI
 - [x] Automatic HTTPS via ACME/Let's Encrypt
 - [x] Basic Auth password protection for HTTP server
 - [x] Easy configuration via command line arguments or ENV variables
-- [x] Configurable maximum size of mails (to skip oversized documents)
+- [x] Configurable maximum size of mails (to skip oversized mails)
 - [x] Summary with charts for domains, organizations and passed/failed checks
 - [x] Viewing filtered lists of reports
 - [x] Viewing of individual DMARC reports
@@ -40,13 +42,13 @@ You can find more screenshots [here](screenshots/screenshots.md).
 Read the [CHANGELOG.md](CHANGELOG.md) file for a list of all released versions and their corresponding changes.
 
 ## Run with Docker
-The latest version is automatically published as Docker image in the GitHub container registry.
-You can download the image using the command `sudo docker pull ghcr.io/cry-inc/dmarc-report-viewer`.
+The latest versions are automatically published as Docker images in the GitHub container registry.
+You can download the latest release using the command `sudo docker pull ghcr.io/cry-inc/dmarc-report-viewer`.
 
 ### Available Docker Tags
 The following tags are available (aside from the versioned tag for all individual releases):
 * `latest` (Latest stable release)
-* `develop` (Last build from master branch)
+* `develop` (Last development build from master branch)
 
 ### Configuration
 List all available configuration parameters with the corresponding environment variables by running this command:
@@ -76,7 +78,7 @@ For STARTTLS set the ENV variables `IMAP_STARTTLS=TRUE` and `IMAP_PORT=143`.
 By default, the application will start an unencrypted and unsecure HTTP server.
 It is *strongly* recommended use the automatic HTTPS feature that will automatically fetch and renew a certificate from Let's Encrypt.
 This feature uses the TLS-ALPN-01 challenge, which uses the HTTPS port 443 also for the challenge. No port 80 required!
-Alternatively, you can use an separate HTTPS reverse proxy like [Caddy](https://caddyserver.com/) to secure it.
+Alternatively, you can use an separate HTTPS reverse proxy like [Caddy](https://caddyserver.com/) to secure the application.
 
 To use the automatic HTTPS feature you need to make sure that the public port exposed to the internet is 443.
 You should also persist the certificate caching directory on your host file system:
@@ -104,7 +106,7 @@ You should also persist the certificate caching directory on your host file syst
 5. Use the help argument to list all possible configuration parameters: `dmarc-report-viewer --help`
 
 ### Docker Builds (Linux only)
-The Dockerfile works for X86-64 and AArch64 (Raspberry Pi & Apple Silicon) architectures.
+The Dockerfile works for `amd64` and `arm64` architectures.
 1. Install Docker
 2. Check out this repository (or download and extract the ZIP file)
 3. Run the command `sudo docker build . --pull --tag dmarc-report-viewer` in the folder with this README file
