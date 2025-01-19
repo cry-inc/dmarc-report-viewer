@@ -33,7 +33,7 @@ pub struct Configuration {
     pub imap_timeout: u64,
 
     /// Interval between checking for new reports in IMAP inbox in seconds
-    #[arg(long, env, default_value_t = 1000)]
+    #[arg(long, env, default_value_t = 1800)]
     pub imap_check_interval: u64,
 
     /// Embedded HTTP server port for web UI
