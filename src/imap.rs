@@ -38,12 +38,12 @@ pub async fn get_mails(config: &Configuration) -> Result<HashMap<u32, Mail>> {
 
     // Get metadata for all all mails and filter by size
     let mut mails = HashMap::new();
-    let mut size_filtered_uids = Vec::new();
     debug!(
         "Number of mails in {imap_folder} folder: {}",
         mailbox.exists
     );
     if mailbox.exists > 0 {
+        // Get metadata for all mails
         let sequence = format!("1:{}", mailbox.exists);
         let mut stream = session
             .fetch(sequence, "(RFC822.SIZE UID ENVELOPE INTERNALDATE)")
@@ -54,32 +54,35 @@ pub async fn get_mails(config: &Configuration) -> Result<HashMap<u32, Mail>> {
                 fetch_result.context("Failed to get next mail header from IMAP fetch response")?;
             let mail = extract_metadata(&fetched, config.max_mail_size as usize)
                 .context("Unable to extract mail metadata")?;
-            if mail.oversized {
-                // Add oversized mails without body to result list
-                mails.insert(mail.uid, mail);
-            } else {
-                // Get mails with body in next step
-                size_filtered_uids.push(mail.uid.to_string());
-            }
+            mails.insert(mail.uid, mail);
         }
-        if !mails.is_empty() {
+        info!("Downloaded metadata of {} mails", mails.len());
+
+        let no_size_mails = mails.values().filter(|m| m.size == 0).count();
+        if no_size_mails > 0 {
+            warn!("Found {no_size_mails} without size property, this will make upfront oversize filtering impossible!")
+        }
+
+        let oversized_mails = mails.values().filter(|m| m.oversized).count();
+        if oversized_mails > 0 {
             warn!(
                 "Found {} mails over size limit of {} bytes",
-                mails.len(),
-                config.max_mail_size
+                oversized_mails, config.max_mail_size
             )
         }
-        info!("Downloaded metadata of {} mails", mailbox.exists)
     }
 
-    // Get full mails for all selected UIDs
-    if !size_filtered_uids.is_empty() {
-        let mut downloaded = 0;
-
+    // Get full mail body for all non-oversized mails
+    let uids: Vec<String> = mails
+        .values()
+        .filter(|m| !m.oversized)
+        .map(|m| m.uid.to_string())
+        .collect();
+    if !uids.is_empty() {
         // We need to get the mails in chunks.
         // It will fail silently if the requested sequences become too big!
         const CHUNK_SIZE: usize = 5000;
-        for chunk in size_filtered_uids.chunks(CHUNK_SIZE) {
+        for chunk in uids.chunks(CHUNK_SIZE) {
             let sequence: String = chunk.join(",");
             let mut stream = session
                 .uid_fetch(
@@ -92,19 +95,28 @@ pub async fn get_mails(config: &Configuration) -> Result<HashMap<u32, Mail>> {
             while let Some(fetch_result) = stream.next().await {
                 let fetched = fetch_result
                     .context("Failed to get next mail header from IMAP fetch response")?;
-                let mut mail = extract_metadata(&fetched, config.max_mail_size as usize)
-                    .context("Unable to extract mail metadata")?;
-                if let Some(body) = fetched.body() {
-                    mail.body = Some(body.to_vec());
-                    mail.size = body.len();
-                    mails.insert(mail.uid, mail);
-                    downloaded += 1;
-                } else {
+                let uid = fetched
+                    .uid
+                    .context("Failed to get UID from IMAP fetch result")?;
+                let Some(mail) = mails.get_mut(&uid) else {
+                    warn!("Cannot find mail metadata for UID {uid}");
+                    continue;
+                };
+                let Some(body) = fetched.body() else {
                     warn!("Mail with UID {} has no body!", mail.uid);
+                    continue;
+                };
+                mail.body = Some(body.to_vec());
+                mail.size = body.len();
+                mail.oversized = body.len() > config.max_mail_size as usize;
+                if mail.oversized {
+                    // Do not keep oversized mails in memory
+                    mail.body = None;
                 }
             }
         }
-        info!("Downloaded {downloaded} mails")
+
+        info!("Downloaded {} mails", uids.len());
     }
 
     session
@@ -204,7 +216,7 @@ async fn create_tls_stream(
 
 fn extract_metadata(mail: &Fetch, max_size: usize) -> Result<Mail> {
     let uid = mail.uid.context("Mail server did not provide UID")?;
-    let size = mail.size.context("Mail server did not provide size")? as usize;
+    let size = mail.size.unwrap_or(0) as usize; // In case the mail server ignored our request for the size
     let env = mail
         .envelope()
         .context("Mail server did not provide envelope")?;
