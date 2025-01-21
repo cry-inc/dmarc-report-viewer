@@ -24,4 +24,5 @@ RUN strip /usr/src/target/release/dmarc-report-viewer
 # Build final minimal image with only the binary
 FROM scratch
 COPY --from=builder /usr/src/target/release/dmarc-report-viewer /
+EXPOSE 8080
 CMD ["./dmarc-report-viewer"]
