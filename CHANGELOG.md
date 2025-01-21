@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.0] - 2025-01-21
+* Increased default IMAP check interval to 30 minutes
+* More robust mail fetching (RFC822.SIZE property is now optional)
+* Updated Cargo dependencies
+* Allow empty `sp` field in reports instead of failing to parse whole report
+* Docker images now expose port 8080 for improved auto-discovery
+* Made Web UI responsive to also work on smaller screens
+
 ## [1.2.0] - 2025-01-04
 * Fixed bugs and improved E-Mail subject decoding
 * Added Linux ARM 64bit binary artifacts and restructured builds
