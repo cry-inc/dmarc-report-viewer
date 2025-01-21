@@ -3,10 +3,10 @@ import { globalStyle } from "./style.js";
 
 export class Dashboard extends LitElement {
     static styles = [globalStyle, css`
-        .container {
+        .grid {
             display: grid;
-            column-gap: 10px;
-            row-gap: 10px;
+            gap: 10px;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
         }
 
         .module {
@@ -18,7 +18,6 @@ export class Dashboard extends LitElement {
         }
 
         .module canvas {
-            max-width: 300px;
             margin: auto;
         }
 
@@ -132,33 +131,33 @@ export class Dashboard extends LitElement {
                 <span>Last Update: <b>${new Date(this.lastUpdate * 1000).toLocaleString()}</b></span>
             </div>
 
-            <div class="container">
-                <div class="module" style="grid-column: 1; grid-row: 1;">
+            <div class="grid">
+                <div class="module">
                     <h2>Organizations</h2>
                     <canvas class="orgs_chart"></canvas>
                 </div>
 
-                <div class="module" style="grid-column: 2; grid-row: 1;">
+                <div class="module">
                     <h2>Domains</h2>
                     <canvas class="domains_chart"></canvas>
                 </div>
 
-                <div class="module" style="grid-column: 3; grid-row: 1;">
+                <div class="module">
                     <h2>SPF Policy Results</h2>
                     <canvas class="spf_policy_chart"></canvas>
                 </div>
 
-                <div class="module" style="grid-column: 1; grid-row: 2;">
+                <div class="module">
                     <h2>DKIM Policy Results</h2>
                     <canvas class="dkim_policy_chart"></canvas>
                 </div>
 
-                <div class="module" style="grid-column: 2; grid-row: 2;">
+                <div class="module">
                     <h2>SPF Auth Results</h2>
                     <canvas class="spf_auth_chart"></canvas>
                 </div>
 
-                <div class="module" style="grid-column: 3; grid-row: 2;">
+                <div class="module">
                     <h2>DKIM Auth Results</h2>
                     <canvas class="dkim_auth_chart"></canvas>
                 </div>
