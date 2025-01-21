@@ -91,6 +91,7 @@ export const globalStyle = css`
         color: white;
         border-radius: 3px;
         background-color: rgb(108, 117, 125);
+        margin-bottom: 3px;
     }
 
     .button:hover {
@@ -100,5 +101,23 @@ export const globalStyle = css`
 
     .ml {
         margin-left: 10px;
+    }
+
+    @media only screen and (max-width: 1100px) {
+        .md-hidden {
+            display: none;
+        }
+    }
+
+    @media only screen and (max-width: 800px) {
+        .sm-hidden {
+            display: none;
+        }
+    }
+    
+    @media only screen and (max-width: 600px) {
+        .xs-hidden {
+            display: none;
+        }
     }
 `;

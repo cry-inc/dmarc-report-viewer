@@ -13,6 +13,15 @@ export class ReportTable extends LitElement {
         this.reports = [];
     }
 
+    prepareId(id) {
+        const limit = 25;
+        if (id.length <= limit) {
+            return id;
+        } else {
+            return id.substring(0, limit) + "...";
+        }
+    }
+
     renderProblemsBadge(problems) {
         if (problems) {
             return html`<span class="badge badge-negative">Yes</span>`;
@@ -26,22 +35,22 @@ export class ReportTable extends LitElement {
             <table>
                 <tr>
                     <th>ID</th>
-                    <th>Organization</th>
-                    <th>Domain</th>
+                    <th class="xs-hidden">Organization</th>
+                    <th class="sm-hidden">Domain</th>
                     <th class="help" title="Reports that indicate possible problems">Problems</th>
-                    <th>Records</th>
-                    <th>Begin</th>
-                    <th>End</th>
+                    <th class="sm-hidden">Records</th>
+                    <th class="md-hidden">Begin</th>
+                    <th class="md-hidden">End</th>
                 </tr>
                 ${this.reports.length !== 0 ? this.reports.map((report) =>
                     html`<tr>
-                            <td><a href="#/reports/${report.hash}">${report.id}</a></td>
-                            <td><a href="#/reports?org=${encodeURIComponent(report.org)}">${report.org}</a></td>
-                            <td><a href="#/reports?domain=${encodeURIComponent(report.domain)}">${report.domain}</a></td>
+                            <td><a href="#/reports/${report.hash}" title="${report.id}">${this.prepareId(report.id)}</a></td>
+                            <td class="xs-hidden"><a href="#/reports?org=${encodeURIComponent(report.org)}">${report.org}</a></td>
+                            <td class="sm-hidden"><a href="#/reports?domain=${encodeURIComponent(report.domain)}">${report.domain}</a></td>
                             <td>${this.renderProblemsBadge(report.flagged)}</td>
-                            <td>${report.records}</td>
-                            <td>${new Date(report.date_begin * 1000).toLocaleString()}</td>
-                            <td>${new Date(report.date_end * 1000).toLocaleString()}</td>
+                            <td class="sm-hidden">${report.records}</td>
+                            <td class="md-hidden">${new Date(report.date_begin * 1000).toLocaleString()}</td>
+                            <td class="md-hidden">${new Date(report.date_end * 1000).toLocaleString()}</td>
                         </tr>`
 
                 ) : html`<tr>

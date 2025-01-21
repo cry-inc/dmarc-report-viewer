@@ -59,20 +59,20 @@ export class MailTable extends LitElement {
             <table>
                 <tr>
                     <th>Subject</th>
-                    <th>Sender</th>
-                    <th>Date</th>
-                    <th class="help" title="Size of E-Mail in Bytes">Size</th>
-                    <th class="help" title="Number of XML files in the Mail">XMLs</th>
-                    <th class="help" title="Did the Mail cause DMARC Parsing Errors?">Errors</th>
+                    <th class="sm-hidden">Sender</th>
+                    <th class="md-hidden">Date</th>
+                    <th class="xs-hidden help" title="Size of E-Mail in Bytes">Size</th>
+                    <th class="md-hidden help" title="Number of XML files in the Mail">XMLs</th>
+                    <th class="xs-hidden help" title="Did the Mail cause DMARC Parsing Errors?">Errors</th>
                 </tr>
                 ${this.mails.length !== 0 ? this.mails.map((mail) =>
                     html`<tr> 
                         <td><a href="#/mails/${mail.uid}">${this.prepareSubject(mail.subject)}</a></td>    
-                        <td><a href="#/mails?sender=${encodeURIComponent(mail.sender)}">${mail.sender}</a></td>
-                        <td>${new Date(mail.date * 1000).toLocaleString()}</td>
-                        <td>${this.prepareSize(mail)}</td>
-                        <td>${this.prepareXmlFileCount(mail)}</td>
-                        <td>${this.prepareParsingError(mail)}</td>
+                        <td class="sm-hidden"><a href="#/mails?sender=${encodeURIComponent(mail.sender)}">${mail.sender}</a></td>
+                        <td class="md-hidden">${new Date(mail.date * 1000).toLocaleString()}</td>
+                        <td class="xs-hidden">${this.prepareSize(mail)}</td>
+                        <td class="md-hidden">${this.prepareXmlFileCount(mail)}</td>
+                        <td class="xs-hidden">${this.prepareParsingError(mail)}</td>
                     </tr>`
                 ) : html`<tr>
                         <td colspan="4">No mails found.</td>
