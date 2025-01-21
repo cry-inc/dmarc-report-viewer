@@ -26,6 +26,7 @@ You can find more screenshots [here](screenshots/screenshots.md).
 - [x] Automatic fetching of reports from IMAP inbox
 - [x] Robust parsing of XML DMARC reports
 - [x] Embedded HTTP server for Web UI
+- [x] Responsive Web UI that works also on small screens
 - [x] Automatic HTTPS via ACME/Let's Encrypt
 - [x] Basic Auth password protection for HTTP server
 - [x] Easy configuration via command line arguments or ENV variables
@@ -51,12 +52,13 @@ The following tags are available (aside from the versioned tag for all individua
 * `develop` (Last development build from master branch)
 
 ### Configuration
-List all available configuration parameters with the corresponding environment variables by running this command:
+List all available configuration parameters with the corresponding environment variables and default values by running this command:
 `sudo docker run --rm ghcr.io/cry-inc/dmarc-report-viewer ./dmarc-report-viewer --help`.
 
 You can configure the application with command line arguments or environment variables.
 For the Docker use case, environment variables are recommended.
 Do not forget to forward the port for the HTTP server!
+By default the HTTP server will use port 8080.
 
 Here is an example: 
 
@@ -64,10 +66,9 @@ Here is an example:
       -e IMAP_HOST=imap.mymailserver.com \
       -e IMAP_USER=dmarc@mymailserver.com \
       -e IMAP_PASSWORD=mysecurepassword \
-      -e HTTP_SERVER_PORT=8123 \
       -e HTTP_SERVER_USER=webui-user \
       -e HTTP_SERVER_PASSWORD=webui-password \
-      -p 8123:8123 \
+      -p 8080:8080 \
       ghcr.io/cry-inc/dmarc-report-viewer
 
 ### IMAP with STARTTLS
