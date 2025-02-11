@@ -207,11 +207,11 @@ async fn create_tls_stream(
             custom_certs.push(cert);
         }
         info!(
-            "Loaded {} custom certificates from input file",
+            "Loaded {} custom certificate(s) from input file",
             custom_certs.len()
         );
         let (added, ignored) = root_cert_store.add_parsable_certificates(custom_certs);
-        info!("{added} certificates were added to the root store and {ignored} were ignored");
+        info!("{added} certificate(s) were added to the root store and {ignored} were ignored");
     }
 
     let client_config = ClientConfig::builder()

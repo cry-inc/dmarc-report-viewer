@@ -105,7 +105,7 @@ impl Configuration {
         info!("IMAP Host: {}", self.imap_host);
         info!("IMAP Port: {}", self.imap_port);
         info!("IMAP STARTTLS: {}", self.imap_starttls);
-        info!("IMAP TLS CA CERTS: {:?}", self.imap_tls_ca_certs);
+        info!("IMAP TLS CA Certificate File: {:?}", self.imap_tls_ca_certs);
         info!("IMAP User: {}", self.imap_user);
         info!("IMAP Check Interval: {} seconds", self.imap_check_interval);
         info!("IMAP Timeout: {}", self.imap_timeout);
