@@ -12,7 +12,8 @@ use std::sync::Arc;
 use std::time::Duration;
 use tokio::net::TcpStream;
 use tokio_rustls::client::TlsStream;
-use tokio_rustls::rustls::pki_types::ServerName;
+use tokio_rustls::rustls::pki_types::pem::PemObject;
+use tokio_rustls::rustls::pki_types::{CertificateDer, ServerName};
 use tokio_rustls::rustls::{ClientConfig, RootCertStore};
 use tokio_rustls::TlsConnector;
 use tracing::{debug, info, warn};
@@ -192,6 +193,26 @@ async fn create_tls_stream(
     let certs = webpki_roots::TLS_SERVER_ROOTS.iter().cloned();
     root_cert_store.extend(certs);
     debug!("Created Root CA cert store");
+
+    if let Some(ca_certs) = &config.imap_tls_ca_certs {
+        info!(
+            "Loading file with custom TLS CA certificates for IMAP client from {}...",
+            ca_certs.display()
+        );
+        let mut custom_certs = Vec::new();
+        for res in CertificateDer::pem_file_iter(ca_certs)
+            .context("Failed to parse custom CA certificate file")?
+        {
+            let cert = res.context("Failed to parse certificate")?;
+            custom_certs.push(cert);
+        }
+        info!(
+            "Loaded {} custom certificates from input file",
+            custom_certs.len()
+        );
+        let (added, ignored) = root_cert_store.add_parsable_certificates(custom_certs);
+        info!("{added} certificates were added to the root store and {ignored} were ignored");
+    }
 
     let client_config = ClientConfig::builder()
         .with_root_certificates(root_cert_store)

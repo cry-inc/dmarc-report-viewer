@@ -1,4 +1,5 @@
 use clap::Parser;
+use std::path::PathBuf;
 use tracing::{info, Level};
 
 #[derive(Parser, Clone)]
@@ -23,6 +24,12 @@ pub struct Configuration {
     /// Use STARTTLS (IMAP port should be set to 143!)
     #[arg(long, env)]
     pub imap_starttls: bool,
+
+    /// Optional path to additional TLS root certificates used to creating the IMAP TLS connections.
+    /// The default set is a compiled-in copy of the root certificates trusted by Mozilla.
+    /// The path should point to a DER-encoded X.509 certificate.
+    #[arg(long, env)]
+    pub imap_tls_ca_certs: Option<PathBuf>,
 
     /// IMAP folder with the DMARC reports
     #[arg(long, env, default_value = "INBOX")]
@@ -72,7 +79,7 @@ pub struct Configuration {
 
     /// Certificate caching directory, required for automatic HTTPS
     #[arg(long, env)]
-    pub https_auto_cert_cache: Option<String>,
+    pub https_auto_cert_cache: Option<PathBuf>,
 
     /// HTTPS server domain, required for automatic HTTPS
     #[arg(long, env)]
@@ -98,6 +105,7 @@ impl Configuration {
         info!("IMAP Host: {}", self.imap_host);
         info!("IMAP Port: {}", self.imap_port);
         info!("IMAP STARTTLS: {}", self.imap_starttls);
+        info!("IMAP TLS CA CERTS: {:?}", self.imap_tls_ca_certs);
         info!("IMAP User: {}", self.imap_user);
         info!("IMAP Check Interval: {} seconds", self.imap_check_interval);
         info!("IMAP Timeout: {}", self.imap_timeout);
