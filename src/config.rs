@@ -21,8 +21,8 @@ pub struct Configuration {
     #[arg(long, env, default_value_t = 993)]
     pub imap_port: u16,
 
-    /// Use STARTTLS (IMAP port should be set to 143!)
-    #[arg(long, env)]
+    /// Enable STARTTLS mode for IMAP client (IMAP port should be set to 143)
+    #[arg(long, env, conflicts_with = "imap_disable_tls")]
     pub imap_starttls: bool,
 
     /// Optional path to additional TLS root certificates used to creating the IMAP TLS connections.
@@ -30,6 +30,12 @@ pub struct Configuration {
     /// The path should point to a DER-encoded X.509 certificate.
     #[arg(long, env)]
     pub imap_tls_ca_certs: Option<PathBuf>,
+
+    /// Will the disable TLS encryption for the IMAP connection (IMAP port should be set to 143).
+    /// Not recommended. NEVER use this for a remote IMAP server over a network!
+    /// This is ONLY intended for connecting to IMAP servers or proxies on the same machine!
+    #[arg(long, env, conflicts_with = "imap_starttls")]
+    pub imap_disable_tls: bool,
 
     /// IMAP folder with the DMARC reports
     #[arg(long, env, default_value = "INBOX")]
@@ -106,6 +112,7 @@ impl Configuration {
         info!("IMAP Port: {}", self.imap_port);
         info!("IMAP STARTTLS: {}", self.imap_starttls);
         info!("IMAP TLS CA Certificate File: {:?}", self.imap_tls_ca_certs);
+        info!("IMAP TLS Disabled: {}", self.imap_disable_tls);
         info!("IMAP User: {}", self.imap_user);
         info!("IMAP Check Interval: {} seconds", self.imap_check_interval);
         info!("IMAP Timeout: {}", self.imap_timeout);

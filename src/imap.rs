@@ -16,6 +16,7 @@ use tokio_rustls::rustls::pki_types::pem::PemObject;
 use tokio_rustls::rustls::pki_types::{CertificateDer, ServerName};
 use tokio_rustls::rustls::{ClientConfig, RootCertStore};
 use tokio_rustls::TlsConnector;
+use tokio_util::either::Either;
 use tracing::{debug, info, warn};
 
 pub async fn get_mails(config: &Configuration) -> Result<HashMap<u32, Mail>> {
@@ -128,8 +129,10 @@ pub async fn get_mails(config: &Configuration) -> Result<HashMap<u32, Mail>> {
     Ok(mails)
 }
 
-/// Creates an encrypted IMAP client
-async fn create_client(config: &Configuration) -> Result<Client<TlsStream<TcpStream>>> {
+/// Creates an unecrypted or encrypted IMAP client
+async fn create_client(
+    config: &Configuration,
+) -> Result<Client<Either<TcpStream, TlsStream<TcpStream>>>> {
     let host_port = format!("{}:{}", config.imap_host.as_str(), config.imap_port);
     debug!("Parsing IMAP address {host_port} as socket address...");
 
@@ -152,9 +155,8 @@ async fn create_client(config: &Configuration) -> Result<Client<TlsStream<TcpStr
         .context("Failed to create TCP stream to IMAP server")?;
     debug!("Created async TCP stream");
 
-    let tls_stream = if config.imap_starttls {
+    let stream = if config.imap_starttls {
         debug!("Sending STARTTLS command over plain connection...");
-
         let mut plain_client = Client::new(tcp_stream);
         plain_client
             .read_response()
@@ -162,25 +164,27 @@ async fn create_client(config: &Configuration) -> Result<Client<TlsStream<TcpStr
             .context("Failed to read greeting")?
             .context("Failed parse greeting response")?;
         debug!("Received greeting");
-
         plain_client
             .run_command_and_check_ok("STARTTLS", None)
             .await
             .context("Failed to run STARTTLS command")?;
         debug!("Requested STARTTLS, upgrading...");
-
-        create_tls_stream(config, plain_client.into_inner())
+        let tls_stream = create_tls_stream(config, plain_client.into_inner())
             .await
-            .context("Failed to upgrade to TLS stream")?
+            .context("Failed to upgrade to TLS stream")?;
+        Either::Right(tls_stream)
+    } else if config.imap_disable_tls {
+        warn!("Using unecrypted TCP connection for IMAP client");
+        Either::Left(tcp_stream)
     } else {
         debug!("Directly creating TLS stream...");
-
-        create_tls_stream(config, tcp_stream)
+        let tls_stream = create_tls_stream(config, tcp_stream)
             .await
-            .context("Failed to create TLS stream")?
+            .context("Failed to create TLS stream")?;
+        Either::Right(tls_stream)
     };
 
-    let client = Client::new(tls_stream);
+    let client = Client::new(stream);
     debug!("Created IMAP client");
     Ok(client)
 }
