@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.0] - 2025-02-15
+* Added option to inject additional custom CA certificates
+* Added option to disable TLS encryption for IMAP client
+* Updated Cargo dependencies
+
 ## [1.3.0] - 2025-01-21
 * Increased default IMAP check interval to 30 minutes
 * More robust mail fetching (RFC822.SIZE property is now optional)
