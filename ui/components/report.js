@@ -8,7 +8,8 @@ export class Report extends LitElement {
         return {
             hash: { type: String },
             uid: { type: String, attribute: false },
-            report: { type: Object, attribute: false }
+            report: { type: Object, attribute: false },
+            ip2dns: { type: Object, attribute: false }
         };
     }
 
@@ -17,6 +18,7 @@ export class Report extends LitElement {
         this.hash = null;
         this.uid = null;
         this.report = null;
+        this.ip2dns = {};
     }
 
     async updated(changedProperties) {
@@ -25,7 +27,19 @@ export class Report extends LitElement {
             const rwu = await response.json();
             this.report = rwu.report;
             this.uid = rwu.uid;
+
+            // Request DNS info for every source IP
+            this.report.record.forEach(rec => {
+                this.getDnsForIp(rec.row.source_ip);
+            });
         }
+    }
+
+    async getDnsForIp(ip) {
+        const response = await fetch("ips/" + ip + "/dns");
+        const result = await response.text();
+        this.ip2dns[ip] = result;
+        this.requestUpdate();
     }
 
     renderOptional(value) {
@@ -148,7 +162,10 @@ export class Report extends LitElement {
                     </tr>
                     <tr>
                         <td class="name">Source IP</td>
-                        <td>${record.row.source_ip}</td>
+                        <td>
+                            ${record.row.source_ip}
+                            <span class="faded">(DNS: ${this.ip2dns[record.row.source_ip] === undefined ? "loading" : this.ip2dns[record.row.source_ip]})</span>
+                        </td>
                     </tr>
                     <tr>
                         <td class="name">Count</td>

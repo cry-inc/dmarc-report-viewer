@@ -14,14 +14,16 @@ use axum::Json;
 use axum::{extract::State, routing::get, Router};
 use axum_server::Handle;
 use base64::{engine::general_purpose::STANDARD, Engine};
+use dns_lookup::lookup_addr;
 use futures::StreamExt;
 use rustls_acme::caches::DirCache;
 use rustls_acme::AcmeConfig;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use std::net::SocketAddr;
+use std::net::{IpAddr, SocketAddr};
 use std::sync::{Arc, Mutex};
 use tokio::signal;
+use tokio::task::spawn_blocking;
 use tracing::{error, info, warn};
 
 pub async fn run_http_server(config: &Configuration, state: Arc<Mutex<AppState>>) -> Result<()> {
@@ -37,6 +39,7 @@ pub async fn run_http_server(config: &Configuration, state: Arc<Mutex<AppState>>
         .route("/reports/{id}", get(report))
         .route("/reports/{id}/json", get(report_json))
         .route("/reports/{id}/xml", get(report_xml))
+        .route("/ips/{ip}/dns", get(ip_to_dns))
         .route("/build", get(build))
         .route("/", get(static_file)) // index.html
         .route("/{*filepath}", get(static_file)) // all other files
@@ -453,6 +456,43 @@ async fn report_xml(
             StatusCode::NOT_FOUND,
             [(header::CONTENT_TYPE, "text/plain")],
             format!("Cannot find report with ID {id}"),
+        )
+    }
+}
+
+async fn ip_to_dns(Path(ip): Path<String>) -> impl IntoResponse {
+    let Ok(parsed_ip) = ip.parse::<IpAddr>() else {
+        return (
+            StatusCode::BAD_REQUEST,
+            [(header::CONTENT_TYPE, "text/plain")],
+            format!("Cannot parse {ip}"),
+        );
+    };
+
+    // Do not block here and use a special async task
+    // where blocking calls are acceptable
+    let handle = spawn_blocking(move || lookup_addr(&parsed_ip));
+
+    // Join async task
+    let Ok(result) = handle.await else {
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            [(header::CONTENT_TYPE, "text/plain")],
+            String::from("DNS lookup failed"),
+        );
+    };
+
+    if let Ok(host_name) = result {
+        (
+            StatusCode::OK,
+            [(header::CONTENT_TYPE, "text/plain")],
+            host_name,
+        )
+    } else {
+        (
+            StatusCode::NOT_FOUND,
+            [(header::CONTENT_TYPE, "text/plain")],
+            String::from("n/a"),
         )
     }
 }
