@@ -5,8 +5,8 @@
 [![Dependencies](https://deps.rs/repo/github/cry-inc/dmarc-report-viewer/status.svg)](https://deps.rs/repo/github/cry-inc/dmarc-report-viewer)
 
 A lightweight selfhosted standalone DMARC report viewer that automatically fetches input data periodically from an IMAP mailbox.
+Ideal for smaller selfhosted mailservers to browse, visualize and analyze the DMARC reports.
 
-Ideal for smaller selfhosted mailservers.
 The application is a single fully statically linked executable written in Rust.
 It combines a DMARC report parser with an IMAP client and an HTTP server.
 The embedded HTTP server offers a web UI for easy access and filtering of the reports.
