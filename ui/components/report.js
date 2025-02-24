@@ -9,7 +9,8 @@ export class Report extends LitElement {
             hash: { type: String },
             uid: { type: String, attribute: false },
             report: { type: Object, attribute: false },
-            ip2dns: { type: Object, attribute: false }
+            ip2dns: { type: Object, attribute: false },
+            ip2location: { type: Object, attribute: false }
         };
     }
 
@@ -19,6 +20,7 @@ export class Report extends LitElement {
         this.uid = null;
         this.report = null;
         this.ip2dns = {};
+        this.ip2location = {};
     }
 
     async updated(changedProperties) {
@@ -28,9 +30,10 @@ export class Report extends LitElement {
             this.report = rwu.report;
             this.uid = rwu.uid;
 
-            // Request DNS info for every source IP
+            // Request more info for every source IP
             this.report.record.forEach(rec => {
                 this.getDnsForIp(rec.row.source_ip);
+                this.getLocationForIp(rec.row.source_ip);
             });
         }
     }
@@ -39,6 +42,17 @@ export class Report extends LitElement {
         const response = await fetch("ips/" + ip + "/dns");
         const result = await response.text();
         this.ip2dns[ip] = result;
+        this.requestUpdate();
+    }
+
+    async getLocationForIp(ip) {
+        const response = await fetch("ips/" + ip + "/location");
+        if (response.status === 200) {
+            const result = await response.json();
+            this.ip2location[ip] = result;
+        } else {
+            this.ip2location[ip] = { country: "n/a" };
+        }
         this.requestUpdate();
     }
 
@@ -164,7 +178,10 @@ export class Report extends LitElement {
                         <td class="name">Source IP</td>
                         <td>
                             ${record.row.source_ip}
-                            <span class="faded">(DNS: ${this.ip2dns[record.row.source_ip] === undefined ? "loading" : this.ip2dns[record.row.source_ip]})</span>
+                            <span class="faded">
+                                (Location: ${this.ip2location[record.row.source_ip] === undefined ? "loading" : html`<span class="help" title="${JSON.stringify(this.ip2location[record.row.source_ip], null, 2)}">${this.ip2location[record.row.source_ip].country}</span>`},
+                                DNS: ${this.ip2dns[record.row.source_ip] === undefined ? "loading" : this.ip2dns[record.row.source_ip]})
+                            </span>
                         </td>
                     </tr>
                     <tr>

@@ -2,6 +2,7 @@
 
 mod background;
 mod config;
+mod geolocate;
 mod hasher;
 mod http;
 mod imap;

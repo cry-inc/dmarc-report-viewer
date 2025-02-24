@@ -1,4 +1,5 @@
 use crate::config::Configuration;
+use crate::geolocate::Location;
 use crate::mail::Mail;
 use crate::report::{DkimResultType, DmarcResultType, Report, SpfResultType};
 use crate::state::AppState;
@@ -40,6 +41,7 @@ pub async fn run_http_server(config: &Configuration, state: Arc<Mutex<AppState>>
         .route("/reports/{id}/json", get(report_json))
         .route("/reports/{id}/xml", get(report_xml))
         .route("/ips/{ip}/dns", get(ip_to_dns))
+        .route("/ips/{ip}/location", get(ip_to_location))
         .route("/build", get(build))
         .route("/", get(static_file)) // index.html
         .route("/{*filepath}", get(static_file)) // all other files
@@ -495,6 +497,30 @@ async fn ip_to_dns(Path(ip): Path<String>) -> impl IntoResponse {
             String::from("n/a"),
         )
     }
+}
+
+async fn ip_to_location(Path(ip): Path<String>) -> impl IntoResponse {
+    let Ok(location) = Location::from_ip(&ip).await else {
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            [(header::CONTENT_TYPE, "text/plain")],
+            String::from("Failed to locate IP"),
+        );
+    };
+
+    let Some(location) = location else {
+        return (
+            StatusCode::NOT_FOUND,
+            [(header::CONTENT_TYPE, "text/plain")],
+            String::from("No info found"),
+        );
+    };
+
+    (
+        StatusCode::OK,
+        [(header::CONTENT_TYPE, "application/json")],
+        serde_json::to_string_pretty(&location).expect("Failed to serialize JSON"),
+    )
 }
 
 async fn mail(
