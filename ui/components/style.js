@@ -83,6 +83,11 @@ export const globalStyle = css`
     }
 
     .button {
+        background: none;
+	    border: none;
+	    font: inherit;
+	    cursor: pointer;
+	    outline: inherit;
         display: inline-block;
         padding: 5px;
         padding-left: 8px;
@@ -97,6 +102,13 @@ export const globalStyle = css`
     .button:hover {
         color: white;
         background-color: rgb(90, 98, 104);
+    }
+
+    .button.sm {
+        padding: 1px;
+        padding-left: 4px;
+        padding-right: 4px;
+        margin-right: 5px;
     }
 
     .ml {

@@ -8,9 +8,6 @@ export class Report extends LitElement {
         return {
             hash: { type: String },
             uid: { type: String, attribute: false },
-            report: { type: Object, attribute: false },
-            ip2dns: { type: Object, attribute: false },
-            ip2location: { type: Object, attribute: false }
         };
     }
 
@@ -21,6 +18,7 @@ export class Report extends LitElement {
         this.report = null;
         this.ip2dns = {};
         this.ip2location = {};
+        this.ipDetails = {};
     }
 
     async updated(changedProperties) {
@@ -29,19 +27,24 @@ export class Report extends LitElement {
             const rwu = await response.json();
             this.report = rwu.report;
             this.uid = rwu.uid;
-
-            // Request more info for every source IP
-            this.report.record.forEach(rec => {
-                this.getDnsForIp(rec.row.source_ip);
-                this.getLocationForIp(rec.row.source_ip);
-            });
         }
+    }
+
+    async lookupIp(ip) {
+        this.ipDetails[ip] = true;
+        this.getDnsForIp(ip);
+        this.getLocationForIp(ip);
+        this.requestUpdate();
     }
 
     async getDnsForIp(ip) {
         const response = await fetch("ips/" + ip + "/dns");
-        const result = await response.text();
-        this.ip2dns[ip] = result;
+        if (response.status === 200) {
+            const result = await response.text();
+            this.ip2dns[ip] = result;
+        } else {
+            this.ip2dns[ip] = null;
+        }
         this.requestUpdate();
     }
 
@@ -51,7 +54,7 @@ export class Report extends LitElement {
             const result = await response.json();
             this.ip2location[ip] = result;
         } else {
-            this.ip2location[ip] = { country: "n/a" };
+            this.ip2location[ip] = null;
         }
         this.requestUpdate();
     }
@@ -76,6 +79,30 @@ export class Report extends LitElement {
             return html`<span class="faded">n/a</span>`;
         } else {
             return html`<span class="badge">${result}</span>`;
+        }
+    }
+
+    renderLocation(lat, lon) {
+        return html`<a target="_blank" title="Show on OpenStreeMap" href="https://www.openstreetmap.org/#map=8/${lat}/${lon}">${lat}, ${lon}</a>`;
+    }
+
+    renderPropIfObjDefined(obj, prop) {
+        if (obj === undefined) {
+            return html`<span class="faded">loading...</span>`;
+        } else if (obj) {
+            return obj[prop]
+        } else {
+            return html`<span class="faded">n/a</span>`;
+        }
+    }
+
+    renderIfDefined(obj) {
+        if (obj === undefined) {
+            return html`<span class="faded">loading...</span>`;
+        } else if (obj) {
+            return obj;
+        } else {
+            return html`<span class="faded">n/a</span>`;
         }
     }
 
@@ -178,12 +205,41 @@ export class Report extends LitElement {
                         <td class="name">Source IP</td>
                         <td>
                             ${record.row.source_ip}
-                            <span class="faded">
-                                (Location: ${this.ip2location[record.row.source_ip] === undefined ? "loading" : html`<span class="help" title="${JSON.stringify(this.ip2location[record.row.source_ip], null, 2)}">${this.ip2location[record.row.source_ip].country}</span>`},
-                                DNS: ${this.ip2dns[record.row.source_ip] === undefined ? "loading" : this.ip2dns[record.row.source_ip]}, <a target="blank" href="/ips/${record.row.source_ip}/whois">Whois</a>)
-                            </span>
+                            <button @click="${() => this.lookupIp(record.row.source_ip)}" class="button sm help" title="Search DNS hostname for IP and geolocate it">DNS and Location</button>
+                            <a class="button sm help" title="Look up whois record for IP and show in new tab" target="blank" href="/ips/${record.row.source_ip}/whois">Whois</a>
                         </td>
                     </tr>
+                    <tbody style="${this.ipDetails[record.row.source_ip] ? "": "display:none"}">
+                        <tr>
+                            <td class="name">Source IP DNS</td>
+                            <td>${this.renderIfDefined(this.ip2dns[record.row.source_ip])}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="name">Source IP Country</td>
+                            <td>${this.renderPropIfObjDefined(this.ip2location[record.row.source_ip], "country")}</td>
+                        </tr>
+                        <tr>
+                            <td class="name">Source IP City</td>
+                            <td>${this.renderPropIfObjDefined(this.ip2location[record.row.source_ip], "city")}</td>
+                        </tr>
+                        <tr>
+                            <td class="name">Source IP ISP</td>
+                            <td>${this.renderPropIfObjDefined(this.ip2location[record.row.source_ip], "isp")}</td>
+                        </tr>
+                        <tr>
+                            <td class="name">Source IP AS</td>
+                            <td>${this.renderPropIfObjDefined(this.ip2location[record.row.source_ip], "as")}</td>
+                        </tr>
+                        <tr>
+                            <td class="name">Source IP Location</td>
+                            <td>${this.ip2location[record.row.source_ip] === undefined ?
+                                    html`<span class="faded">loading</span>` :
+                                    this.renderLocation(this.ip2location[record.row.source_ip].lat, this.ip2location[record.row.source_ip].lon)
+                                }
+                            </td>
+                        </tr>
+                    </tbody>
                     <tr>
                         <td class="name">Count</td>
                         <td>${record.row.count}</td>
