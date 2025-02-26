@@ -3,6 +3,7 @@ use crate::geolocate::Location;
 use crate::mail::Mail;
 use crate::report::{DkimResultType, DmarcResultType, Report, SpfResultType};
 use crate::state::AppState;
+use crate::whois::WhoIsIp;
 use anyhow::{Context, Result};
 use axum::body::Body;
 use axum::extract::{Path, Query, Request};
@@ -42,6 +43,7 @@ pub async fn run_http_server(config: &Configuration, state: Arc<Mutex<AppState>>
         .route("/reports/{id}/xml", get(report_xml))
         .route("/ips/{ip}/dns", get(ip_to_dns))
         .route("/ips/{ip}/location", get(ip_to_location))
+        .route("/ips/{ip}/whois", get(ip_to_whois))
         .route("/build", get(build))
         .route("/", get(static_file)) // index.html
         .route("/{*filepath}", get(static_file)) // all other files
@@ -520,6 +522,35 @@ async fn ip_to_location(Path(ip): Path<String>) -> impl IntoResponse {
         StatusCode::OK,
         [(header::CONTENT_TYPE, "application/json")],
         serde_json::to_string_pretty(&location).expect("Failed to serialize JSON"),
+    )
+}
+
+async fn ip_to_whois(Path(ip): Path<String>) -> impl IntoResponse {
+    // Validate IP parameter roughly
+    if !ip
+        .chars()
+        .all(|c| c.is_ascii_digit() || c == ':' || c == '.')
+    {
+        return (
+            StatusCode::BAD_REQUEST,
+            [(header::CONTENT_TYPE, "text/plain")],
+            String::from("Invalid IP value"),
+        );
+    }
+
+    let whois = WhoIsIp::default();
+    let Ok(whois) = whois.lookup(&ip).await else {
+        return (
+            StatusCode::NOT_FOUND,
+            [(header::CONTENT_TYPE, "text/plain")],
+            String::from("Failed to look up IP"),
+        );
+    };
+
+    (
+        StatusCode::OK,
+        [(header::CONTENT_TYPE, "text/plain")],
+        whois,
     )
 }
 

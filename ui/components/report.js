@@ -180,7 +180,7 @@ export class Report extends LitElement {
                             ${record.row.source_ip}
                             <span class="faded">
                                 (Location: ${this.ip2location[record.row.source_ip] === undefined ? "loading" : html`<span class="help" title="${JSON.stringify(this.ip2location[record.row.source_ip], null, 2)}">${this.ip2location[record.row.source_ip].country}</span>`},
-                                DNS: ${this.ip2dns[record.row.source_ip] === undefined ? "loading" : this.ip2dns[record.row.source_ip]})
+                                DNS: ${this.ip2dns[record.row.source_ip] === undefined ? "loading" : this.ip2dns[record.row.source_ip]}, <a target="blank" href="/ips/${record.row.source_ip}/whois">Whois</a>)
                             </span>
                         </td>
                     </tr>

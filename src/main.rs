@@ -11,6 +11,7 @@ mod parser;
 mod report;
 mod state;
 mod summary;
+mod whois;
 mod xml_error;
 mod xml_file;
 
