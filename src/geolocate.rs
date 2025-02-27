@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use tokio::net::TcpStream;
 use tracing::error;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Location {
     #[serde(rename = "as")]

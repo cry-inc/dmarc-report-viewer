@@ -31,9 +31,13 @@ export class Report extends LitElement {
     }
 
     async lookupIp(ip) {
-        this.ipDetails[ip] = true;
-        this.getDnsForIp(ip);
-        this.getLocationForIp(ip);
+        if (this.ipDetails[ip]) {
+            this.ipDetails[ip] = false;
+        } else {
+            this.ipDetails[ip] = true;
+            this.getDnsForIp(ip);
+            this.getLocationForIp(ip);
+        }
         this.requestUpdate();
     }
 
@@ -230,6 +234,14 @@ export class Report extends LitElement {
                         <tr>
                             <td class="name">Source IP AS</td>
                             <td>${this.renderPropIfObjDefined(this.ip2location[record.row.source_ip], "as")}</td>
+                        </tr>
+                        <tr>
+                            <td class="name help" title="Known Proxy, VPN or Tor exit address?">Source IP Proxy</td>
+                            <td>${this.renderPropIfObjDefined(this.ip2location[record.row.source_ip], "proxy")}</td>
+                        </tr>
+                        <tr>
+                            <td class="name help" title="Known data center, hosting or colocated">Source IP Data Center</td>
+                            <td>${this.renderPropIfObjDefined(this.ip2location[record.row.source_ip], "hosting")}</td>
                         </tr>
                         <tr>
                             <td class="name">Source IP Location</td>

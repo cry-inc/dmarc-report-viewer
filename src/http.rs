@@ -459,29 +459,53 @@ async fn report_xml(
     }
 }
 
-async fn ip_to_dns(Path(ip): Path<String>) -> impl IntoResponse {
+async fn ip_to_dns(
+    State(state): State<Arc<Mutex<AppState>>>,
+    Path(ip): Path<String>,
+) -> impl IntoResponse {
     let Ok(parsed_ip) = ip.parse::<IpAddr>() else {
         return (
             StatusCode::BAD_REQUEST,
             [(header::CONTENT_TYPE, "text/plain")],
-            format!("Cannot parse {ip}"),
+            format!("Invalid IP {ip}"),
         );
     };
 
-    // Do not block here and use a special async task
-    // where blocking calls are acceptable
-    let handle = spawn_blocking(move || lookup_addr(&parsed_ip));
-
-    // Join async task
-    let Ok(result) = handle.await else {
-        return (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            [(header::CONTENT_TYPE, "text/plain")],
-            String::from("DNS lookup failed"),
-        );
+    // Check cache
+    let cached = {
+        let app = state.lock().await;
+        app.ip_dns_cache.get(&parsed_ip).map(|dns| dns.to_string())
     };
 
-    if let Ok(host_name) = result {
+    let result = if let Some(host_name) = cached {
+        // Found result in cache!
+        Some(host_name)
+    } else {
+        // Nothing in cache, send new DNS request!
+        // Do not block here and use a special async task
+        // where blocking calls are acceptable
+        let handle = spawn_blocking(move || lookup_addr(&parsed_ip));
+
+        // Join async task
+        let Ok(result) = handle.await else {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                [(header::CONTENT_TYPE, "text/plain")],
+                String::from("DNS lookup failed"),
+            );
+        };
+
+        // Cache any positive result
+        if let Ok(host_name) = result {
+            let mut app = state.lock().await;
+            app.ip_dns_cache.insert(parsed_ip, host_name.clone());
+            Some(host_name)
+        } else {
+            None
+        }
+    };
+
+    if let Some(host_name) = result {
         (
             StatusCode::OK,
             [(header::CONTENT_TYPE, "text/plain")],
@@ -496,16 +520,48 @@ async fn ip_to_dns(Path(ip): Path<String>) -> impl IntoResponse {
     }
 }
 
-async fn ip_to_location(Path(ip): Path<String>) -> impl IntoResponse {
-    let Ok(location) = Location::from_ip(&ip).await else {
+async fn ip_to_location(
+    State(state): State<Arc<Mutex<AppState>>>,
+    Path(ip): Path<String>,
+) -> impl IntoResponse {
+    let Ok(parsed_ip) = ip.parse::<IpAddr>() else {
         return (
-            StatusCode::INTERNAL_SERVER_ERROR,
+            StatusCode::BAD_REQUEST,
             [(header::CONTENT_TYPE, "text/plain")],
-            String::from("Failed to locate IP"),
+            format!("Invalid IP {ip}"),
         );
     };
 
-    let Some(location) = location else {
+    // Check cache
+    let cached = {
+        let app = state.lock().await;
+        app.ip_location_cache.get(&parsed_ip).cloned()
+    };
+
+    let result = if let Some(location) = cached {
+        // Found result in cache!
+        Some(location)
+    } else {
+        // Nothing in cache, send new request!
+        let Ok(result) = Location::from_ip(&parsed_ip.to_string()).await else {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                [(header::CONTENT_TYPE, "text/plain")],
+                String::from("Failed to locate IP"),
+            );
+        };
+
+        // Cache any positive result
+        if let Some(location) = result {
+            let mut app = state.lock().await;
+            app.ip_location_cache.insert(parsed_ip, location.clone());
+            Some(location)
+        } else {
+            None
+        }
+    };
+
+    let Some(location) = result else {
         return (
             StatusCode::NOT_FOUND,
             [(header::CONTENT_TYPE, "text/plain")],
@@ -529,7 +585,7 @@ async fn ip_to_whois(Path(ip): Path<String>) -> impl IntoResponse {
         return (
             StatusCode::BAD_REQUEST,
             [(header::CONTENT_TYPE, "text/plain")],
-            String::from("Invalid IP value"),
+            format!("Invalid IP {ip}"),
         );
     }
 

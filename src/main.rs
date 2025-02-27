@@ -1,6 +1,7 @@
 #![forbid(unsafe_code)]
 
 mod background;
+mod cache_map;
 mod config;
 mod geolocate;
 mod hasher;
@@ -54,7 +55,7 @@ async fn main() -> Result<()> {
     config.log();
 
     // Prepare shared application state
-    let state = Arc::new(Mutex::new(AppState::default()));
+    let state = Arc::new(Mutex::new(AppState::new()));
 
     // Start background task
     let (stop_sender, stop_receiver) = channel(1);
