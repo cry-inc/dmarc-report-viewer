@@ -6,6 +6,7 @@ use hyper::client::conn::http1;
 use hyper::{Request, Uri};
 use hyper_util::rt::TokioIo;
 use serde::{Deserialize, Serialize};
+use std::net::IpAddr;
 use tokio::net::TcpStream;
 use tracing::error;
 
@@ -29,7 +30,7 @@ pub struct Location {
 
 impl Location {
     /// Current backend allows 45 requests per minute
-    pub async fn from_ip(ip: &str) -> Result<Option<Self>> {
+    pub async fn from_ip(ip: &IpAddr) -> Result<Option<Self>> {
         // Create and parse URI
         let uri = format!("http://ip-api.com/json/{ip}?fields=country,countryCode,regionName,city,lat,lon,timezone,isp,org,as,proxy,hosting,query")
             .parse::<Uri>()

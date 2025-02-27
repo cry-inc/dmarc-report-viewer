@@ -5,6 +5,7 @@
 
 use anyhow::{bail, Context, Result};
 use regex::Regex;
+use std::net::IpAddr;
 use std::time::Duration;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
@@ -36,13 +37,13 @@ impl WhoIsIp {
             .context("TCP connect failed")
     }
 
-    async fn lookup_once(&self, ip: &str, server: &Server) -> Result<AddrTextPair> {
+    async fn lookup_once(&self, ip: &IpAddr, server: &Server) -> Result<AddrTextPair> {
         let server_addr = format!("{}:{}", server.host, server.port);
         let mut client = self
             .get_tcp_stream(&server_addr)
             .await
             .context("Failed to get TCP stream")?;
-        let query = server.query.replace("$addr", ip);
+        let query = server.query.replace("$addr", &ip.to_string());
         timeout(self.timeout, client.write_all(query.as_bytes()))
             .await
             .context("Sending query timed out")?
@@ -62,7 +63,12 @@ impl WhoIsIp {
         })
     }
 
-    async fn lookup_iterative(&self, ip: &str, server: &Server, mut follow: u8) -> Result<String> {
+    async fn lookup_iterative(
+        &self,
+        ip: &IpAddr,
+        server: &Server,
+        mut follow: u8,
+    ) -> Result<String> {
         let mut result = self
             .lookup_once(ip, server)
             .await
@@ -88,7 +94,7 @@ impl WhoIsIp {
         Ok(result.text)
     }
 
-    pub async fn lookup(&self, ip: &str) -> Result<String> {
+    pub async fn lookup(&self, ip: &IpAddr) -> Result<String> {
         self.lookup_iterative(ip, &self.server, self.max_follows)
             .await
     }

@@ -543,7 +543,7 @@ async fn ip_to_location(
         Some(location)
     } else {
         // Nothing in cache, send new request!
-        let Ok(result) = Location::from_ip(&parsed_ip.to_string()).await else {
+        let Ok(result) = Location::from_ip(&parsed_ip).await else {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 [(header::CONTENT_TYPE, "text/plain")],
@@ -577,20 +577,16 @@ async fn ip_to_location(
 }
 
 async fn ip_to_whois(Path(ip): Path<String>) -> impl IntoResponse {
-    // Validate IP parameter roughly
-    if !ip
-        .chars()
-        .all(|c| c.is_ascii_digit() || c == ':' || c == '.')
-    {
+    let Ok(parsed_ip) = ip.parse::<IpAddr>() else {
         return (
             StatusCode::BAD_REQUEST,
             [(header::CONTENT_TYPE, "text/plain")],
             format!("Invalid IP {ip}"),
         );
-    }
+    };
 
     let whois = WhoIsIp::default();
-    let Ok(whois) = whois.lookup(&ip).await else {
+    let Ok(whois) = whois.lookup(&parsed_ip).await else {
         return (
             StatusCode::NOT_FOUND,
             [(header::CONTENT_TYPE, "text/plain")],
