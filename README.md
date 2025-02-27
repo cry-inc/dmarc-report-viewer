@@ -38,6 +38,7 @@ You can find more screenshots [here](screenshots/screenshots.md).
 - [x] List all mails in the IMAP inbox
 - [x] Viewing of individual mail metadata with a list of extracted reports
 - [x] Show parsing errors for DMARC reports
+- [x] Lookup of DNS, location, whois and other source IP properties
 
 ## Changelog
 Read the [CHANGELOG.md](CHANGELOG.md) file for a list of all released versions and their corresponding changes.
