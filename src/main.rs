@@ -20,8 +20,8 @@ use crate::http::run_http_server;
 use crate::state::AppState;
 use anyhow::{Context, Result};
 use config::Configuration;
-use std::sync::{Arc, Mutex};
-use tokio::sync::mpsc::channel;
+use std::sync::Arc;
+use tokio::sync::{mpsc::channel, Mutex};
 use tracing::info;
 
 #[tokio::main]

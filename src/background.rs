@@ -7,9 +7,10 @@ use crate::summary::Summary;
 use crate::xml_error::XmlError;
 use anyhow::{Context, Result};
 use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 use std::time::{Duration, Instant, SystemTime};
 use tokio::sync::mpsc::Receiver;
+use tokio::sync::Mutex;
 use tokio::task::JoinHandle;
 use tracing::{error, info, warn};
 
@@ -119,7 +120,7 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
     let summary = Summary::new(mails.len(), xml_files.len(), &reports, timestamp);
 
     {
-        let mut locked_state = state.lock().expect("Failed to lock app state");
+        let mut locked_state = state.lock().await;
         locked_state.mails = mails;
         locked_state.summary = summary;
         locked_state.reports = reports;

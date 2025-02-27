@@ -23,8 +23,9 @@ use rustls_acme::AcmeConfig;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::net::{IpAddr, SocketAddr};
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 use tokio::signal;
+use tokio::sync::Mutex;
 use tokio::task::spawn_blocking;
 use tracing::{error, info, warn};
 
@@ -253,13 +254,7 @@ async fn static_file(req: Request) -> impl IntoResponse {
 }
 
 async fn summary(State(state): State<Arc<Mutex<AppState>>>) -> impl IntoResponse {
-    Json(
-        state
-            .lock()
-            .expect("Failed to lock app state")
-            .summary
-            .clone(),
-    )
+    Json(state.lock().await.summary.clone())
 }
 
 async fn build() -> impl IntoResponse {
@@ -359,7 +354,7 @@ async fn reports(
 
     let reports: Vec<ReportHeader> = state
         .lock()
-        .expect("Failed to lock app state")
+        .await
         .reports
         .iter()
         .filter(|(_, rwu)| {
@@ -399,7 +394,7 @@ async fn report(
     State(state): State<Arc<Mutex<AppState>>>,
     Path(id): Path<String>,
 ) -> impl IntoResponse {
-    let lock = state.lock().expect("Failed to lock app state");
+    let lock = state.lock().await;
     if let Some(rwu) = lock.reports.get(&id) {
         let report_json = serde_json::to_string(rwu).expect("Failed to serialize JSON");
         (
@@ -420,7 +415,7 @@ async fn report_json(
     State(state): State<Arc<Mutex<AppState>>>,
     Path(id): Path<String>,
 ) -> impl IntoResponse {
-    let lock = state.lock().expect("Failed to lock app state");
+    let lock = state.lock().await;
     if let Some(rwu) = lock.reports.get(&id) {
         let report_json = serde_json::to_string(&rwu.report).expect("Failed to serialize JSON");
         (
@@ -441,7 +436,7 @@ async fn report_xml(
     State(state): State<Arc<Mutex<AppState>>>,
     Path(id): Path<String>,
 ) -> impl IntoResponse {
-    let lock = state.lock().expect("Failed to lock app state");
+    let lock = state.lock().await;
     if let Some(rwu) = lock.reports.get(&id) {
         let mut report_xml = String::new();
         let mut serializer = quick_xml::se::Serializer::new(&mut report_xml);
@@ -565,7 +560,7 @@ async fn mail(
             format!("Invalid ID {id}"),
         );
     };
-    let lock = state.lock().expect("Failed to lock app state");
+    let lock = state.lock().await;
     if let Some((_, mail)) = lock.mails.iter().find(|(uid, _)| **uid == parsed_uid) {
         let mail_json = serde_json::to_string(mail).expect("Failed to serialize JSON");
         (
@@ -593,7 +588,7 @@ async fn mail_errors(
             format!("Invalid ID {id}"),
         );
     };
-    let lock = state.lock().expect("Failed to lock app state");
+    let lock = state.lock().await;
     if !lock.mails.contains_key(&parsed_uid) {
         return (
             StatusCode::NOT_FOUND,
@@ -647,7 +642,7 @@ async fn mails(
     // Remove URL encoding from strings in filters
     let filters = filters.url_decode();
 
-    let lock = state.lock().expect("Failed to lock app state");
+    let lock = state.lock().await;
     let mails: Vec<&Mail> = lock
         .mails
         .values()
