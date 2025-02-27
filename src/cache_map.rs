@@ -1,7 +1,6 @@
 use anyhow::{ensure, Result};
 use std::collections::HashMap;
 use std::hash::Hash;
-use std::time::SystemTime;
 
 /// Very simple map for caching data.
 /// Cached values are identified by a unique key.
@@ -11,10 +10,11 @@ use std::time::SystemTime;
 pub struct CacheMap<K, V> {
     map: HashMap<K, Entry<V>>,
     max_size: usize,
+    counter: usize,
 }
 
 struct Entry<T> {
-    pub inserted: SystemTime,
+    pub inserted: usize,
     pub value: T,
 }
 
@@ -27,6 +27,7 @@ where
         Ok(Self {
             map: HashMap::new(),
             max_size,
+            counter: 0,
         })
     }
 
@@ -39,10 +40,11 @@ where
             self.prune();
         }
         let entry = Entry {
-            inserted: SystemTime::now(),
+            inserted: self.counter,
             value,
         };
         self.map.insert(key, entry);
+        self.counter += 1;
     }
 
     fn prune(&mut self) {
