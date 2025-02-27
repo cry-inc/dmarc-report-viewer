@@ -54,7 +54,15 @@ pub fn extract_xml_files(mail: &mut Mail) -> Result<Vec<XmlFile>> {
             .get_headers()
             .get_first_value("Content-Type")
             .unwrap_or(String::new());
-        if content_type.contains("application/zip") {
+
+        // Detect compression based on content type header.
+        // In most cases is directly a ZIP or GZIP type, but in some cases its generic
+        // and we need to check for a file name ending with a certain extension.
+        // For example AWS uses such values:
+        // Content-Type: application/octet-stream;name=amazonses.com!example.com!1722384000!1722470400.xml.gz
+        if content_type.contains("application/zip")
+            || content_type.contains("application/octet-stream") && content_type.ends_with(".zip")
+        {
             let body = part
                 .get_body_raw()
                 .context("Failed to get raw body of attachment part")?;
@@ -68,7 +76,10 @@ pub fn extract_xml_files(mail: &mut Mail) -> Result<Vec<XmlFile>> {
                     hash,
                 });
             }
-        } else if content_type.contains("application/gzip") {
+        } else if content_type.contains("application/gzip")
+            || content_type.contains("application/octet-stream")
+                && content_type.ends_with(".xml.gz")
+        {
             let body = part
                 .get_body_raw()
                 .context("Failed to get raw body of attachment part")?;
