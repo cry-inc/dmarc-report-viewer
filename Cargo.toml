@@ -6,7 +6,7 @@ categories = ["email"]
 license = "MIT"
 readme = "README.md"
 repository = "https://github.com/cry-inc/dmarc-report-viewer"
-version = "1.4.0"
+version = "1.5.0"
 edition = "2021"
 
 [dependencies]

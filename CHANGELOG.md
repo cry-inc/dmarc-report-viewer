@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.0] - 2025-03-02
+* Fixed detection of (G)ZIP XML attachments with content type `application/octet-stream`
+* Added feature to look up DNS name of Source IP
+* Added feature to look up location of Source IP
+  (uses free IP Geolocation API by ip-api.com, limited to 45 req/min)
+* Added feature to look up Whois record of Source IP
+* Updated Cargo dependencies
+
 ## [1.4.0] - 2025-02-15
 * Added option to inject additional custom CA certificates
 * Added option to disable TLS encryption for IMAP client
