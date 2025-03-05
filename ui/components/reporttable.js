@@ -22,12 +22,15 @@ export class ReportTable extends LitElement {
         }
     }
 
-    renderProblemsBadge(problems) {
-        if (problems) {
-            return html`<span class="badge badge-negative">Yes</span>`;
-        } else {
-            return html`<span class="faded">No</span>`;
+    renderProblemBadges(dkim, spf) {
+        const badges = [];
+        if (dkim) {
+            badges.push(html`<span class="badge badge-negative mr-5">DKIM</span>`);
         }
+        if (spf) {
+            badges.push(html` <span class="badge badge-negative">SPF</span>`);
+        }
+        return badges;
     }
 
     render() {
@@ -37,7 +40,7 @@ export class ReportTable extends LitElement {
                     <th>ID</th>
                     <th class="xs-hidden">Organization</th>
                     <th class="sm-hidden">Domain</th>
-                    <th class="help" title="Reports that indicate possible problems">Problems</th>
+                    <th class="help" title="Reports with SPF or DKIM problems are highlighted in red">Problems</th>
                     <th class="sm-hidden">Records</th>
                     <th class="md-hidden">Begin</th>
                     <th class="md-hidden">End</th>
@@ -47,7 +50,7 @@ export class ReportTable extends LitElement {
                             <td><a href="#/reports/${report.hash}" title="${report.id}">${this.prepareId(report.id)}</a></td>
                             <td class="xs-hidden"><a href="#/reports?org=${encodeURIComponent(report.org)}">${report.org}</a></td>
                             <td class="sm-hidden"><a href="#/reports?domain=${encodeURIComponent(report.domain)}">${report.domain}</a></td>
-                            <td>${this.renderProblemsBadge(report.flagged)}</td>
+                            <td>${this.renderProblemBadges(report.flagged_dkim, report.flagged_spf)}</td>
                             <td class="sm-hidden">${report.records}</td>
                             <td class="md-hidden">${new Date(report.date_begin * 1000).toLocaleString()}</td>
                             <td class="md-hidden">${new Date(report.date_end * 1000).toLocaleString()}</td>

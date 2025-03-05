@@ -27,6 +27,12 @@ export class Reports extends LitElement {
         if (this.params.flagged === "true" || this.params.flagged === "false") {
             urlParams.push("flagged=" + this.params.flagged);
         }
+        if (this.params.flagged_dkim === "true" || this.params.flagged_dkim === "false") {
+            urlParams.push("flagged_dkim=" + this.params.flagged_dkim);
+        }
+        if (this.params.flagged_spf === "true" || this.params.flagged_spf === "false") {
+            urlParams.push("flagged_spf=" + this.params.flagged_spf);
+        }
         if (this.params.domain) {
             urlParams.push("domain=" + encodeURIComponent(this.params.domain));
         }
@@ -49,7 +55,11 @@ export class Reports extends LitElement {
             <div>
                 ${this.filtered ?
                     html`Filter active! <a class="ml button" href="#/reports">Show all Reports</a>` :
-                    html`Filters: <a class="ml button" href="#/reports?flagged=true">Reports with Problems</a>`
+                    html`Filters:
+                        <a class="ml button mr-5" href="#/reports?flagged=true">Reports with Problems</a>
+                        <a class="button mr-5" href="#/reports?flagged_dkim=true">Reports with DKIM Problems</a>
+                        <a class="button mr-5" href="#/reports?flagged_spf=true">Reports with SPF Problems</a>
+                    `
                 }
             </div>
             <dmarc-report-table .reports="${this.reports}"></dmarc-report-table>

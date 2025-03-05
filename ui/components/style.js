@@ -115,6 +115,10 @@ export const globalStyle = css`
         margin-left: 10px;
     }
 
+    .mr-5 {
+        margin-right: 5px;
+    }
+
     @media only screen and (max-width: 1100px) {
         .md-hidden {
             display: none;
