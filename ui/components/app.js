@@ -111,8 +111,8 @@ export class App extends LitElement {
         return html`
             <nav>
                 <a class="${this.component === "dashboard" ? "active" : ""}" href="#/dashboard">Dashboard</a>
-                <a class="${this.component === "mails" ? "active" : ""}" href="#/mails">Mails</a>
-                <a class="${this.component === "reports" ? "active" : ""}" href="#/reports">Reports</a>
+                <a class="${this.component === "mails" || this.component === "mail" ? "active" : ""}" href="#/mails">Mails</a>
+                <a class="${this.component === "reports" || this.component === "report" ? "active" : ""}" href="#/reports">Reports</a>
                 <a class="${this.component === "about" ? "active" : ""} right" href="#/about">About</a>
             </nav>
             <main>${component}</main>
