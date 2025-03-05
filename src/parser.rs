@@ -61,7 +61,9 @@ pub fn extract_xml_files(mail: &mut Mail) -> Result<Vec<XmlFile>> {
         // For example AWS uses such values:
         // Content-Type: application/octet-stream;name=amazonses.com!example.com!1722384000!1722470400.xml.gz
         if content_type.contains("application/zip")
-            || content_type.contains("application/octet-stream") && content_type.ends_with(".zip")
+            || content_type.contains("application/octet-stream") && content_type.contains(".zip")
+            || content_type.contains("application/x-zip-compressed")
+                && content_type.contains(".zip")
         {
             let body = part
                 .get_body_raw()
@@ -77,8 +79,7 @@ pub fn extract_xml_files(mail: &mut Mail) -> Result<Vec<XmlFile>> {
                 });
             }
         } else if content_type.contains("application/gzip")
-            || content_type.contains("application/octet-stream")
-                && content_type.ends_with(".xml.gz")
+            || content_type.contains("application/octet-stream") && content_type.contains(".xml.gz")
         {
             let body = part
                 .get_body_raw()
