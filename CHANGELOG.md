@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.0] - 2025-03-20
+* Improved active state of navbar links to include child pages
+* Introduced separate problem flags for DKIM and SPF
+* Detect more ZIP attachments correctly
+* Updated Cargo dependencies, including `zip` to fix CVE-2025-29787 and `ring` to fix GHSA-4p46-pwfr-66x6
+
 ## [1.5.0] - 2025-03-02
 * Fixed detection of (G)ZIP XML attachments with content type `application/octet-stream`
 * Added feature to look up DNS name of Source IP
