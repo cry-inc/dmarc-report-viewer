@@ -51,7 +51,7 @@ export class Dashboard extends LitElement {
         const response = await fetch("summary");
         const summary = await response.json();
 
-        const colorMap = {
+        const resultColorMap = {
             "none": "rgb(108, 117, 125)",
             "fail": "rgb(220, 53, 69)",
             "pass": "rgb(25, 135, 84)",
@@ -62,24 +62,62 @@ export class Dashboard extends LitElement {
             "permerror": "rgb(132, 32, 41)",
         };
 
+        const orgColorMap = {
+            "google.com": "#ea4335",
+            "Yahoo": "#6001d2",
+            "WEB.DE": "#ffd800",
+            "Mail.Ru": "#0078ff",
+            "GMX": "#1c449b",
+            "Outlook.com": "#0078d4",
+            "Enterprise Outlook": "#0078d4",
+            "Fastmail Pty Ltd": "#0067b9",
+            "AMAZON-SES": "#ff9900",
+        };
+
         this.mails = summary.mails;
         this.xmlFiles = summary.xml_files;
         this.reports = summary.reports;
         this.lastUpdate = summary.last_update;
 
-        this.createPieChart("orgs_chart", summary.orgs, null, function (label) {
+        this.createPieChart("orgs_chart", this.sortedMap(summary.orgs), orgColorMap, function (label) {
             window.location.hash = "#/reports?org=" + encodeURIComponent(label);
         });
-        this.createPieChart("domains_chart", summary.domains, null, function (label) {
+        this.createPieChart("domains_chart", this.sortedMap(summary.domains), null, function (label) {
             window.location.hash = "#/reports?domain=" + encodeURIComponent(label);
         });
-        this.createPieChart("spf_policy_chart", summary.spf_policy_results, colorMap);
-        this.createPieChart("dkim_policy_chart", summary.dkim_policy_results, colorMap);
-        this.createPieChart("spf_auth_chart", summary.spf_auth_results, colorMap);
-        this.createPieChart("dkim_auth_chart", summary.dkim_auth_results, colorMap);
+        this.createPieChart("spf_policy_chart", this.sortedMap(summary.spf_policy_results), resultColorMap);
+        this.createPieChart("dkim_policy_chart", this.sortedMap(summary.dkim_policy_results), resultColorMap);
+        this.createPieChart("spf_auth_chart", this.sortedMap(summary.spf_auth_results), resultColorMap);
+        this.createPieChart("dkim_auth_chart", this.sortedMap(summary.dkim_auth_results), resultColorMap);
+    }
+
+    sortedMap(map) {
+        const keys = Object.keys(map);
+        keys.sort((a, b) => {
+            if (map[a] < map[b])
+                return 1;
+            if (map[a] > map[b])
+                return -1;
+            else
+                return b;
+        });
+        const newMap = {};
+        keys.forEach(k => newMap[k] = map[k]);
+        return newMap;
     }
 
     async createPieChart(canvasId, dataMap, colorMap, onLabelClick) {
+        const defaultColors = [
+            "rgb(13, 202, 240)",
+            "rgb(253, 126, 20)",
+            "rgb(25, 135, 84)",
+            "rgb(220, 53, 69)",
+            "rgb(13, 110, 253)",
+            "rgb(255, 193, 7)",
+            "rgb(108, 117, 125)",
+            "rgb(132, 32, 41)"
+        ];
+
         const element = this.renderRoot.querySelector("." + canvasId);
 
         const labels = Object.keys(dataMap);
@@ -88,17 +126,17 @@ export class Dashboard extends LitElement {
         let colors = undefined;
         if (colorMap !== undefined && colorMap !== null) {
             colors = labels.map(l => colorMap[l]);
+
+            // Use default color set to colorize labels without explicit color
+            let nextColor = 0;
+            for (let i = 0; i < colors.length; i++) {
+                if (!colors[i]) {
+                    colors[i] = defaultColors[nextColor % defaultColors.length];
+                    nextColor++;
+                }
+            }
         } else {
-            colors = [
-                "rgb(13, 202, 240)",
-                "rgb(253, 126, 20)",
-                "rgb(25, 135, 84)",
-                "rgb(220, 53, 69)",
-                "rgb(13, 110, 253)",
-                "rgb(255, 193, 7)",
-                "rgb(108, 117, 125)",
-                "rgb(132, 32, 41)"
-            ];
+            colors = defaultColors;
         }
 
         new Chart(element, {
@@ -115,6 +153,11 @@ export class Dashboard extends LitElement {
                     if (onLabelClick) {
                         const label = labels[element[0].index];
                         onLabelClick(label);
+                    }
+                },
+                plugins: {
+                    legend: {
+                        maxHeight: 70
                     }
                 }
             }
