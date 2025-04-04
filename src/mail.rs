@@ -46,7 +46,7 @@ fn q_decode(mut data: &str) -> Result<Vec<u8>> {
             }
         } else {
             // Keep everything else as is...
-            let byte = data[0..1].as_bytes();
+            let byte = &data.as_bytes()[0..1];
             result.extend_from_slice(byte);
             data = &data[1..];
         }
