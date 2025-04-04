@@ -1,6 +1,6 @@
 use crate::config::Configuration;
 use crate::mail::{decode_subject, Mail};
-use anyhow::{Context, Result};
+use anyhow::{anyhow, Context, Result};
 use async_imap::imap_proto::Address;
 use async_imap::types::Fetch;
 use async_imap::Client;
@@ -121,10 +121,11 @@ pub async fn get_mails(config: &Configuration) -> Result<HashMap<u32, Mail>> {
         info!("Downloaded {} mails", uids.len());
     }
 
-    session
-        .logout()
-        .await
-        .context("Failed to log off from IMAP server")?;
+    // We have everything we need, an error is no longer preventing an update.
+    if let Err(err) = session.logout().await {
+        let anyhow_err = anyhow!(err);
+        warn!("Failed to log off from IMAP server: {anyhow_err:#}");
+    }
 
     Ok(mails)
 }
