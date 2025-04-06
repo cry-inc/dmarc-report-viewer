@@ -27,7 +27,7 @@ pub struct Configuration {
 
     /// Optional path to additional TLS root certificates used to creating the IMAP TLS connections.
     /// The default set is a compiled-in copy of the root certificates trusted by Mozilla.
-    /// The path should point to a DER-encoded X.509 certificate.
+    /// The path should point to a PEM file with one or more X.509 certificates.
     #[arg(long, env)]
     pub imap_tls_ca_certs: Option<PathBuf>,
 
