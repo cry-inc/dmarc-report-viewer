@@ -17,7 +17,7 @@ use tokio_rustls::rustls::pki_types::{CertificateDer, ServerName};
 use tokio_rustls::rustls::{ClientConfig, RootCertStore};
 use tokio_rustls::TlsConnector;
 use tokio_util::either::Either;
-use tracing::{debug, info, warn};
+use tracing::{debug, info, trace, warn};
 
 pub async fn get_mails(config: &Configuration) -> Result<HashMap<u32, Mail>> {
     let client = create_client(config)
@@ -85,6 +85,7 @@ pub async fn get_mails(config: &Configuration) -> Result<HashMap<u32, Mail>> {
         // It will fail silently if the requested sequences become too big!
         const CHUNK_SIZE: usize = 5000;
         for chunk in uids.chunks(CHUNK_SIZE) {
+            debug!("Downloading chunk with {} mails...", chunk.len());
             let sequence: String = chunk.join(",");
             let mut stream = session
                 .uid_fetch(
@@ -114,7 +115,13 @@ pub async fn get_mails(config: &Configuration) -> Result<HashMap<u32, Mail>> {
                 if mail.oversized {
                     // Do not keep oversized mails in memory
                     mail.body = None;
+                    warn!("Mail with UID {uid} was bigger than expected and is oversized");
                 }
+                trace!(
+                    "Fetched mail with UID {uid} and size {} from {}",
+                    mail.size,
+                    mail.sender
+                );
             }
         }
 
@@ -135,14 +142,12 @@ async fn create_client(
     config: &Configuration,
 ) -> Result<Client<Either<TcpStream, TlsStream<TcpStream>>>> {
     let host_port = format!("{}:{}", config.imap_host.as_str(), config.imap_port);
-    debug!("Parsing IMAP address {host_port} as socket address...");
-
     let addrs = host_port
         .to_socket_addrs()
         .context("Failed to convert host name and port to socket address")?
         .collect::<Vec<SocketAddr>>();
     let addr = addrs.first().context("Unable get first resolved address")?;
-    debug!("Got address {addr}");
+    debug!("Got {addr} as as socket address for IMAP endpoint {host_port}");
 
     let timeout = Duration::from_secs(config.imap_timeout);
     let std_tcp_stream =

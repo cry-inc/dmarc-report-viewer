@@ -12,7 +12,7 @@ use std::time::{Duration, Instant, SystemTime};
 use tokio::sync::mpsc::Receiver;
 use tokio::sync::Mutex;
 use tokio::task::JoinHandle;
-use tracing::{error, info, warn};
+use tracing::{error, info, trace, warn};
 
 pub fn start_bg_task(
     config: Configuration,
@@ -50,19 +50,24 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
     let mut xml_files = HashMap::new();
     let mut mails_without_xml = 0;
     for mail in &mut mails.values_mut() {
-        if mail.body.is_some() {
-            match extract_xml_files(mail) {
-                Ok(files) => {
-                    if files.is_empty() {
-                        mails_without_xml += 1;
-                    }
-                    for xml_file in files {
-                        xml_files.insert(xml_file.hash.clone(), xml_file);
-                        mail.xml_files += 1;
-                    }
+        if mail.body.is_none() {
+            trace!(
+                "Skipping data extraction for mail with UID {} because of empty body",
+                mail.uid
+            );
+            continue;
+        }
+        match extract_xml_files(mail) {
+            Ok(files) => {
+                if files.is_empty() {
+                    mails_without_xml += 1;
                 }
-                Err(err) => warn!("Failed to extract XML files from mail: {err:#}"),
+                for xml_file in files {
+                    xml_files.insert(xml_file.hash.clone(), xml_file);
+                    mail.xml_files += 1;
+                }
             }
+            Err(err) => warn!("Failed to extract XML files from mail: {err:#}"),
         }
     }
     if mails_without_xml > 0 {

@@ -4,9 +4,9 @@ use crate::report::Report;
 use crate::xml_file::XmlFile;
 use anyhow::{Context, Result};
 use flate2::read::GzDecoder;
-use mailparse::MailHeaderMap;
+use mailparse::{MailHeaderMap, ParsedMail};
 use std::io::{Cursor, Read};
-use tracing::warn;
+use tracing::{trace, warn};
 use zip::ZipArchive;
 
 /// Get zero or more XML files from a ZIP archive
@@ -14,8 +14,13 @@ fn get_xml_from_zip(zip_bytes: &[u8]) -> Result<Vec<Vec<u8>>> {
     let cursor = Cursor::new(zip_bytes);
     let mut archive = ZipArchive::new(cursor).context("Failed to binary data as ZIP")?;
 
+    let file_count = archive.len();
+    if file_count == 0 {
+        warn!("ZIP file is empty");
+    }
+
     let mut xml_files = Vec::new();
-    for i in 0..archive.len() {
+    for i in 0..file_count {
         let mut file = archive.by_index(i).context("Unable to get file from ZIP")?;
         let file_name = file.name();
 
@@ -46,14 +51,17 @@ pub fn extract_xml_files(mail: &mut Mail) -> Result<Vec<XmlFile>> {
     // Consume mail body to avoid keeping the longer needed data in memory
     let body = mail.body.take().context("Missing mail body")?;
 
-    let parsed = mailparse::parse_mail(&body).context("Failed to parse mail body")?;
-
     let mut xml_files = Vec::new();
-    for part in parsed.parts() {
-        let content_type = part
-            .get_headers()
-            .get_first_value("Content-Type")
-            .unwrap_or(String::new());
+    let parsed = mailparse::parse_mail(&body).context("Failed to parse mail body")?;
+    let parts: Vec<&ParsedMail> = parsed.parts().collect();
+    let uid = mail.uid;
+    trace!("Parsed mail with UID {uid} and found {} parts", parts.len());
+    for (index, part) in parts.iter().enumerate() {
+        let Some(content_type) = part.get_headers().get_first_value("Content-Type") else {
+            trace!("Skipping part {index} of mail with UID {uid} because of missing content type",);
+            continue;
+        };
+        trace!("Part {index} of mail with UID {uid} has content type '{content_type}'",);
 
         // Detect compression based on content type header.
         // In most cases is directly a ZIP or GZIP type, but in some cases its generic
@@ -65,11 +73,16 @@ pub fn extract_xml_files(mail: &mut Mail) -> Result<Vec<XmlFile>> {
             || content_type.contains("application/x-zip-compressed")
                 && content_type.contains(".zip")
         {
+            trace!("Detected ZIP attachment for mail with UID {uid} in part {index}");
             let body = part
                 .get_body_raw()
                 .context("Failed to get raw body of attachment part")?;
             let xml_files_zip =
                 get_xml_from_zip(&body).context("Failed to extract XML from ZIP attachment")?;
+            trace!(
+                "Extracted {} XML files from ZIP in part {index} of mail with UID {uid}",
+                xml_files_zip.len()
+            );
             for xml in xml_files_zip {
                 let hash = hash_data(&xml);
                 xml_files.push(XmlFile {
@@ -81,6 +94,7 @@ pub fn extract_xml_files(mail: &mut Mail) -> Result<Vec<XmlFile>> {
         } else if content_type.contains("application/gzip")
             || content_type.contains("application/octet-stream") && content_type.contains(".xml.gz")
         {
+            trace!("Detected GZ attachment for mail with UID {uid} in part {index}");
             let body = part
                 .get_body_raw()
                 .context("Failed to get raw body of attachment part")?;
