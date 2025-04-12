@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.7.0] - 2025-04-12
+* Dashboard UI: Use fixed colors for some well known big organizations
+* Dashboard UI: Limit size of legends in charts
+* Dashboard UI: Made order of values in charts stable
+* Extended low level logging for mail fetching and XML extraction
+* Fixed embedded documentation for certificate input file
+* Convert non-fatal IMAP error when closing connection into warning
+* Updated Cargo dependencies
+
 ## [1.6.0] - 2025-03-20
 * Improved active state of navbar links to include child pages
 * Introduced separate problem flags for DKIM and SPF
