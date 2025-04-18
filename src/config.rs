@@ -54,7 +54,7 @@ pub struct Configuration {
     #[arg(long, env, default_value_t = 10)]
     pub imap_timeout: u64,
 
-    /// Number of mails downloaded in one chunk
+    /// Number of mails downloaded in one chunk, must be bigger than 0.
     #[arg(long, env, default_value_t = 5000)]
     pub imap_chunk_size: usize,
 
@@ -129,6 +129,7 @@ impl Configuration {
         info!("IMAP User: {}", self.imap_user);
         info!("IMAP Check Interval: {} seconds", self.imap_check_interval);
         info!("IMAP Body Request: {}", self.imap_body_request.to_string());
+        info!("IMAP Chunk Size: {}", self.imap_chunk_size);
         info!("IMAP Timeout: {}", self.imap_timeout);
 
         info!("HTTP Binding: {}", self.http_server_binding);
