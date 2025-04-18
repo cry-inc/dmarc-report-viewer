@@ -54,6 +54,10 @@ pub struct Configuration {
     #[arg(long, env, default_value_t = 10)]
     pub imap_timeout: u64,
 
+    /// Number of mails downloaded in one chunk
+    #[arg(long, env, default_value_t = 5000)]
+    pub imap_chunk_size: usize,
+
     /// Interval between checking for new reports in IMAP inbox in seconds
     #[arg(long, env, default_value_t = 1800)]
     pub imap_check_interval: u64,

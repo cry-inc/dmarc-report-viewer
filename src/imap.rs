@@ -83,8 +83,7 @@ pub async fn get_mails(config: &Configuration) -> Result<HashMap<u32, Mail>> {
     if !uids.is_empty() {
         // We need to get the mails in chunks.
         // It will fail silently if the requested sequences become too big!
-        const CHUNK_SIZE: usize = 5000;
-        for chunk in uids.chunks(CHUNK_SIZE) {
+        for chunk in uids.chunks(config.imap_chunk_size) {
             debug!("Downloading chunk with {} mails...", chunk.len());
             let sequence: String = chunk.join(",");
             let body_request = config.imap_body_request.to_request_string();
@@ -97,7 +96,9 @@ pub async fn get_mails(config: &Configuration) -> Result<HashMap<u32, Mail>> {
                 )
                 .await
                 .context("Failed to fetch message stream from IMAP inbox")?;
+            let mut fetched = 0;
             while let Some(fetch_result) = stream.next().await {
+                fetched += 1;
                 let fetched = fetch_result
                     .context("Failed to get next mail header from IMAP fetch response")?;
                 let uid = fetched
@@ -123,6 +124,12 @@ pub async fn get_mails(config: &Configuration) -> Result<HashMap<u32, Mail>> {
                     "Fetched mail with UID {uid} and size {} from {}",
                     mail.size,
                     mail.sender
+                );
+            }
+            if fetched != chunk.len() {
+                warn!(
+                    "Unable to fetch some mails from chunk, expected {} mails but got {fetched}",
+                    chunk.len()
                 );
             }
         }
