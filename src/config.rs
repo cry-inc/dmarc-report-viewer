@@ -44,9 +44,9 @@ pub struct Configuration {
     pub imap_folder: String,
 
     /// Method of requesting the mail body from the IMAP server.
-    /// The default should work for most cases.
+    /// The default should work for most IMAP servers.
     /// Only try other values if you have issues with missing mail bodies.
-    /// Possible values: default, rfc822 and body.
+    /// Possible values: `default`, `rfc822` and `body`.
     #[arg(long, env, default_value_t = ImapBodyRequest::Default)]
     pub imap_body_request: ImapBodyRequest,
 
@@ -55,18 +55,24 @@ pub struct Configuration {
     pub imap_timeout: u64,
 
     /// Number of mails downloaded in one chunk, must be bigger than 0.
-    #[arg(long, env, default_value_t = 5000)]
+    /// The default value should work for most IMAP servers.
+    /// Try lower values in case of warnings like "Unable to fetch some mails from chunk"!
+    #[arg(long, env, default_value_t = 2000)]
     pub imap_chunk_size: usize,
 
     /// Interval between checking for new reports in IMAP inbox in seconds
     #[arg(long, env, default_value_t = 1800)]
     pub imap_check_interval: u64,
 
-    /// Embedded HTTP server port for web UI
+    /// Embedded HTTP server port for web UI.
+    /// Needs to be bigger than 0 because for 0 a random port will be used!
     #[arg(long, env, default_value_t = 8080)]
     pub http_server_port: u16,
 
-    /// Embedded HTTP server binding for web UI
+    /// Embedded HTTP server binding for web UI.
+    /// Needs to be an IP address.
+    /// The default will use all IPs of the host.
+    /// Use `127.0.0.1` to make the server only available on localhost!
     #[arg(long, env, default_value = "0.0.0.0")]
     pub http_server_binding: String,
 
