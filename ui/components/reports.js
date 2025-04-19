@@ -39,7 +39,7 @@ export class Reports extends LitElement {
         if (this.params.org) {
             urlParams.push("org=" + encodeURIComponent(this.params.org));
         }
-        let url = "reports";
+        let url = "dmarc-reports";
         if (urlParams.length > 0) {
             url += "?" + urlParams.join("&");
         }

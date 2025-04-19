@@ -23,7 +23,7 @@ export class Report extends LitElement {
 
     async updated(changedProperties) {
         if (changedProperties.has("hash") && changedProperties.hash !== this.hash && this.hash) {
-            const response = await fetch("reports/" + this.hash);
+            const response = await fetch("dmarc-reports/" + this.hash);
             const rwu = await response.json();
             this.report = rwu.report;
             this.uid = rwu.uid;
@@ -124,8 +124,8 @@ export class Report extends LitElement {
             <h1>Report Details</h1>
             <p>
                 <a class="button" href="#/mails/${this.uid}">Show Mail</a>
-                <a class="button" href="/reports/${this.hash}/xml" target="_blank">Open XML</a>
-                <a class="button" href="/reports/${this.hash}/json" target="_blank">Open JSON</a>
+                <a class="button" href="/dmarc-reports/${this.hash}/xml" target="_blank">Open XML</a>
+                <a class="button" href="/dmarc-reports/${this.hash}/json" target="_blank">Open JSON</a>
             </p>
             <table>
                 <tr>

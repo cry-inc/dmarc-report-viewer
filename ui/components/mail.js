@@ -32,7 +32,7 @@ export class Mail extends LitElement {
         if (changedProperties.has("uid") && changedProperties.uid !== this.uid && this.uid) {
             const mailsResponse = await fetch("mails/" + this.uid);
             this.mail = await mailsResponse.json();
-            const reportsResponse = await fetch("reports?uid=" + this.uid);
+            const reportsResponse = await fetch("dmarc-reports?uid=" + this.uid);
             this.reports = await reportsResponse.json();
             const errorsResponse = await fetch("mails/" + this.uid + "/errors");
             this.errors = await errorsResponse.json();

@@ -38,10 +38,10 @@ pub async fn run_http_server(config: &Configuration, state: Arc<Mutex<AppState>>
         .route("/mails", get(mails))
         .route("/mails/{id}", get(mail))
         .route("/mails/{id}/errors", get(mail_errors))
-        .route("/reports", get(reports))
-        .route("/reports/{id}", get(report))
-        .route("/reports/{id}/json", get(report_json))
-        .route("/reports/{id}/xml", get(report_xml))
+        .route("/dmarc-reports", get(dmarc_reports))
+        .route("/dmarc-reports/{id}", get(dmarc_report))
+        .route("/dmarc-reports/{id}/json", get(dmarc_report_json))
+        .route("/dmarc-reports/{id}/xml", get(dmarc_report_xml))
         .route("/ips/{ip}/dns", get(ip_to_dns))
         .route("/ips/{ip}/location", get(ip_to_location))
         .route("/ips/{ip}/whois", get(ip_to_whois))
@@ -360,7 +360,7 @@ impl ReportFilters {
     }
 }
 
-async fn reports(
+async fn dmarc_reports(
     State(state): State<Arc<Mutex<AppState>>>,
     filters: Query<ReportFilters>,
 ) -> impl IntoResponse {
@@ -419,7 +419,7 @@ async fn reports(
     Json(reports)
 }
 
-async fn report(
+async fn dmarc_report(
     State(state): State<Arc<Mutex<AppState>>>,
     Path(id): Path<String>,
 ) -> impl IntoResponse {
@@ -440,7 +440,7 @@ async fn report(
     }
 }
 
-async fn report_json(
+async fn dmarc_report_json(
     State(state): State<Arc<Mutex<AppState>>>,
     Path(id): Path<String>,
 ) -> impl IntoResponse {
@@ -461,7 +461,7 @@ async fn report_json(
     }
 }
 
-async fn report_xml(
+async fn dmarc_report_xml(
     State(state): State<Arc<Mutex<AppState>>>,
     Path(id): Path<String>,
 ) -> impl IntoResponse {
