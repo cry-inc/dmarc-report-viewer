@@ -1,5 +1,5 @@
+use crate::dmarc::Report;
 use crate::geolocate::Location;
-use crate::report::Report;
 use crate::summary::Summary;
 use crate::xml_error::XmlError;
 use crate::{cache_map::CacheMap, mail::Mail};

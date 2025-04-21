@@ -1,7 +1,7 @@
-use crate::report::DkimResultType;
-use crate::report::DmarcResultType;
-use crate::report::Report;
-use crate::report::SpfResultType;
+use crate::dmarc::DkimResultType;
+use crate::dmarc::DmarcResultType;
+use crate::dmarc::Report;
+use crate::dmarc::SpfResultType;
 use crate::state::AppState;
 use axum::extract::Path;
 use axum::extract::Query;

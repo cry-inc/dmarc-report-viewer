@@ -1,9 +1,10 @@
 use crate::config::Configuration;
+use crate::dmarc::Report;
 use crate::hasher::hash_data;
 use crate::imap::get_mails;
-use crate::parser::{extract_xml_files, parse_xml_file};
 use crate::state::{AppState, ReportWithUid};
 use crate::summary::Summary;
+use crate::unpack::extract_xml_files;
 use crate::xml_error::XmlError;
 use anyhow::{Context, Result};
 use std::collections::HashMap;
@@ -78,7 +79,7 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
     let mut xml_errors = HashMap::new();
     let mut reports = HashMap::new();
     for xml_file in xml_files.values() {
-        match parse_xml_file(&xml_file.data) {
+        match Report::from_slice(&xml_file.data) {
             Ok(report) => {
                 let rwu = ReportWithUid {
                     report,

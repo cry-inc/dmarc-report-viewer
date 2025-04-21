@@ -1,7 +1,5 @@
 use crate::hasher::hash_data;
 use crate::mail::Mail;
-use crate::report::Report;
-use crate::xml_file::XmlFile;
 use anyhow::{Context, Result};
 use flate2::read::GzDecoder;
 use mailparse::{MailHeaderMap, ParsedMail};
@@ -111,7 +109,9 @@ pub fn extract_xml_files(mail: &mut Mail) -> Result<Vec<XmlFile>> {
     Ok(xml_files)
 }
 
-pub fn parse_xml_file(xml_file: &[u8]) -> Result<Report> {
-    let mut cursor = Cursor::new(xml_file);
-    quick_xml::de::from_reader(&mut cursor).context("Failed to parse XML as DMARC report")
+/// In-memory representation of an unparsed XML file with mail UID and hash
+pub struct XmlFile {
+    pub mail_uid: u32,
+    pub data: Vec<u8>,
+    pub hash: String,
 }

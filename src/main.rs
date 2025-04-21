@@ -3,18 +3,17 @@
 mod background;
 mod cache_map;
 mod config;
+mod dmarc;
 mod geolocate;
 mod hasher;
 mod http;
 mod imap;
 mod mail;
-mod parser;
-mod report;
 mod state;
 mod summary;
+mod unpack;
 mod whois;
 mod xml_error;
-mod xml_file;
 
 use crate::background::start_bg_task;
 use crate::http::run_http_server;
