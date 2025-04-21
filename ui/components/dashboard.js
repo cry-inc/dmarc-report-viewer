@@ -34,7 +34,7 @@ export class Dashboard extends LitElement {
     static properties = {
         mails: { type: Number },
         xmlFiles: { type: Number },
-        reports: { type: Number },
+        dmarcReports: { type: Number },
         lastUpdate: { type: Number },
     };
 
@@ -43,7 +43,7 @@ export class Dashboard extends LitElement {
 
         this.mails = 0;
         this.xmlFiles = 0;
-        this.reports = 0;
+        this.dmarcReports = 0;
         this.lastUpdate = 0;
     }
 
@@ -76,13 +76,13 @@ export class Dashboard extends LitElement {
 
         this.mails = summary.mails;
         this.xmlFiles = summary.xml_files;
-        this.reports = summary.reports;
+        this.dmarcReports = summary.dmarc_reports;
         this.lastUpdate = summary.last_update;
 
-        this.createPieChart("orgs_chart", this.sortedMap(summary.orgs), orgColorMap, function (label) {
+        this.createPieChart("orgs_chart", this.sortedMap(summary.dmarc_orgs), orgColorMap, function (label) {
             window.location.hash = "#/reports?org=" + encodeURIComponent(label);
         });
-        this.createPieChart("domains_chart", this.sortedMap(summary.domains), null, function (label) {
+        this.createPieChart("domains_chart", this.sortedMap(summary.dmarc_domains), null, function (label) {
             window.location.hash = "#/reports?domain=" + encodeURIComponent(label);
         });
         this.createPieChart("spf_policy_chart", this.sortedMap(summary.spf_policy_results), resultColorMap);
@@ -170,7 +170,7 @@ export class Dashboard extends LitElement {
             <div class="module stats">
                 <span>Mails: <b>${this.mails}</b></span>
                 <span>XML Files: <b>${this.xmlFiles}</b></span>
-                <span>DMARC Reports: <b>${this.reports}</b></span>
+                <span>DMARC Reports: <b>${this.dmarcReports}</b></span>
                 <span>Last Update: <b>${new Date(this.lastUpdate * 1000).toLocaleString()}</b></span>
             </div>
 
