@@ -56,7 +56,7 @@ pub async fn errors_handler(
             format!("Cannot find mail with ID {id}"),
         );
     }
-    if let Some(errors) = lock.xml_errors.get(&parsed_uid) {
+    if let Some(errors) = lock.dmarc_parsing_errors.get(&parsed_uid) {
         let errors_json = serde_json::to_string(errors).expect("Failed to serialize JSON");
         (
             StatusCode::OK,

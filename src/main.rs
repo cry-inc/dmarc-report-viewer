@@ -13,7 +13,6 @@ mod state;
 mod summary;
 mod unpack;
 mod whois;
-mod xml_error;
 
 use crate::background::start_bg_task;
 use crate::http::run_http_server;

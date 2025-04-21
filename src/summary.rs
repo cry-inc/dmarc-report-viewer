@@ -1,5 +1,5 @@
 use crate::dmarc::{DkimResultType, DmarcResultType, SpfResultType};
-use crate::state::ReportWithUid;
+use crate::state::DmarcReportWithUid;
 use serde::Serialize;
 use std::collections::HashMap;
 
@@ -40,7 +40,7 @@ impl Summary {
     pub fn new(
         mails: usize,
         xml_files: usize,
-        reports: &HashMap<String, ReportWithUid>,
+        reports: &HashMap<String, DmarcReportWithUid>,
         last_update: u64,
     ) -> Self {
         let mut orgs: HashMap<String, usize> = HashMap::new();
@@ -49,7 +49,7 @@ impl Summary {
         let mut dkim_policy_results: HashMap<DmarcResultType, usize> = HashMap::new();
         let mut spf_auth_results: HashMap<SpfResultType, usize> = HashMap::new();
         let mut dkim_auth_results: HashMap<DkimResultType, usize> = HashMap::new();
-        for ReportWithUid { report, .. } in reports.values() {
+        for DmarcReportWithUid { report, .. } in reports.values() {
             for record in &report.record {
                 for r in &record.auth_results.spf {
                     if let Some(entry) = spf_auth_results.get_mut(&r.result) {

@@ -120,7 +120,7 @@ pub async fn list_handler(
     let reports: Vec<ReportHeader> = state
         .lock()
         .await
-        .reports
+        .dmarc_reports
         .iter()
         .filter(|(_, rwu)| {
             if let Some(queried_uid) = filters.uid {
@@ -174,7 +174,7 @@ pub async fn single_handler(
     Path(id): Path<String>,
 ) -> impl IntoResponse {
     let lock = state.lock().await;
-    if let Some(rwu) = lock.reports.get(&id) {
+    if let Some(rwu) = lock.dmarc_reports.get(&id) {
         let report_json = serde_json::to_string(rwu).expect("Failed to serialize JSON");
         (
             StatusCode::OK,
@@ -195,7 +195,7 @@ pub async fn json_handler(
     Path(id): Path<String>,
 ) -> impl IntoResponse {
     let lock = state.lock().await;
-    if let Some(rwu) = lock.reports.get(&id) {
+    if let Some(rwu) = lock.dmarc_reports.get(&id) {
         let report_json = serde_json::to_string(&rwu.report).expect("Failed to serialize JSON");
         (
             StatusCode::OK,
@@ -216,7 +216,7 @@ pub async fn xml_handler(
     Path(id): Path<String>,
 ) -> impl IntoResponse {
     let lock = state.lock().await;
-    if let Some(rwu) = lock.reports.get(&id) {
+    if let Some(rwu) = lock.dmarc_reports.get(&id) {
         let mut report_xml = String::new();
         let mut serializer = quick_xml::se::Serializer::new(&mut report_xml);
         serializer.indent(' ', 2);

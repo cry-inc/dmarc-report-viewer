@@ -1,11 +1,10 @@
 use crate::config::Configuration;
-use crate::dmarc::Report;
+use crate::dmarc::{DmarcParsingError, Report};
 use crate::hasher::hash_data;
 use crate::imap::get_mails;
-use crate::state::{AppState, ReportWithUid};
+use crate::state::{AppState, DmarcReportWithUid};
 use crate::summary::Summary;
 use crate::unpack::extract_xml_files;
-use crate::xml_error::XmlError;
 use anyhow::{Context, Result};
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -76,30 +75,31 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
     }
     info!("Extracted {} XML file(s)", xml_files.len());
 
-    let mut xml_errors = HashMap::new();
-    let mut reports = HashMap::new();
+    let mut dmarc_parsing_errors = HashMap::new();
+    let mut dmarc_reports = HashMap::new();
     for xml_file in xml_files.values() {
         match Report::from_slice(&xml_file.data) {
             Ok(report) => {
-                let rwu = ReportWithUid {
+                let rwu = DmarcReportWithUid {
                     report,
                     uid: xml_file.mail_uid,
                 };
                 let binary =
                     serde_json::to_vec(&rwu).context("Failed to serialize report with UID")?;
                 let hash = hash_data(&binary);
-                reports.insert(hash, rwu);
+                dmarc_reports.insert(hash, rwu);
             }
             Err(err) => {
                 // Prepare error information
                 let error_str = format!("{err:#}");
-                let error = XmlError {
+                let error = DmarcParsingError {
                     error: error_str,
                     xml: String::from_utf8_lossy(&xml_file.data).to_string(),
                 };
 
                 // Store in error hashmap for fast lookup
-                let entry: &mut Vec<XmlError> = xml_errors.entry(xml_file.mail_uid).or_default();
+                let entry: &mut Vec<DmarcParsingError> =
+                    dmarc_parsing_errors.entry(xml_file.mail_uid).or_default();
                 entry.push(error);
 
                 // Increase error counter for mail
@@ -110,11 +110,11 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
             }
         }
     }
-    info!("Parsed {} DMARC reports successfully", reports.len());
-    if !xml_errors.is_empty() {
+    info!("Parsed {} DMARC reports successfully", dmarc_reports.len());
+    if !dmarc_parsing_errors.is_empty() {
         warn!(
             "Failed to parse {} XML file as DMARC reports",
-            xml_errors.len()
+            dmarc_parsing_errors.len()
         );
     }
 
@@ -123,15 +123,15 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
         .context("Failed to get Unix time stamp")?
         .as_secs();
 
-    let summary = Summary::new(mails.len(), xml_files.len(), &reports, timestamp);
+    let summary = Summary::new(mails.len(), xml_files.len(), &dmarc_reports, timestamp);
 
     {
         let mut locked_state = state.lock().await;
         locked_state.mails = mails;
         locked_state.summary = summary;
-        locked_state.reports = reports;
+        locked_state.dmarc_reports = dmarc_reports;
         locked_state.last_update = timestamp;
-        locked_state.xml_errors = xml_errors;
+        locked_state.dmarc_parsing_errors = dmarc_parsing_errors;
     }
 
     Ok(())
