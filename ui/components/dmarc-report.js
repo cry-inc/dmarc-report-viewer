@@ -213,7 +213,7 @@ export class Report extends LitElement {
                             <a class="button sm help" title="Look up whois record for IP and show in new tab" target="blank" href="/ips/${record.row.source_ip}/whois">Whois</a>
                         </td>
                     </tr>
-                    <tbody style="${this.ipDetails[record.row.source_ip] ? "": "display:none"}">
+                    <tbody class="sourceip" style="${this.ipDetails[record.row.source_ip] ? "": "display:none"}">
                         <tr>
                             <td class="name">Source IP DNS</td>
                             <td>${this.renderIfDefined(this.ip2dns[record.row.source_ip])}
