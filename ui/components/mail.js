@@ -89,7 +89,7 @@ export class Mail extends LitElement {
                 </tr>
             </table>
 
-            <h2>Reports extracted from this Mail</h2>
+            <h2>DMARC Reports</h2>
             <dmarc-report-table .reports="${this.reports}"></dmarc-report-table>
 
             ${this.errors.length > 0 ?

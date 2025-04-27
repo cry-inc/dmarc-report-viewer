@@ -176,12 +176,12 @@ export class Dashboard extends LitElement {
 
             <div class="grid">
                 <div class="module">
-                    <h2>Organizations</h2>
+                    <h2>DMARC Organizations</h2>
                     <canvas class="orgs_chart"></canvas>
                 </div>
 
                 <div class="module">
-                    <h2>Domains</h2>
+                    <h2>DMARC Domains</h2>
                     <canvas class="domains_chart"></canvas>
                 </div>
 
