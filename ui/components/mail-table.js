@@ -83,4 +83,4 @@ export class MailTable extends LitElement {
     }
 }
 
-customElements.define("dmarc-mail-table", MailTable);
+customElements.define("drv-mail-table", MailTable);

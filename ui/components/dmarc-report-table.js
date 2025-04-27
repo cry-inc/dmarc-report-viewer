@@ -65,4 +65,4 @@ export class ReportTable extends LitElement {
     }
 }
 
-customElements.define("dmarc-report-table", ReportTable);
+customElements.define("drv-dmarc-report-table", ReportTable);

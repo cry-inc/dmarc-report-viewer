@@ -335,4 +335,4 @@ export class Report extends LitElement {
     }
 }
 
-customElements.define("dmarc-report", Report);
+customElements.define("drv-dmarc-report", Report);

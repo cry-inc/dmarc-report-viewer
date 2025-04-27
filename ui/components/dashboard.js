@@ -209,4 +209,4 @@ export class Dashboard extends LitElement {
     }
 }
 
-customElements.define("dmarc-dashboard", Dashboard);
+customElements.define("drv-dashboard", Dashboard);

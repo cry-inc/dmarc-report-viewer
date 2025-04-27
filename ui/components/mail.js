@@ -90,7 +90,7 @@ export class Mail extends LitElement {
             </table>
 
             <h2>DMARC Reports</h2>
-            <dmarc-report-table .reports="${this.reports}"></dmarc-report-table>
+            <drv-dmarc-report-table .reports="${this.reports}"></drv-dmarc-report-table>
 
             ${this.errors.length > 0 ?
                 html`
@@ -108,4 +108,4 @@ export class Mail extends LitElement {
     }
 }
 
-customElements.define("dmarc-mail", Mail);
+customElements.define("drv-mail", Mail);

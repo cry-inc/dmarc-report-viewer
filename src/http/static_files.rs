@@ -66,9 +66,9 @@ const STATIC_FILES: &[StaticFile] = &[
         _data: include_bytes!("../../ui/components/dashboard.js"),
     },
     StaticFile {
-        http_path: "/components/mailtable.js",
-        file_path: "ui/components/mailtable.js",
-        _data: include_bytes!("../../ui/components/mailtable.js"),
+        http_path: "/components/mail-table.js",
+        file_path: "ui/components/mail-table.js",
+        _data: include_bytes!("../../ui/components/mail-table.js"),
     },
     StaticFile {
         http_path: "/components/dmarc-report.js",
@@ -96,9 +96,9 @@ const STATIC_FILES: &[StaticFile] = &[
         _data: include_bytes!("../../ui/components/about.js"),
     },
     StaticFile {
-        http_path: "/components/reporttable.js",
-        file_path: "ui/components/reporttable.js",
-        _data: include_bytes!("../../ui/components/reporttable.js"),
+        http_path: "/components/dmarc-report-table.js",
+        file_path: "ui/components/dmarc-report-table.js",
+        _data: include_bytes!("../../ui/components/dmarc-report-table.js"),
     },
 ];
 

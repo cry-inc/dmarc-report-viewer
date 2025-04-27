@@ -43,4 +43,4 @@ export class About extends LitElement {
     }
 }
 
-customElements.define("dmarc-about", About);
+customElements.define("drv-about", About);

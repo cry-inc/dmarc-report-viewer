@@ -57,9 +57,9 @@ export class Mails extends LitElement {
                          <a class="button" href="#/mails?errors=true">Parsing Errors</a>`
             }
             </div>
-            <dmarc-mail-table .mails="${this.mails}"></dmarc-mail-table>
+            <drv-mail-table .mails="${this.mails}"></drv-mail-table>
         `;
     }
 }
 
-customElements.define("dmarc-mails", Mails);
+customElements.define("drv-mails", Mails);

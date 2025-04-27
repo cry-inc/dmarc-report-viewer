@@ -62,9 +62,9 @@ export class Reports extends LitElement {
                     `
                 }
             </div>
-            <dmarc-report-table .reports="${this.reports}"></dmarc-report-table>
+            <drv-dmarc-report-table .reports="${this.reports}"></drv-dmarc-report-table>
         `;
     }
 }
 
-customElements.define("dmarc-reports", Reports);
+customElements.define("drv-dmarc-reports", Reports);

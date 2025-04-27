@@ -95,17 +95,17 @@ export class App extends LitElement {
     render() {
         let component;
         if (this.component == "dmarc-reports") {
-            component = html`<dmarc-reports .params="${this.params}"></dmarc-reports>`;
+            component = html`<drv-dmarc-reports .params="${this.params}"></drv-dmarc-reports>`;
         } else if (this.component == "dmarc-report") {
-            component = html`<dmarc-report hash="${this.reportHash}"></dmarc-report>`;
+            component = html`<drv-dmarc-report hash="${this.reportHash}"></drv-dmarc-report>`;
         } else if (this.component == "mails") {
-            component = html`<dmarc-mails .params="${this.params}"></dmarc-mails>`;
+            component = html`<drv-mails .params="${this.params}"></drv-mails>`;
         } else if (this.component == "mail") {
-            component = html`<dmarc-mail uid="${this.mailUid}"></dmarc-mail>`;
+            component = html`<drv-mail uid="${this.mailUid}"></drv-mail>`;
         } else if (this.component == "about") {
-            component = html`<dmarc-about></dmarc-about>`;
+            component = html`<drv-about></drv-about>`;
         } else {
-            component = html`<dmarc-dashboard></dmarc-dashboard>`;
+            component = html`<drv-dashboard></drv-dashboard>`;
         }
 
         return html`
@@ -120,4 +120,4 @@ export class App extends LitElement {
     }
 }
 
-customElements.define("dmarc-app", App);
+customElements.define("drv-app", App);
