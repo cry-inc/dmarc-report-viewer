@@ -54,11 +54,11 @@ export class Reports extends LitElement {
             <h1>Reports</h1>
             <div>
                 ${this.filtered ?
-                    html`Filter active! <a class="ml button" href="#/reports">Show all Reports</a>` :
+                    html`Filter active! <a class="ml button" href="#/dmarc-reports">Show all Reports</a>` :
                     html`Filters:
-                        <a class="ml button mr-5" href="#/reports?flagged=true">Reports with Problems</a>
-                        <a class="button mr-5" href="#/reports?flagged_dkim=true">Reports with DKIM Problems</a>
-                        <a class="button mr-5" href="#/reports?flagged_spf=true">Reports with SPF Problems</a>
+                        <a class="ml button mr-5" href="#/dmarc-reports?flagged=true">Reports with Problems</a>
+                        <a class="button mr-5" href="#/dmarc-reports?flagged_dkim=true">Reports with DKIM Problems</a>
+                        <a class="button mr-5" href="#/dmarc-reports?flagged_spf=true">Reports with SPF Problems</a>
                     `
                 }
             </div>

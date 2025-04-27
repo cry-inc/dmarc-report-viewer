@@ -75,11 +75,11 @@ export class App extends LitElement {
         }
 
         // Parse routes and route parameters
-        if (hash == "#/reports") {
-            this.component = "reports";
-        } else if (hash.startsWith("#/reports/")) {
-            this.component = "report";
-            this.reportHash = hash.substring(10);
+        if (hash == "#/dmarc-reports") {
+            this.component = "dmarc-reports";
+        } else if (hash.startsWith("#/dmarc-reports/")) {
+            this.component = "dmarc-report";
+            this.reportHash = hash.substring(16);
         } else if (hash == "#/mails") {
             this.component = "mails";
         } else if (hash.startsWith("#/mails/")) {
@@ -94,9 +94,9 @@ export class App extends LitElement {
 
     render() {
         let component;
-        if (this.component == "reports") {
+        if (this.component == "dmarc-reports") {
             component = html`<dmarc-reports .params="${this.params}"></dmarc-reports>`;
-        } else if (this.component == "report") {
+        } else if (this.component == "dmarc-report") {
             component = html`<dmarc-report hash="${this.reportHash}"></dmarc-report>`;
         } else if (this.component == "mails") {
             component = html`<dmarc-mails .params="${this.params}"></dmarc-mails>`;
@@ -112,7 +112,7 @@ export class App extends LitElement {
             <nav>
                 <a class="${this.component === "dashboard" ? "active" : ""}" href="#/dashboard">Dashboard</a>
                 <a class="${this.component === "mails" || this.component === "mail" ? "active" : ""}" href="#/mails">Mails</a>
-                <a class="${this.component === "reports" || this.component === "report" ? "active" : ""}" href="#/reports">DMARC Reports</a>
+                <a class="${this.component === "dmarc-reports" || this.component === "dmarc-report" ? "active" : ""}" href="#/dmarc-reports">DMARC Reports</a>
                 <a class="${this.component === "about" ? "active" : ""} right" href="#/about">About</a>
             </nav>
             <main>${component}</main>

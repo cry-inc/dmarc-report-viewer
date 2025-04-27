@@ -71,14 +71,14 @@ const STATIC_FILES: &[StaticFile] = &[
         _data: include_bytes!("../../ui/components/mailtable.js"),
     },
     StaticFile {
-        http_path: "/components/report.js",
-        file_path: "ui/components/report.js",
-        _data: include_bytes!("../../ui/components/report.js"),
+        http_path: "/components/dmarc-report.js",
+        file_path: "ui/components/dmarc-report.js",
+        _data: include_bytes!("../../ui/components/dmarc-report.js"),
     },
     StaticFile {
-        http_path: "/components/reports.js",
-        file_path: "ui/components/reports.js",
-        _data: include_bytes!("../../ui/components/reports.js"),
+        http_path: "/components/dmarc-reports.js",
+        file_path: "ui/components/dmarc-reports.js",
+        _data: include_bytes!("../../ui/components/dmarc-reports.js"),
     },
     StaticFile {
         http_path: "/components/mails.js",

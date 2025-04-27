@@ -47,9 +47,9 @@ export class ReportTable extends LitElement {
                 </tr>
                 ${this.reports.length !== 0 ? this.reports.map((report) =>
                     html`<tr>
-                            <td><a href="#/reports/${report.hash}" title="${report.id}">${this.prepareId(report.id)}</a></td>
-                            <td class="xs-hidden"><a href="#/reports?org=${encodeURIComponent(report.org)}">${report.org}</a></td>
-                            <td class="sm-hidden"><a href="#/reports?domain=${encodeURIComponent(report.domain)}">${report.domain}</a></td>
+                            <td><a href="#/dmarc-reports/${report.hash}" title="${report.id}">${this.prepareId(report.id)}</a></td>
+                            <td class="xs-hidden"><a href="#/dmarc-reports?org=${encodeURIComponent(report.org)}">${report.org}</a></td>
+                            <td class="sm-hidden"><a href="#/dmarc-reports?domain=${encodeURIComponent(report.domain)}">${report.domain}</a></td>
                             <td>${this.renderProblemBadges(report.flagged_dkim, report.flagged_spf)}</td>
                             <td class="sm-hidden">${report.records}</td>
                             <td class="md-hidden">${new Date(report.date_begin * 1000).toLocaleString()}</td>

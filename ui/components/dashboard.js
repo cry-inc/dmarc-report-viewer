@@ -80,10 +80,10 @@ export class Dashboard extends LitElement {
         this.lastUpdate = summary.last_update;
 
         this.createPieChart("orgs_chart", this.sortedMap(summary.dmarc_orgs), orgColorMap, function (label) {
-            window.location.hash = "#/reports?org=" + encodeURIComponent(label);
+            window.location.hash = "#/dmarc-reports?org=" + encodeURIComponent(label);
         });
         this.createPieChart("domains_chart", this.sortedMap(summary.dmarc_domains), null, function (label) {
-            window.location.hash = "#/reports?domain=" + encodeURIComponent(label);
+            window.location.hash = "#/dmarc-reports?domain=" + encodeURIComponent(label);
         });
         this.createPieChart("spf_policy_chart", this.sortedMap(summary.spf_policy_results), resultColorMap);
         this.createPieChart("dkim_policy_chart", this.sortedMap(summary.dkim_policy_results), resultColorMap);
