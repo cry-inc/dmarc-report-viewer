@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feedback>
+    <report_metadata>
+        <org_name>reporting org</org_name>
+        <email>reporting@reporting.org</email>
+        <report_id>abcdef</report_id>
+        <date_range>
+            <begin>1727049600</begin>
+            <end>1727135999</end>
+        </date_range>
+    </report_metadata>
+    <policy_published>
+        <adkim>r</adkim>
+        <domain>mydomain.org</domain>
+        <aspf>r</aspf>
+        <p>quarantine</p>
+        <pct>100</pct>
+        <sp>quarantine</sp>
+    </policy_published>
+    <record>
+        <row>
+            <source_ip>42.42.42.42</source_ip>
+            <count>1</count>
+            <policy_evaluated>
+                <disposition>quarantine</disposition>
+                <dkim>fail</dkim>
+                <spf>fail</spf>
+            </policy_evaluated>
+        </row>
+        <identifiers>
+            <header_from>mydomain.org</header_from>
+        </identifiers>
+        <auth_results>
+            <dkim>
+                <result>fail</result>
+                <domain></domain>
+                <selector></selector>
+            </dkim>
+            <spf>
+                <domain>mydomain.org</domain>
+                <result>hardfail</result>
+            </spf>
+        </auth_results>
+    </record>
+</feedback>

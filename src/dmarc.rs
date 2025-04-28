@@ -220,6 +220,8 @@ pub enum SpfResultType {
     None,
     Neutral,
     Pass,
+    // Some reports use this value that is not really official, see issue #21
+    #[serde(alias = "hardfail")]
     Fail,
     #[serde(rename = "softfail")]
     SoftFail,
@@ -905,5 +907,17 @@ mod tests {
                 result: SpfResultType::Pass,
             }]
         );
+    }
+
+    #[test]
+    fn hardfail_alias() {
+        // Some reports use the value "hardfail" as SPF auth result, see issue #21.
+        // According to https://datatracker.ietf.org/doc/html/rfc7489#appendix-C
+        // this is not a valid value, but we allow it as alias for "fail".
+        let reader = BufReader::new(File::open("testdata/dmarc-reports/hardfail.xml").unwrap());
+        let report: Report = quick_xml::de::from_reader(reader).unwrap();
+        let record = report.record.first().unwrap();
+        let spf_auth_res = record.auth_results.spf.first().unwrap();
+        assert_eq!(spf_auth_res.result, SpfResultType::Fail);
     }
 }
