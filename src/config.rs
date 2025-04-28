@@ -1,4 +1,5 @@
 use clap::Parser;
+use cron::Schedule;
 use std::fmt::Display;
 use std::path::PathBuf;
 use std::str::FromStr;
@@ -63,6 +64,13 @@ pub struct Configuration {
     /// Interval between checking for new reports in IMAP inbox in seconds
     #[arg(long, env, default_value_t = 1800)]
     pub imap_check_interval: u64,
+
+    /// Schedule for checking the IMAP inbox.
+    /// Specified as cron expression string (in UTC time).
+    /// Will replace and override the IMAP check interval if specified.
+    /// Columns: sec, min, hour, day of month, month, day of week, year
+    #[arg(long, env)]
+    pub imap_check_schedule: Option<Schedule>,
 
     /// Embedded HTTP server port for web UI.
     /// Needs to be bigger than 0 because for 0 a random port will be used!
@@ -134,6 +142,13 @@ impl Configuration {
         info!("IMAP TLS Disabled: {}", self.imap_disable_tls);
         info!("IMAP User: {}", self.imap_user);
         info!("IMAP Check Interval: {} seconds", self.imap_check_interval);
+        info!(
+            "IMAP Schedule: {}",
+            self.imap_check_schedule
+                .as_ref()
+                .map(|s| s.source().to_string())
+                .unwrap_or(String::from("None"))
+        );
         info!("IMAP Body Request: {}", self.imap_body_request.to_string());
         info!("IMAP Chunk Size: {}", self.imap_chunk_size);
         info!("IMAP Timeout: {}", self.imap_timeout);

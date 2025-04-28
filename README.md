@@ -23,10 +23,11 @@ You can find more screenshots [here](screenshots/screenshots.md).
 - [x] Prebuilt binaries and Docker images
 - [x] Runs out of the box on a Raspberry Pi
 - [x] Secure IMAP client (TLS & STARTTLS)
-- [x] Automatic fetching of reports from IMAP inbox
 - [x] Robust parsing of XML DMARC reports
 - [x] Embedded HTTP server for Web UI
 - [x] Responsive Web UI that works also on small screens
+- [x] Automatic fetching of reports from IMAP inbox
+- [x] Updates are scheduled via simple update interval or cron expression
 - [x] Automatic HTTPS via ACME/Let's Encrypt
 - [x] Basic Auth password protection for HTTP server
 - [x] Easy configuration via command line arguments or ENV variables

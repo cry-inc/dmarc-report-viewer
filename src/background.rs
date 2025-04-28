@@ -6,6 +6,7 @@ use crate::state::{AppState, DmarcReportWithUid};
 use crate::summary::Summary;
 use crate::unpack::extract_xml_files;
 use anyhow::{Context, Result};
+use chrono::Utc;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant, SystemTime};
@@ -35,7 +36,21 @@ pub fn start_bg_task(
                 Err(err) => error!("Failed background update: {err:#}"),
             };
 
-            let duration = Duration::from_secs(config.imap_check_interval);
+            // Check how many seconds we need to sleep
+            let mut duration = Duration::from_secs(config.imap_check_interval);
+            if let Some(schedule) = &config.imap_check_schedule {
+                if let Some(next_update) = schedule.upcoming(Utc).next() {
+                    let delta = next_update - Utc::now();
+                    duration = Duration::from_millis(delta.num_milliseconds().max(0) as u64)
+                } else {
+                    warn!("Unable to find next scheduled check, falling back to interval...")
+                }
+            }
+
+            // Print next update time
+            let next = Utc::now() + duration;
+            info!("Next update is planned for {next}");
+
             tokio::select! {
                 _ = tokio::time::sleep(duration) => {},
                 _ = stop_signal.recv() => { break; },
