@@ -66,7 +66,7 @@ pub struct Configuration {
     pub imap_check_interval: u64,
 
     /// Schedule for checking the IMAP inbox.
-    /// Specified as cron expression string (in UTC time).
+    /// Specified as cron expression string (in Local time).
     /// Will replace and override the IMAP check interval if specified.
     /// Columns: sec, min, hour, day of month, month, day of week, year
     #[arg(long, env)]

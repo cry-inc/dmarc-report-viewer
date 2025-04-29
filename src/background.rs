@@ -6,7 +6,7 @@ use crate::state::{AppState, DmarcReportWithUid};
 use crate::summary::Summary;
 use crate::unpack::extract_xml_files;
 use anyhow::{Context, Result};
-use chrono::Utc;
+use chrono::Local;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant, SystemTime};
@@ -39,8 +39,8 @@ pub fn start_bg_task(
             // Check how many seconds we need to sleep
             let mut duration = Duration::from_secs(config.imap_check_interval);
             if let Some(schedule) = &config.imap_check_schedule {
-                if let Some(next_update) = schedule.upcoming(Utc).next() {
-                    let delta = next_update - Utc::now();
+                if let Some(next_update) = schedule.upcoming(Local).next() {
+                    let delta = next_update - Local::now();
                     duration = Duration::from_millis(delta.num_milliseconds().max(0) as u64)
                 } else {
                     warn!("Unable to find next scheduled check, falling back to interval...")
@@ -48,7 +48,7 @@ pub fn start_bg_task(
             }
 
             // Print next update time
-            let next = Utc::now() + duration;
+            let next = Local::now() + duration;
             info!("Next update is planned for {next}");
 
             tokio::select! {
