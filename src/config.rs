@@ -68,7 +68,11 @@ pub struct Configuration {
     /// Schedule for checking the IMAP inbox.
     /// Specified as cron expression string (in Local time).
     /// Will replace and override the IMAP check interval if specified.
-    /// Columns: sec, min, hour, day of month, month, day of week, year
+    /// Columns: sec, min, hour, day of month, month, day of week, year.
+    /// When running the official Docker image the local time zone will be UTC.
+    /// To change this, set the `TZ` ENV var. Since the image comes without
+    /// time zone data, you also need to mount the host folder
+    /// `/usr/share/zoneinfo` into the container.
     #[arg(long, env)]
     pub imap_check_schedule: Option<Schedule>,
 
