@@ -1,8 +1,6 @@
-use clap::Parser;
+use clap::{Parser, ValueEnum};
 use cron::Schedule;
-use std::fmt::Display;
 use std::path::PathBuf;
-use std::str::FromStr;
 use tracing::{info, Level};
 
 #[derive(Parser, Clone)]
@@ -47,8 +45,7 @@ pub struct Configuration {
     /// Method of requesting the mail body from the IMAP server.
     /// The default should work for most IMAP servers.
     /// Only try other values if you have issues with missing mail bodies.
-    /// Possible values: `default`, `rfc822` and `body`.
-    #[arg(long, env, default_value_t = ImapBodyRequest::Default)]
+    #[arg(long, env)]
     pub imap_body_request: ImapBodyRequest,
 
     /// TCP connection timeout for IMAP server in seconds
@@ -153,7 +150,7 @@ impl Configuration {
                 .map(|s| s.source().to_string())
                 .unwrap_or(String::from("None"))
         );
-        info!("IMAP Body Request: {}", self.imap_body_request.to_string());
+        info!("IMAP Body Request: {:?}", self.imap_body_request);
         info!("IMAP Chunk Size: {}", self.imap_chunk_size);
         info!("IMAP Timeout: {}", self.imap_timeout);
 
@@ -170,9 +167,10 @@ impl Configuration {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, ValueEnum, Debug, Default)]
 pub enum ImapBodyRequest {
     /// RFC822 and BODY[]
+    #[default]
     Default,
     /// RFC822
     Rfc822,
@@ -186,33 +184,6 @@ impl ImapBodyRequest {
             ImapBodyRequest::Default => String::from("RFC822 BODY[]"),
             ImapBodyRequest::Rfc822 => String::from("RFC822"),
             ImapBodyRequest::Body => String::from("BODY[]"),
-        }
-    }
-}
-
-impl Display for ImapBodyRequest {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        let str = match &self {
-            ImapBodyRequest::Default => "default",
-            ImapBodyRequest::Rfc822 => "rfc822",
-            ImapBodyRequest::Body => "body",
-        };
-        write!(f, "{str}")
-    }
-}
-
-impl FromStr for ImapBodyRequest {
-    type Err = String;
-    fn from_str(value: &str) -> Result<Self, Self::Err> {
-        let lower = value.to_lowercase();
-        if lower == "default" {
-            Ok(ImapBodyRequest::Default)
-        } else if lower == "rfc822" {
-            Ok(ImapBodyRequest::Rfc822)
-        } else if lower == "body" {
-            Ok(ImapBodyRequest::Body)
-        } else {
-            Err(format!("'{lower}' is not a valid value"))
         }
     }
 }
