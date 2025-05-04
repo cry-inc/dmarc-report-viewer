@@ -45,7 +45,7 @@ pub struct Configuration {
     /// Method of requesting the mail body from the IMAP server.
     /// The default should work for most IMAP servers.
     /// Only try other values if you have issues with missing mail bodies.
-    #[arg(long, env)]
+    #[arg(long, env, default_value = "default")]
     pub imap_body_request: ImapBodyRequest,
 
     /// TCP connection timeout for IMAP server in seconds
