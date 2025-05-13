@@ -53,32 +53,32 @@ impl Summary {
             for record in &report.record {
                 for r in &record.auth_results.spf {
                     if let Some(entry) = spf_auth_results.get_mut(&r.result) {
-                        *entry += 1;
+                        *entry += record.row.count;
                     } else {
-                        spf_auth_results.insert(r.result.clone(), 1);
+                        spf_auth_results.insert(r.result.clone(), record.row.count);
                     }
                 }
                 if let Some(vec) = &record.auth_results.dkim {
                     for r in vec {
                         if let Some(entry) = dkim_auth_results.get_mut(&r.result) {
-                            *entry += 1;
+                            *entry += record.row.count;
                         } else {
-                            dkim_auth_results.insert(r.result.clone(), 1);
+                            dkim_auth_results.insert(r.result.clone(), record.row.count);
                         }
                     }
                 }
                 if let Some(result) = &record.row.policy_evaluated.spf {
                     if let Some(entry) = spf_policy_results.get_mut(result) {
-                        *entry += 1;
+                        *entry += record.row.count;
                     } else {
-                        spf_policy_results.insert(result.clone(), 1);
+                        spf_policy_results.insert(result.clone(), record.row.count);
                     }
                 }
                 if let Some(result) = &record.row.policy_evaluated.dkim {
                     if let Some(entry) = dkim_policy_results.get_mut(result) {
-                        *entry += 1;
+                        *entry += record.row.count;
                     } else {
-                        dkim_policy_results.insert(result.clone(), 1);
+                        dkim_policy_results.insert(result.clone(), record.row.count);
                     }
                 }
             }
