@@ -36,6 +36,40 @@ fn get_xml_from_zip(zip_bytes: &[u8]) -> Result<Vec<Vec<u8>>> {
     Ok(xml_files)
 }
 
+/// Merge name value of content type header in case its split like described
+/// here: https://datatracker.ietf.org/doc/html/rfc2231#section-3
+fn merge_name_parts(value: &str) -> String {
+    let mut merged = String::new();
+    let mut name_buffer = String::new();
+    let mut next = 0;
+
+    for line in value.lines() {
+        let next_prefix = format!("name*{next}=");
+        if let Some(stripped) = line.trim().strip_prefix(&next_prefix) {
+            let mut stripped = stripped.to_string();
+            if stripped.ends_with(';') {
+                stripped.pop();
+            }
+            if stripped.len() >= 2 && stripped.starts_with('"') && stripped.ends_with('"') {
+                stripped.remove(0);
+                stripped.pop();
+            }
+            name_buffer += &stripped;
+            next += 1;
+        } else if merged.is_empty() {
+            merged += &format!("{line}\n");
+        } else {
+            merged += &format!("  {line}\n");
+        }
+    }
+
+    if !name_buffer.is_empty() {
+        merged += &format!("  name=\"{name_buffer}\"");
+    }
+
+    merged
+}
+
 /// Get a single XML file from a GZ archive
 fn get_xml_from_gz(gz_bytes: &[u8]) -> Result<Vec<u8>> {
     let mut gz = GzDecoder::new(gz_bytes);
@@ -59,7 +93,13 @@ pub fn extract_xml_files(mail: &mut Mail) -> Result<Vec<XmlFile>> {
             trace!("Skipping part {index} of mail with UID {uid} because of missing content type",);
             continue;
         };
-        trace!("Part {index} of mail with UID {uid} has content type '{content_type}'",);
+        trace!("Part {index} of mail with UID {uid} has content type '{content_type}'");
+
+        // Some long names in content type headers names are split into multiple lines and parts:
+        // application/octet-stream;
+        //   name*0=amazonses.com!xxxxxxxxxxxxxxxxxxxxxx!1745884800!1745971200.xm;
+        //   name*1=l.gz
+        let content_type = merge_name_parts(&content_type);
 
         // Detect compression based on content type header.
         // In most cases is directly a ZIP or GZIP type, but in some cases its generic
@@ -114,4 +154,27 @@ pub struct XmlFile {
     pub mail_uid: u32,
     pub data: Vec<u8>,
     pub hash: String,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_merge_name_parts() {
+        let input = "application/octet-stream;\n  name*0=amazonses.com!xxxxxxxxxxxxxxxxxxxxxx!1745884800!1745971200.xm;\n  name*1=l.gz";
+        let output = merge_name_parts(input);
+        assert!(output.contains(
+            "name=\"amazonses.com!xxxxxxxxxxxxxxxxxxxxxx!1745884800!1745971200.xml.gz\""
+        ));
+
+        let input = "application/octet-stream;\n  name*0=foo;\n  name*1=bar;\n  name*2=.jpeg";
+        let output = merge_name_parts(input);
+        assert!(output.contains("name=\"foobar.jpeg\""));
+
+        let input =
+            "application/octet-stream;\n  name*0=\"foo\";\n  name*1=\"bar\";\n  name*2=\".jpeg\"";
+        let output = merge_name_parts(input);
+        assert!(output.contains("name=\"foobar.jpeg\""));
+    }
 }
