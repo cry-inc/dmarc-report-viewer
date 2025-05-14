@@ -143,6 +143,19 @@ pub fn extract_xml_files(mail: &mut Mail) -> Result<Vec<XmlFile>> {
                 mail_uid: mail.uid,
                 hash,
             });
+        } else if content_type.contains("text/xml")
+            || content_type.contains("application/octet-stream") && content_type.contains(".xml")
+        {
+            trace!("Detected uncompressed XML attachment for mail with UID {uid} in part {index}");
+            let xml = part
+                .get_body_raw()
+                .context("Failed to get raw body of attachment part")?;
+            let hash = hash_data(&xml);
+            xml_files.push(XmlFile {
+                data: xml,
+                mail_uid: mail.uid,
+                hash,
+            });
         }
     }
 
