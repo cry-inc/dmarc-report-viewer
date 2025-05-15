@@ -38,36 +38,36 @@ fn get_xml_from_zip(zip_bytes: &[u8]) -> Result<Vec<Vec<u8>>> {
 
 /// Merge name value of content type header in case its split like described
 /// here: https://datatracker.ietf.org/doc/html/rfc2231#section-3
+/// Please note that `mailparse` already removes the line breaks before this function is used!
 fn merge_name_parts(value: &str) -> String {
-    let mut merged = String::new();
+    let mut out_buffer = String::new();
     let mut name_buffer = String::new();
     let mut next = 0;
 
-    for line in value.lines() {
+    for segment in value.trim().split("; ") {
         let next_prefix = format!("name*{next}=");
-        if let Some(stripped) = line.trim().strip_prefix(&next_prefix) {
-            let mut stripped = stripped.to_string();
-            if stripped.ends_with(';') {
-                stripped.pop();
-            }
-            if stripped.len() >= 2 && stripped.starts_with('"') && stripped.ends_with('"') {
-                stripped.remove(0);
-                stripped.pop();
-            }
-            name_buffer += &stripped;
+        if let Some(mut candidate) = segment.trim().strip_prefix(&next_prefix).map(String::from) {
             next += 1;
-        } else if merged.is_empty() {
-            merged += &format!("{line}\n");
+            if candidate.ends_with(';') {
+                candidate.pop();
+            }
+            if candidate.len() > 2 && candidate.starts_with('"') && candidate.ends_with('"') {
+                candidate.remove(0);
+                candidate.pop();
+            }
+            name_buffer += &candidate;
+        } else if out_buffer.is_empty() {
+            out_buffer += segment;
         } else {
-            merged += &format!("  {line}\n");
+            out_buffer += &format!("; {segment}");
         }
     }
 
     if !name_buffer.is_empty() {
-        merged += &format!("  name=\"{name_buffer}\"");
+        out_buffer += &format!("; name=\"{name_buffer}\"");
     }
 
-    merged
+    out_buffer
 }
 
 /// Get a single XML file from a GZ archive
@@ -175,18 +175,17 @@ mod tests {
 
     #[test]
     fn test_merge_name_parts() {
-        let input = "application/octet-stream;\n  name*0=amazonses.com!xxxxxxxxxxxxxxxxxxxxxx!1745884800!1745971200.xm;\n  name*1=l.gz";
+        let input = "application/octet-stream;  name*0=amazonses.com!xxxxxxxxxxxxxxxxxxxxxx!1745884800!1745971200.xm;  name*1=l.gz";
         let output = merge_name_parts(input);
         assert!(output.contains(
             "name=\"amazonses.com!xxxxxxxxxxxxxxxxxxxxxx!1745884800!1745971200.xml.gz\""
         ));
 
-        let input = "application/octet-stream;\n  name*0=foo;\n  name*1=bar;\n  name*2=.jpeg";
+        let input = "application/octet-stream;  name*0=foo;  name*1=bar;  name*2=.jpeg";
         let output = merge_name_parts(input);
         assert!(output.contains("name=\"foobar.jpeg\""));
 
-        let input =
-            "application/octet-stream;\n  name*0=\"foo\";\n  name*1=\"bar\";\n  name*2=\".jpeg\"";
+        let input = "application/octet-stream; name*0=\"foo\"; name*1=\"bar\"; name*2=\".jpeg\"";
         let output = merge_name_parts(input);
         assert!(output.contains("name=\"foobar.jpeg\""));
     }
