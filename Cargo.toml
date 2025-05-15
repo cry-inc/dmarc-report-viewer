@@ -37,6 +37,6 @@ clap = { version = "4", features = ["derive", "env"] }
 rustls-acme = { version = "0.13", features = ["axum"] }
 quick-xml = {version = "0.37", features = ["serialize"] }
 tower-http = { version = "0.6", features = ["compression-gzip"] }
-zip = { version = "2", default-features = false, features = ["deflate"] }
+zip = { version = "3", default-features = false, features = ["deflate"] }
 tokio = { version = "1.36", features = ["macros", "rt-multi-thread", "signal"] }
 async-imap = {version = "0.10", default-features = false, features = ["runtime-tokio"] }
