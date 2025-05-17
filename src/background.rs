@@ -3,7 +3,6 @@ use crate::dmarc::{DmarcParsingError, Report};
 use crate::hasher::create_hash;
 use crate::imap::get_mails;
 use crate::state::{AppState, DmarcReportWithUid};
-use crate::summary::Summary;
 use crate::unpack::extract_xml_files;
 use anyhow::{Context, Result};
 use chrono::Local;
@@ -138,14 +137,12 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
         .context("Failed to get Unix time stamp")?
         .as_secs();
 
-    let summary = Summary::new(mails.len(), xml_files.len(), &dmarc_reports, timestamp);
-
     {
         let mut locked_state = state.lock().await;
         locked_state.mails = mails;
-        locked_state.summary = summary;
         locked_state.dmarc_reports = dmarc_reports;
         locked_state.last_update = timestamp;
+        locked_state.xml_files = xml_files.len();
         locked_state.dmarc_parsing_errors = dmarc_parsing_errors;
     }
 

@@ -1,6 +1,5 @@
 use crate::dmarc::{DmarcParsingError, Report};
 use crate::geolocate::Location;
-use crate::summary::Summary;
 use crate::{cache_map::CacheMap, mail::Mail};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -26,8 +25,8 @@ pub struct AppState {
     /// Parsed DMARC reports with mail UID and corresponding hash as key
     pub dmarc_reports: HashMap<String, DmarcReportWithUid>,
 
-    /// Summary of report and other stats
-    pub summary: Summary,
+    /// Number of XML files extracted from mails
+    pub xml_files: usize,
 
     /// Time of last update from IMAP inbox as Unix timestamp
     pub last_update: u64,
@@ -47,8 +46,8 @@ impl AppState {
         Self {
             mails: HashMap::new(),
             dmarc_reports: HashMap::new(),
-            summary: Summary::default(),
             last_update: 0,
+            xml_files: 0,
             dmarc_parsing_errors: HashMap::new(),
             ip_dns_cache: CacheMap::new(CACHE_SIZE).expect("Failed to create DNS cache"),
             ip_location_cache: CacheMap::new(CACHE_SIZE).expect("Failed to create location cache"),

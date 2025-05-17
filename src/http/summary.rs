@@ -1,7 +1,23 @@
 use crate::dmarc::{DkimResultType, DmarcResultType, SpfResultType};
-use crate::state::DmarcReportWithUid;
+use crate::state::{AppState, DmarcReportWithUid};
+use axum::extract::State;
+use axum::response::IntoResponse;
+use axum::Json;
 use serde::Serialize;
 use std::collections::HashMap;
+use std::sync::Arc;
+use tokio::sync::Mutex;
+
+pub async fn handler(State(state): State<Arc<Mutex<AppState>>>) -> impl IntoResponse {
+    let guard = state.lock().await;
+    let summary = Summary::new(
+        guard.mails.len(),
+        guard.xml_files,
+        &guard.dmarc_reports,
+        guard.last_update,
+    );
+    Json(summary)
+}
 
 #[derive(Serialize, Default, Clone)]
 pub struct Summary {

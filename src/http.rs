@@ -2,6 +2,7 @@ mod dmarc_reports;
 mod ips;
 mod mails;
 mod static_files;
+mod summary;
 
 use crate::config::Configuration;
 use crate::state::AppState;
@@ -32,7 +33,7 @@ pub async fn run_http_server(config: &Configuration, state: Arc<Mutex<AppState>>
         warn!("Detected empty password: Basic Authentication will be disabled")
     }
     let make_service = Router::new()
-        .route("/summary", get(summary))
+        .route("/summary", get(summary::handler))
         .route("/mails", get(mails::list_handler))
         .route("/mails/{id}", get(mails::single_handler))
         .route("/mails/{id}/errors", get(mails::errors_handler))
@@ -218,10 +219,6 @@ async fn basic_auth_middleware(
     } else {
         unauthorized
     }
-}
-
-async fn summary(State(state): State<Arc<Mutex<AppState>>>) -> impl IntoResponse {
-    Json(state.lock().await.summary.clone())
 }
 
 async fn build() -> impl IntoResponse {

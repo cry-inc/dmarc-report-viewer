@@ -10,7 +10,6 @@ mod http;
 mod imap;
 mod mail;
 mod state;
-mod summary;
 mod unpack;
 mod whois;
 
