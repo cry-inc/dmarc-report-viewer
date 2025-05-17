@@ -32,6 +32,7 @@ export class Dashboard extends LitElement {
     `];
 
     static properties = {
+        params: { type: Object },
         mails: { type: Number },
         xmlFiles: { type: Number },
         dmarcReports: { type: Number },
@@ -41,14 +42,30 @@ export class Dashboard extends LitElement {
     constructor() {
         super();
 
+        this.params = {};
         this.mails = 0;
         this.xmlFiles = 0;
         this.dmarcReports = 0;
         this.lastUpdate = 0;
     }
 
-    async firstUpdated() {
-        const response = await fetch("summary");
+    updated(changedProperties) {
+        if (changedProperties.has("params")) {
+            let ts = 0;
+            if (this.params.ts) {
+                ts = parseInt(this.params.ts);
+            }
+            this.createCharts(ts);
+        }
+    }
+
+    onTimeSpanChange(event) {
+        const value = event.target.value;
+        document.location.href = "#/dashboard?ts=" + value;
+    }
+
+    async createCharts(ts) {
+        const response = await fetch("summary?time_span=" + ts);
         const summary = await response.json();
 
         const resultColorMap = {
@@ -79,16 +96,27 @@ export class Dashboard extends LitElement {
         this.dmarcReports = summary.dmarc_reports;
         this.lastUpdate = summary.last_update;
 
-        this.createPieChart("orgs_chart", this.sortedMap(summary.dmarc_orgs), orgColorMap, function (label) {
+        if (this.orgs_chart) this.orgs_chart.destroy();
+        this.orgs_chart = await this.createPieChart("orgs_chart", this.sortedMap(summary.dmarc_orgs), orgColorMap, function (label) {
             window.location.hash = "#/dmarc-reports?org=" + encodeURIComponent(label);
         });
-        this.createPieChart("domains_chart", this.sortedMap(summary.dmarc_domains), null, function (label) {
+
+        if (this.domains_chart) this.domains_chart.destroy();
+        this.domains_chart = await this.createPieChart("domains_chart", this.sortedMap(summary.dmarc_domains), null, function (label) {
             window.location.hash = "#/dmarc-reports?domain=" + encodeURIComponent(label);
         });
-        this.createPieChart("spf_policy_chart", this.sortedMap(summary.spf_policy_results), resultColorMap);
-        this.createPieChart("dkim_policy_chart", this.sortedMap(summary.dkim_policy_results), resultColorMap);
-        this.createPieChart("spf_auth_chart", this.sortedMap(summary.spf_auth_results), resultColorMap);
-        this.createPieChart("dkim_auth_chart", this.sortedMap(summary.dkim_auth_results), resultColorMap);
+
+        if (this.spf_policy_chart) this.spf_policy_chart.destroy();
+        this.spf_policy_chart = await this.createPieChart("spf_policy_chart", this.sortedMap(summary.spf_policy_results), resultColorMap);
+
+        if (this.dkim_policy_chart) this.dkim_policy_chart.destroy();
+        this.dkim_policy_chart = await this.createPieChart("dkim_policy_chart", this.sortedMap(summary.dkim_policy_results), resultColorMap);
+
+        if (this.spf_auth_chart) this.spf_auth_chart.destroy();
+        this.spf_auth_chart = await this.createPieChart("spf_auth_chart", this.sortedMap(summary.spf_auth_results), resultColorMap);
+
+        if (this.dkim_auth_chart) this.dkim_auth_chart.destroy();
+        this.dkim_auth_chart = await this.createPieChart("dkim_auth_chart", this.sortedMap(summary.dkim_auth_results), resultColorMap);
     }
 
     sortedMap(map) {
@@ -139,7 +167,7 @@ export class Dashboard extends LitElement {
             colors = defaultColors;
         }
 
-        new Chart(element, {
+        return new Chart(element, {
             type: "pie",
             data: {
                 labels,
@@ -167,11 +195,24 @@ export class Dashboard extends LitElement {
     render() {
         return html`
             <h1>Dashboard</h1>
+
             <div class="module stats">
                 <span>Mails: <b>${this.mails}</b></span>
                 <span>XML Files: <b>${this.xmlFiles}</b></span>
                 <span>DMARC Reports: <b>${this.dmarcReports}</b></span>
                 <span>Last Update: <b>${new Date(this.lastUpdate * 1000).toLocaleString()}</b></span>
+            </div>
+
+            <div class="module stats">
+                Time Span for Summary Charts:
+                <select @change="${this.onTimeSpanChange}">
+                    <option value="0">Everything</option>
+                    <option ?selected=${this.params.ts == "72"} value="72">Last Three Days</option>
+                    <option ?selected=${this.params.ts == "168"} value="168">Last Week</option>
+                    <option ?selected=${this.params.ts == "744"} value="744">Last Month</option>
+                    <option ?selected=${this.params.ts == "4464"} value="4464">Last Six Months</option>
+                    <option ?selected=${this.params.ts == "8760"} value="8760">Last Year</option>
+                </select>
             </div>
 
             <div class="grid">

@@ -105,7 +105,7 @@ export class App extends LitElement {
         } else if (this.component == "about") {
             component = html`<drv-about></drv-about>`;
         } else {
-            component = html`<drv-dashboard></drv-dashboard>`;
+            component = html`<drv-dashboard .params="${this.params}"></drv-dashboard>`;
         }
 
         return html`
