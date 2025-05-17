@@ -1,4 +1,4 @@
-use crate::hasher::hash_data;
+use crate::hasher::create_hash;
 use crate::mail::Mail;
 use anyhow::{Context, Result};
 use flate2::read::GzDecoder;
@@ -122,7 +122,7 @@ pub fn extract_xml_files(mail: &mut Mail) -> Result<Vec<XmlFile>> {
                 xml_files_zip.len()
             );
             for xml in xml_files_zip {
-                let hash = hash_data(&xml);
+                let hash = create_hash(&xml, Some(mail.uid));
                 xml_files.push(XmlFile {
                     data: xml,
                     mail_uid: mail.uid,
@@ -137,7 +137,7 @@ pub fn extract_xml_files(mail: &mut Mail) -> Result<Vec<XmlFile>> {
                 .get_body_raw()
                 .context("Failed to get raw body of attachment part")?;
             let xml = get_xml_from_gz(&body).context("Failed to extract XML from GZ attachment")?;
-            let hash = hash_data(&xml);
+            let hash = create_hash(&xml, Some(mail.uid));
             xml_files.push(XmlFile {
                 data: xml,
                 mail_uid: mail.uid,
@@ -150,7 +150,7 @@ pub fn extract_xml_files(mail: &mut Mail) -> Result<Vec<XmlFile>> {
             let xml = part
                 .get_body_raw()
                 .context("Failed to get raw body of attachment part")?;
-            let hash = hash_data(&xml);
+            let hash = create_hash(&xml, Some(mail.uid));
             xml_files.push(XmlFile {
                 data: xml,
                 mail_uid: mail.uid,
@@ -164,8 +164,12 @@ pub fn extract_xml_files(mail: &mut Mail) -> Result<Vec<XmlFile>> {
 
 /// In-memory representation of an unparsed XML file with mail UID and hash
 pub struct XmlFile {
+    /// UID of the mail that contained this XML file
     pub mail_uid: u32,
+    /// Binary data of the XML file
     pub data: Vec<u8>,
+    /// Hash of the XML data AND mail UID.
+    /// UID needs to be included to avoid the same XML file from multiple mails being treated as the same file!
     pub hash: String,
 }
 

@@ -1,6 +1,6 @@
 use crate::config::Configuration;
 use crate::dmarc::{DmarcParsingError, Report};
-use crate::hasher::hash_data;
+use crate::hasher::create_hash;
 use crate::imap::get_mails;
 use crate::state::{AppState, DmarcReportWithUid};
 use crate::summary::Summary;
@@ -101,7 +101,7 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
                 };
                 let binary =
                     serde_json::to_vec(&rwu).context("Failed to serialize report with UID")?;
-                let hash = hash_data(&binary);
+                let hash = create_hash(&binary, None);
                 dmarc_reports.insert(hash, rwu);
             }
             Err(err) => {
