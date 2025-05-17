@@ -1,20 +1,39 @@
 use crate::dmarc::{DkimResultType, DmarcResultType, SpfResultType};
 use crate::state::{AppState, DmarcReportWithUid};
-use axum::extract::State;
+use axum::extract::{Query, State};
 use axum::response::IntoResponse;
 use axum::Json;
-use serde::Serialize;
+use chrono::{Duration, Utc};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
-pub async fn handler(State(state): State<Arc<Mutex<AppState>>>) -> impl IntoResponse {
+#[derive(Deserialize, Debug)]
+pub struct SummaryFilters {
+    /// Number of hours from current time backwards to include.
+    /// Everything older will be excluded.
+    /// None or a value of zero means the filter is disabled!
+    time_span: Option<u64>,
+}
+
+pub async fn handler(
+    State(state): State<Arc<Mutex<AppState>>>,
+    filters: Query<SummaryFilters>,
+) -> impl IntoResponse {
     let guard = state.lock().await;
+    let mut time_span = None;
+    if let Some(hours) = filters.time_span {
+        if hours > 0 {
+            time_span = Some(Duration::hours(hours as i64));
+        }
+    }
     let summary = Summary::new(
         guard.mails.len(),
         guard.xml_files,
         &guard.dmarc_reports,
         guard.last_update,
+        time_span,
     );
     Json(summary)
 }
@@ -58,6 +77,7 @@ impl Summary {
         xml_files: usize,
         dmarc_reports: &HashMap<String, DmarcReportWithUid>,
         last_update: u64,
+        time_span: Option<Duration>,
     ) -> Self {
         let mut dmarc_orgs: HashMap<String, usize> = HashMap::new();
         let mut dmarc_domains = HashMap::new();
@@ -65,7 +85,13 @@ impl Summary {
         let mut dkim_policy_results: HashMap<DmarcResultType, usize> = HashMap::new();
         let mut spf_auth_results: HashMap<SpfResultType, usize> = HashMap::new();
         let mut dkim_auth_results: HashMap<DkimResultType, usize> = HashMap::new();
+        let threshold = time_span.map(|d| (Utc::now() - d).timestamp() as u64);
         for DmarcReportWithUid { report, .. } in dmarc_reports.values() {
+            if let Some(threshold) = threshold {
+                if report.report_metadata.date_range.end < threshold {
+                    continue;
+                }
+            }
             for record in &report.record {
                 for r in &record.auth_results.spf {
                     if let Some(entry) = spf_auth_results.get_mut(&r.result) {
