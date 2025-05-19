@@ -37,6 +37,7 @@ export class Dashboard extends LitElement {
         xmlFiles: { type: Number },
         dmarcReports: { type: Number },
         lastUpdate: { type: Number },
+        domains: { type: Array },
     };
 
     constructor() {
@@ -47,25 +48,68 @@ export class Dashboard extends LitElement {
         this.xmlFiles = 0;
         this.dmarcReports = 0;
         this.lastUpdate = 0;
+        this.domains = [];
+
+        this.getDomains();
+    }
+
+    async getDomains() {
+        const response = await fetch("summary");
+        const summary = await response.json();
+        this.domains = Object.keys(summary.dmarc_domains);
     }
 
     updated(changedProperties) {
         if (changedProperties.has("params")) {
-            let ts = 0;
-            if (this.params.ts) {
-                ts = parseInt(this.params.ts);
-            }
-            this.createCharts(ts);
+            this.updateCharts();
         }
     }
 
     onTimeSpanChange(event) {
         const value = event.target.value;
-        document.location.href = "#/dashboard?ts=" + value;
+        if (value && value !== "0") {
+            this.params.ts = value;
+        } else {
+            delete this.params.ts;
+        }
+        this.updateByParams();
     }
 
-    async createCharts(ts) {
-        const response = await fetch("summary?time_span=" + ts);
+    onDomainChange(event) {
+        const value = event.target.value;
+        if (value && value !== "all") {
+            this.params.domain = value;
+        } else {
+            delete this.params.domain;
+        }
+        this.updateByParams();
+    }
+
+    updateByParams() {
+        let params = Object.
+            keys(this.params).
+            map(k => k + "=" + this.params[k]).
+            join("&");
+        if (params.length > 0) {
+            document.location.href = "#/dashboard?" + params;
+        } else {
+            document.location.href = "#/dashboard";
+        }
+    }
+
+    async updateCharts() {
+        const queryParams = [];
+        if (this.params.ts && this.params.ts !== "0") {
+            queryParams.push("time_span=" + this.params.ts);
+        }
+        if (this.params.domain && this.params.domain !== "all") {
+            queryParams.push("domain=" + this.params.domain);
+        }
+        let url = "summary";
+        if (queryParams.length > 0) {
+            url += "?" + queryParams.join("&");
+        }
+        const response = await fetch(url);
         const summary = await response.json();
 
         const resultColorMap = {
@@ -204,15 +248,29 @@ export class Dashboard extends LitElement {
             </div>
 
             <div class="module stats">
-                Time Span for Summary Charts:
-                <select @change="${this.onTimeSpanChange}">
-                    <option value="0">Everything</option>
-                    <option ?selected=${this.params.ts == "72"} value="72">Last Three Days</option>
-                    <option ?selected=${this.params.ts == "168"} value="168">Last Week</option>
-                    <option ?selected=${this.params.ts == "744"} value="744">Last Month</option>
-                    <option ?selected=${this.params.ts == "4464"} value="4464">Last Six Months</option>
-                    <option ?selected=${this.params.ts == "8760"} value="8760">Last Year</option>
-                </select>
+                <span>
+                    Time Span for Summary Charts:
+                    <select @change="${this.onTimeSpanChange}">
+                        <option value="0">Everything</option>
+                        <option ?selected=${this.params.ts === "72"} value="72">Last Three Days</option>
+                        <option ?selected=${this.params.ts === "168"} value="168">Last Week</option>
+                        <option ?selected=${this.params.ts === "744"} value="744">Last Month</option>
+                        <option ?selected=${this.params.ts === "4464"} value="4464">Last Six Months</option>
+                        <option ?selected=${this.params.ts === "8760"} value="8760">Last Year</option>
+                    </select>
+                </span>
+
+                <span>
+                    Domain:
+                    <select @change="${this.onDomainChange}">
+                        <option value="all">All</option>
+                        ${this.domains.map((domain) =>
+                        html`<option
+                                ?selected=${this.params.domain === encodeURIComponent(domain)}
+                                value="${encodeURIComponent(domain)}">${domain}</option>`
+                        )}
+                    </select>
+                </span>
             </div>
 
             <div class="grid">

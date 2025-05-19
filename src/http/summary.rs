@@ -15,12 +15,30 @@ pub struct SummaryFilters {
     /// Everything older will be excluded.
     /// None or a value of zero means the filter is disabled!
     time_span: Option<u64>,
+
+    /// Domain to be filtered. Other domains will be ignored.
+    /// None means the filter is disabled!
+    domain: Option<String>,
+}
+
+impl SummaryFilters {
+    fn url_decode(&self) -> Self {
+        Self {
+            time_span: self.time_span,
+            domain: self
+                .domain
+                .as_ref()
+                .and_then(|s| urlencoding::decode(s).ok())
+                .map(|s| s.to_string()),
+        }
+    }
 }
 
 pub async fn handler(
     State(state): State<Arc<Mutex<AppState>>>,
     filters: Query<SummaryFilters>,
 ) -> impl IntoResponse {
+    let filters = filters.url_decode();
     let guard = state.lock().await;
     let mut time_span = None;
     if let Some(hours) = filters.time_span {
@@ -34,6 +52,7 @@ pub async fn handler(
         &guard.dmarc_reports,
         guard.last_update,
         time_span,
+        filters.domain,
     );
     Json(summary)
 }
@@ -78,6 +97,7 @@ impl Summary {
         dmarc_reports: &HashMap<String, DmarcReportWithUid>,
         last_update: u64,
         time_span: Option<Duration>,
+        domain: Option<String>,
     ) -> Self {
         let mut dmarc_orgs: HashMap<String, usize> = HashMap::new();
         let mut dmarc_domains = HashMap::new();
@@ -91,6 +111,23 @@ impl Summary {
                 if report.report_metadata.date_range.end < threshold {
                     continue;
                 }
+            }
+            if let Some(domain) = &domain {
+                if report.policy_published.domain != *domain {
+                    continue;
+                }
+            }
+            let domain = report.policy_published.domain.clone();
+            if let Some(entry) = dmarc_domains.get_mut(&domain) {
+                *entry += 1;
+            } else {
+                dmarc_domains.insert(domain, 1);
+            }
+            let org = report.report_metadata.org_name.clone();
+            if let Some(entry) = dmarc_orgs.get_mut(&org) {
+                *entry += 1;
+            } else {
+                dmarc_orgs.insert(org, 1);
             }
             for record in &report.record {
                 for r in &record.auth_results.spf {
@@ -123,18 +160,6 @@ impl Summary {
                         dkim_policy_results.insert(result.clone(), record.row.count);
                     }
                 }
-            }
-            let org = report.report_metadata.org_name.clone();
-            if let Some(entry) = dmarc_orgs.get_mut(&org) {
-                *entry += 1;
-            } else {
-                dmarc_orgs.insert(org, 1);
-            }
-            let domain = report.policy_published.domain.clone();
-            if let Some(entry) = dmarc_domains.get_mut(&domain) {
-                *entry += 1;
-            } else {
-                dmarc_domains.insert(domain, 1);
             }
         }
         Self {
