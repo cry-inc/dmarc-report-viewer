@@ -57,6 +57,7 @@ export class Dashboard extends LitElement {
         const response = await fetch("summary");
         const summary = await response.json();
         this.domains = Object.keys(summary.dmarc_domains);
+        this.domains.sort();
     }
 
     updated(changedProperties) {
