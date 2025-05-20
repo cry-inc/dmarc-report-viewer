@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.8.0] - 2025-05-20
+* Dashboard UI: Add filtering for charts by time span
+* Dashboard UI: Add filtering for charts by domain
+* Add support for attachments with uncompressed XML files
+* Allow scheduling IMAP updates using cron expressions instead of intervals
+* Allow SPF result "hardfail" as alias for "fail"
+* Improved visualization of dynamically queried source IP properties
+* Updated default IMAP chunk size to make MS Exchange servers happy
+* Fix to sum up results on dashboard correctly with row count
+* Fix to treat same XML file from different mails as separate XML files
+* Fix to deal with file names in headers that are split into multiple parts
+* Updated Cargo dependencies
+
 ## [1.7.0] - 2025-04-12
 * Dashboard UI: Use fixed colors for some well known big organizations
 * Dashboard UI: Limit size of legends in charts
