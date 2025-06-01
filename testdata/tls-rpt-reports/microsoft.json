@@ -1,0 +1,40 @@
+{
+    "organization-name": "Microsoft Corporation",
+    "date-range": {
+        "start-datetime": "2025-05-23T00:00:00Z",
+        "end-datetime": "2025-05-23T23:59:59Z"
+    },
+    "contact-info": "tlsrpt-noreply@microsoft.com",
+    "report-id": "133925885310113267+random.net",
+    "policies": [
+        {
+            "policy": {
+                "policy-type": "sts",
+                "policy-string": [
+                    "version: STSv1",
+                    "mode: enforce",
+                    "mx: *.random.net",
+                    "max_age: 2592000"
+                ],
+                "policy-domain": "random.net"
+            },
+            "summary": {
+                "total-successful-session-count": 2,
+                "total-failure-session-count": 0
+            }
+        },
+        {
+            "policy": {
+                "policy-type": "tlsa",
+                "policy-string": [
+                    "[\"3 1 1 6007EEE553E85D8DF007A845D19EC343283D4E416E9A33F9EF3040C8B7C285BC\",\"3 1 1 837C773D54C2E2BD71871A3FC352BE8214D5646CBAE5E3091401A7274717998B\"]"
+                ],
+                "policy-domain": "random.net"
+            },
+            "summary": {
+                "total-successful-session-count": 2,
+                "total-failure-session-count": 0
+            }
+        }
+    ]
+}
