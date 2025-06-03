@@ -136,7 +136,7 @@ pub struct PolicyResult {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "kebab-case", rename = "feedback")]
+#[serde(rename_all = "kebab-case")]
 pub struct Report {
     /// The name of the organization responsible for the report.
     pub organization_name: String,
