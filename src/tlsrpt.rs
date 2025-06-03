@@ -150,12 +150,6 @@ pub struct Report {
     pub policies: Vec<PolicyResult>,
 }
 
-#[derive(Serialize)]
-pub struct TLSRPTParsingError {
-    pub error: String,
-    pub json: String,
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
