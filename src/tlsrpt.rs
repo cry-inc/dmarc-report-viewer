@@ -153,14 +153,12 @@ pub struct Report {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::fs::File;
-    use std::io::BufReader;
 
     #[test]
     fn serde_roundtrip() {
-        let reader =
-            BufReader::new(File::open("testdata/tls-rpt-reports/rfc-example.json").unwrap());
-        let report_1: Report = serde_json::from_reader(reader).unwrap();
+        let org_report = std::fs::read("testdata/smtp-tls-reports/rfc-example.json").unwrap();
+
+        let report_1: Report = serde_json::from_slice(&org_report).unwrap();
         let string_1 = serde_json::to_string(&report_1).unwrap();
 
         let report_2: Report = serde_json::from_str(&string_1).unwrap();
@@ -174,9 +172,8 @@ mod tests {
 
     #[test]
     fn rfc_example_report() {
-        let reader =
-            BufReader::new(File::open("testdata/tls-rpt-reports/rfc-example.json").unwrap());
-        let report: Report = serde_json::from_reader(reader).unwrap();
+        let data = std::fs::read("testdata/smtp-tls-reports/rfc-example.json").unwrap();
+        let report: Report = serde_json::from_slice(&data).unwrap();
 
         // Check metadata
         assert_eq!(report.organization_name, "Company-X");
@@ -279,8 +276,8 @@ mod tests {
 
     #[test]
     fn microsoft_report() {
-        let reader = BufReader::new(File::open("testdata/tls-rpt-reports/microsoft.json").unwrap());
-        let report: Report = serde_json::from_reader(reader).unwrap();
+        let data = std::fs::read("testdata/smtp-tls-reports/microsoft.json").unwrap();
+        let report: Report = serde_json::from_slice(&data).unwrap();
 
         // Check metadata
         assert_eq!(report.organization_name, "Microsoft Corporation");
@@ -339,8 +336,8 @@ mod tests {
 
     #[test]
     fn google_report() {
-        let reader = BufReader::new(File::open("testdata/tls-rpt-reports/google.json").unwrap());
-        let report: Report = serde_json::from_reader(reader).unwrap();
+        let data = std::fs::read("testdata/smtp-tls-reports/google.json").unwrap();
+        let report: Report = serde_json::from_slice(&data).unwrap();
 
         // Check metadata
         assert_eq!(report.organization_name, "Google Inc.");
@@ -386,8 +383,8 @@ mod tests {
 
     #[test]
     fn no_policy_report() {
-        let reader = BufReader::new(File::open("testdata/tls-rpt-reports/no-policy.json").unwrap());
-        let report: Report = serde_json::from_reader(reader).unwrap();
+        let data = std::fs::read("testdata/smtp-tls-reports/no-policy.json").unwrap();
+        let report: Report = serde_json::from_slice(&data).unwrap();
 
         // Check metadata
         assert_eq!(report.organization_name, "Google Inc.");

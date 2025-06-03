@@ -1,1 +1,30 @@
-{"organization-name":"Google Inc.","date-range":{"start-datetime":"2025-04-12T00:00:00Z","end-datetime":"2025-04-12T23:59:59Z"},"contact-info":"smtp-tls-reporting@google.com","report-id":"2025-04-12T00:00:00Z_domain.de","policies":[{"policy":{"policy-type":"no-policy-found","policy-domain":"domain.de"},"summary":{"total-successful-session-count":2,"total-failure-session-count":0}}]}
+{
+    "organization-name": "Google Inc.",
+    "date-range": {
+        "start-datetime": "2025-05-22T00:00:00Z",
+        "end-datetime": "2025-05-22T23:59:59Z"
+    },
+    "contact-info": "smtp-tls-reporting@google.com",
+    "report-id": "2025-05-22T00:00:00Z_foo-bar.io",
+    "policies": [
+        {
+            "policy": {
+                "policy-type": "sts",
+                "policy-string": [
+                    "version: STSv1",
+                    "mode: enforce",
+                    "mx: *.foo-bar.io",
+                    "max_age: 2592000"
+                ],
+                "policy-domain": "foo-bar.io",
+                "mx-host": [
+                    "*.foo-bar.io"
+                ]
+            },
+            "summary": {
+                "total-successful-session-count": 1,
+                "total-failure-session-count": 0
+            }
+        }
+    ]
+}
