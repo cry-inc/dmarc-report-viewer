@@ -135,7 +135,10 @@ pub async fn list_handler(
         })
         .filter(|(_, rwu)| {
             if let Some(domain) = &filters.domain {
-                rwu.report.policies.iter().any(|policy_result| policy_result.policy.policy_domain == *domain)
+                rwu.report
+                    .policies
+                    .iter()
+                    .any(|policy_result| policy_result.policy.policy_domain == *domain)
             } else {
                 true
             }
