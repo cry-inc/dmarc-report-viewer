@@ -1,5 +1,7 @@
+use anyhow::{Context, Result};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use std::io::Cursor;
 
 /// The time range covered by messages in this report.
 /// Formatted according to "Internet Date/Time Format", Section 5.6 of RFC3339.
@@ -11,7 +13,7 @@ pub struct DateRange {
 }
 
 /// Type of the policy evaluated by the reporting organization.
-#[derive(Debug, Serialize, Deserialize, Hash, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, Hash, PartialEq, Eq)]
 #[serde(rename_all = "kebab-case")]
 pub enum PolicyType {
     /// The MTA-STS Policy was applied.
@@ -40,18 +42,27 @@ pub struct Policy {
     pub mx_host: Option<Vec<String>>,
 }
 
+/// A simplified representation of the TLS-RPT policy evaluation result, which
+/// is used to summarize the report.
+#[derive(Debug, Clone, Serialize, Deserialize, Hash, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum TlsRptResultType {
+    Successful,
+    Failure,
+}
+
 /// A summary of the policy evaluation result.
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct Summary {
-    pub total_successful_session_count: u64,
-    pub total_failure_session_count: u64,
+    pub total_successful_session_count: usize,
+    pub total_failure_session_count: usize,
 }
 
 /// The result type, describing what went wrong during the connection attempt.
-#[derive(Debug, Serialize, Deserialize, Hash, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, Hash, PartialEq, Eq)]
 #[serde(rename_all = "kebab-case")]
-pub enum ResultType {
+pub enum FailureResultType {
     // Negotiation failures
     /// The recipient MX did not support STARTTLS.
     StarttlsNotSupported,
@@ -94,7 +105,7 @@ pub enum ResultType {
 #[serde(rename_all = "kebab-case")]
 pub struct FailureDetails {
     /// The type of the failure.
-    pub result_type: ResultType,
+    pub result_type: FailureResultType,
     /// The IP address of the Sending MTA that attempted the STARTTLS
     /// connection.
     pub sending_mta_ip: String,
@@ -111,7 +122,7 @@ pub struct FailureDetails {
     pub receiving_ip: Option<String>,
     /// The number of (attempted) sessions that match the relevant
     /// "result-type" for this section.
-    pub failed_session_count: u64,
+    pub failed_session_count: usize,
     /// A URI that points to additional information around the relevant
     /// "result-type".
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -148,6 +159,19 @@ pub struct Report {
     pub report_id: String,
     /// The policies evaluated by the reporting organization.
     pub policies: Vec<PolicyResult>,
+}
+
+impl Report {
+    pub fn from_slice(json_file: &[u8]) -> Result<Report> {
+        let mut cursor = Cursor::new(json_file);
+        serde_json::from_reader(&mut cursor).context("Failed to parse JSON as TLS-RPT report")
+    }
+}
+
+#[derive(Serialize)]
+pub struct TlsRptParsingError {
+    pub error: String,
+    pub json: String,
 }
 
 #[cfg(test)]
@@ -221,7 +245,7 @@ mod tests {
 
         assert_eq!(
             cert_expired_details.result_type,
-            ResultType::CertificateExpired
+            FailureResultType::CertificateExpired
         );
         assert_eq!(cert_expired_details.sending_mta_ip, "2001:db8:abcd:0012::1");
         assert_eq!(
@@ -236,7 +260,7 @@ mod tests {
 
         assert_eq!(
             no_starttls_details.result_type,
-            ResultType::StarttlsNotSupported
+            FailureResultType::StarttlsNotSupported
         );
         assert_eq!(no_starttls_details.sending_mta_ip, "2001:db8:abcd:0013::1");
         assert_eq!(
@@ -254,7 +278,7 @@ mod tests {
 
         assert_eq!(
             validation_failure_details.result_type,
-            ResultType::ValidationFailure
+            FailureResultType::ValidationFailure
         );
         assert_eq!(validation_failure_details.sending_mta_ip, "198.51.100.62");
         assert_eq!(

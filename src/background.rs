@@ -1,9 +1,10 @@
 use crate::config::Configuration;
-use crate::dmarc::{DmarcParsingError, Report};
+use crate::dmarc::{self, DmarcParsingError};
 use crate::hasher::create_hash;
 use crate::imap::get_mails;
-use crate::state::{AppState, DmarcReportWithUid};
-use crate::unpack::extract_xml_files;
+use crate::state::{AppState, DmarcReportWithUid, TlsRptReportWithUid};
+use crate::tlsrpt::{self, TlsRptParsingError};
+use crate::unpack::{extract_report_files, FileType};
 use anyhow::{Context, Result};
 use chrono::Local;
 use std::collections::HashMap;
@@ -62,7 +63,8 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
     let mut mails = get_mails(config).await.context("Failed to get mails")?;
 
     let mut xml_files = HashMap::new();
-    let mut mails_without_xml = 0;
+    let mut json_files = HashMap::new();
+    let mut mails_without_reports = 0;
     for mail in &mut mails.values_mut() {
         if mail.body.is_none() {
             trace!(
@@ -71,28 +73,38 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
             );
             continue;
         }
-        match extract_xml_files(mail) {
+        match extract_report_files(mail) {
             Ok(files) => {
                 if files.is_empty() {
-                    mails_without_xml += 1;
+                    mails_without_reports += 1;
                 }
-                for xml_file in files {
-                    xml_files.insert(xml_file.hash.clone(), xml_file);
-                    mail.xml_files += 1;
+                for file in files {
+                    match file.file_type {
+                        FileType::Xml => {
+                            xml_files.insert(file.hash.clone(), file);
+                            mail.xml_files += 1;
+                        },
+                        FileType::Json => {
+                            json_files.insert(file.hash.clone(), file);
+                            mail.json_files += 1;
+                        },
+                    }
                 }
             }
-            Err(err) => warn!("Failed to extract XML files from mail: {err:#}"),
+            Err(err) => warn!("Failed to extract report files from mail: {err:#}"),
         }
     }
-    if mails_without_xml > 0 {
-        warn!("Found {mails_without_xml} mail(s) without XML files");
+    if mails_without_reports > 0 {
+        warn!("Found {mails_without_reports} mail(s) without report files");
     }
-    info!("Extracted {} XML file(s)", xml_files.len());
+    info!("Extracted {} XML report file(s) and {} JSON report file(s)", xml_files.len(), json_files.len());
 
     let mut dmarc_parsing_errors = HashMap::new();
     let mut dmarc_reports = HashMap::new();
+    let mut tlsrpt_parsing_errors = HashMap::new();
+    let mut tlsrpt_reports = HashMap::new();
     for xml_file in xml_files.values() {
-        match Report::from_slice(&xml_file.data) {
+        match dmarc::Report::from_slice(&xml_file.data) {
             Ok(report) => {
                 let rwu = DmarcReportWithUid {
                     report,
@@ -120,17 +132,58 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
                 let mail = mails
                     .get_mut(&xml_file.mail_uid)
                     .context("Failed to find mail")?;
-                mail.parsing_errors += 1;
+                mail.xml_parsing_errors += 1;
             }
         }
     }
-    info!("Parsed {} DMARC reports successfully", dmarc_reports.len());
     if !dmarc_parsing_errors.is_empty() {
         warn!(
             "Failed to parse {} XML file as DMARC reports",
             dmarc_parsing_errors.len()
         );
     }
+
+    for json_file in json_files.values() {
+        match tlsrpt::Report::from_slice(&json_file.data) {
+            Ok(report) => {
+                let rwu = TlsRptReportWithUid {
+                    report,
+                    uid: json_file.mail_uid,
+                };
+                let binary =
+                    serde_json::to_vec(&rwu).context("Failed to serialize TLS-RPT report with UID")?;
+                let hash = create_hash(&binary, None);
+                tlsrpt_reports.insert(hash, rwu);
+            }
+            Err(err) => {
+                // Prepare error information
+                let error_str = format!("{err:#}");
+                let error = TlsRptParsingError {
+                    error: error_str,
+                    json: String::from_utf8_lossy(&json_file.data).to_string(),
+                };
+
+                // Store in error hashmap for fast lookup
+                let entry: &mut Vec<TlsRptParsingError> =
+                    tlsrpt_parsing_errors.entry(json_file.mail_uid).or_default();
+                entry.push(error);
+
+                // Increase error counter for mail
+                let mail = mails
+                    .get_mut(&json_file.mail_uid)
+                    .context("Failed to find mail")?;
+                mail.json_parsing_errors += 1;
+            }
+        }
+    }
+    if !tlsrpt_parsing_errors.is_empty() {
+        warn!(
+            "Failed to parse {} JSON file as TLS-RPT reports",
+            tlsrpt_parsing_errors.len()
+        );
+    }
+
+    info!("Parsed {} DMARC reports and {} TLS-RPT reports successfully", dmarc_reports.len(), tlsrpt_reports.len());
 
     let timestamp = SystemTime::now()
         .duration_since(SystemTime::UNIX_EPOCH)
@@ -141,9 +194,12 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
         let mut locked_state = state.lock().await;
         locked_state.mails = mails;
         locked_state.dmarc_reports = dmarc_reports;
+        locked_state.tlsrpt_reports = tlsrpt_reports;
         locked_state.last_update = timestamp;
         locked_state.xml_files = xml_files.len();
+        locked_state.json_files = json_files.len();
         locked_state.dmarc_parsing_errors = dmarc_parsing_errors;
+        locked_state.tlsrpt_parsing_errors = tlsrpt_parsing_errors;
     }
 
     Ok(())

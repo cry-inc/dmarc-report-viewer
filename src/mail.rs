@@ -21,8 +21,14 @@ pub struct Mail {
     // Set at later stage when extracting the XML files from the body
     pub xml_files: usize,
 
+    // Set at later stage when extracting the JSON files from the body
+    pub json_files: usize,
+
     // Set at later stage during parsing
-    pub parsing_errors: usize,
+    pub xml_parsing_errors: usize,
+
+    // Set at later stage during parsing
+    pub json_parsing_errors: usize,
 }
 
 /// Decoding of Q-encoded data as described in RFC2047

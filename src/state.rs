@@ -1,5 +1,6 @@
-use crate::dmarc::{DmarcParsingError, Report};
+use crate::dmarc::{self, DmarcParsingError};
 use crate::geolocate::Location;
+use crate::tlsrpt::{self, TlsRptParsingError};
 use crate::{cache_map::CacheMap, mail::Mail};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -7,11 +8,18 @@ use std::net::IpAddr;
 
 const CACHE_SIZE: usize = 10000;
 
-/// Report with UID of the mail that contained the report
+/// DMARC Report with UID of the mail that contained the report
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DmarcReportWithUid {
     pub uid: u32,
-    pub report: Report,
+    pub report: dmarc::Report,
+}
+
+/// TLS-RPT Report with UID of the mail that contained the report
+#[derive(Debug, Serialize, Deserialize)]
+pub struct TlsRptReportWithUid {
+    pub uid: u32,
+    pub report: tlsrpt::Report,
 }
 
 /// Shared state between the different parts of the application.
@@ -25,14 +33,23 @@ pub struct AppState {
     /// Parsed DMARC reports with mail UID and corresponding hash as key
     pub dmarc_reports: HashMap<String, DmarcReportWithUid>,
 
+    /// Parsed TLS-RPT reports with mail UID and corresponding hash as key
+    pub tlsrpt_reports: HashMap<String, TlsRptReportWithUid>,
+
     /// Number of XML files extracted from mails
     pub xml_files: usize,
+
+    /// Number of JSON files extracted from mails
+    pub json_files: usize,
 
     /// Time of last update from IMAP inbox as Unix timestamp
     pub last_update: u64,
 
     /// XML DMARC parsing errors keyed by mail UID
     pub dmarc_parsing_errors: HashMap<u32, Vec<DmarcParsingError>>,
+
+    /// JSON TLS-RPT parsing errors keyed by mail UID
+    pub tlsrpt_parsing_errors: HashMap<u32, Vec<TlsRptParsingError>>,
 
     /// IP to DNS cache
     pub ip_dns_cache: CacheMap<IpAddr, String>,
@@ -46,9 +63,12 @@ impl AppState {
         Self {
             mails: HashMap::new(),
             dmarc_reports: HashMap::new(),
+            tlsrpt_reports: HashMap::new(),
             last_update: 0,
             xml_files: 0,
+            json_files: 0,
             dmarc_parsing_errors: HashMap::new(),
+            tlsrpt_parsing_errors: HashMap::new(),
             ip_dns_cache: CacheMap::new(CACHE_SIZE).expect("Failed to create DNS cache"),
             ip_location_cache: CacheMap::new(CACHE_SIZE).expect("Failed to create location cache"),
         }
