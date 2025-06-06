@@ -1,6 +1,6 @@
 use crate::dmarc::{DkimResultType, DmarcResultType, SpfResultType};
 use crate::state::{AppState, DmarcReportWithUid, TlsRptReportWithUid};
-use crate::tlsrpt::{PolicyType, FailureResultType, TlsRptResultType};
+use crate::tlsrpt::{FailureResultType, PolicyType, TlsRptResultType};
 use axum::extract::{Query, State};
 use axum::response::IntoResponse;
 use axum::Json;
@@ -227,7 +227,9 @@ impl Summary {
                     if let Some(entry) = dmarc.spf_auth_results.get_mut(&r.result) {
                         *entry += record.row.count;
                     } else {
-                        dmarc.spf_auth_results.insert(r.result.clone(), record.row.count);
+                        dmarc
+                            .spf_auth_results
+                            .insert(r.result.clone(), record.row.count);
                     }
                 }
                 if let Some(vec) = &record.auth_results.dkim {
@@ -235,7 +237,9 @@ impl Summary {
                         if let Some(entry) = dmarc.dkim_auth_results.get_mut(&r.result) {
                             *entry += record.row.count;
                         } else {
-                            dmarc.dkim_auth_results.insert(r.result.clone(), record.row.count);
+                            dmarc
+                                .dkim_auth_results
+                                .insert(r.result.clone(), record.row.count);
                         }
                     }
                 }
@@ -243,14 +247,18 @@ impl Summary {
                     if let Some(entry) = dmarc.spf_policy_results.get_mut(result) {
                         *entry += record.row.count;
                     } else {
-                        dmarc.spf_policy_results.insert(result.clone(), record.row.count);
+                        dmarc
+                            .spf_policy_results
+                            .insert(result.clone(), record.row.count);
                     }
                 }
                 if let Some(result) = &record.row.policy_evaluated.dkim {
                     if let Some(entry) = dmarc.dkim_policy_results.get_mut(result) {
                         *entry += record.row.count;
                     } else {
-                        dmarc.dkim_policy_results.insert(result.clone(), record.row.count);
+                        dmarc
+                            .dkim_policy_results
+                            .insert(result.clone(), record.row.count);
                     }
                 }
             }
@@ -262,7 +270,11 @@ impl Summary {
                 }
             }
             if let Some(domain) = &domain {
-                if report.policies.iter().all(|p| p.policy.policy_domain != *domain) {
+                if report
+                    .policies
+                    .iter()
+                    .all(|p| p.policy.policy_domain != *domain)
+                {
                     continue;
                 }
             }
@@ -279,10 +291,15 @@ impl Summary {
                 } else {
                     tlsrpt.domains.insert(domain, 1);
                 }
-                if let Some(entry) = tlsrpt.policy_types.get_mut(&policy_result.policy.policy_type) {
+                if let Some(entry) = tlsrpt
+                    .policy_types
+                    .get_mut(&policy_result.policy.policy_type)
+                {
                     *entry += 1;
                 } else {
-                    tlsrpt.policy_types.insert(policy_result.policy.policy_type.clone(), 1);
+                    tlsrpt
+                        .policy_types
+                        .insert(policy_result.policy.policy_type.clone(), 1);
                 }
                 let policy_results;
                 let failure_types;
@@ -316,7 +333,10 @@ impl Summary {
                         if let Some(entry) = failure_types.get_mut(&failure_detail.result_type) {
                             *entry += failure_detail.failed_session_count;
                         } else {
-                            failure_types.insert(failure_detail.result_type.clone(), failure_detail.failed_session_count);
+                            failure_types.insert(
+                                failure_detail.result_type.clone(),
+                                failure_detail.failed_session_count,
+                            );
                         }
                     }
                 }

@@ -157,8 +157,8 @@ pub fn extract_report_files(mail: &mut Mail) -> Result<Vec<ReportFile>> {
             let body = part
                 .get_body_raw()
                 .context("Failed to get raw body of attachment part")?;
-            let report_files_zip =
-                get_reports_from_zip(&body).context("Failed to extract reports from ZIP attachment")?;
+            let report_files_zip = get_reports_from_zip(&body)
+                .context("Failed to extract reports from ZIP attachment")?;
             trace!(
                 "Extracted {} report files from ZIP in part {index} of mail with UID {uid}",
                 report_files_zip.len()
@@ -179,7 +179,8 @@ pub fn extract_report_files(mail: &mut Mail) -> Result<Vec<ReportFile>> {
             let body = part
                 .get_body_raw()
                 .context("Failed to get raw body of attachment part")?;
-            let xml = get_report_from_gz(&body).context("Failed to extract XML from GZ attachment")?;
+            let xml =
+                get_report_from_gz(&body).context("Failed to extract XML from GZ attachment")?;
             let hash = create_hash(&xml, Some(mail.uid));
             report_files.push(ReportFile {
                 file_type: FileType::Xml,
@@ -201,13 +202,13 @@ pub fn extract_report_files(mail: &mut Mail) -> Result<Vec<ReportFile>> {
                 mail_uid: mail.uid,
                 hash,
             });
-        } else if content_type.contains("application/tlsrpt+gzip")
-        {
+        } else if content_type.contains("application/tlsrpt+gzip") {
             trace!("Detected gzipped JSON attachment for mail with UID {uid} in part {index}");
             let body = part
                 .get_body_raw()
                 .context("Failed to get raw body of attachment part")?;
-            let json = get_report_from_gz(&body).context("Failed to extract JSON from GZ attachment")?;
+            let json =
+                get_report_from_gz(&body).context("Failed to extract JSON from GZ attachment")?;
             let hash = create_hash(&json, Some(mail.uid));
             report_files.push(ReportFile {
                 file_type: FileType::Json,
@@ -215,8 +216,7 @@ pub fn extract_report_files(mail: &mut Mail) -> Result<Vec<ReportFile>> {
                 mail_uid: mail.uid,
                 hash,
             });
-        } else if content_type.contains("application/tlsrpt+json")
-        {
+        } else if content_type.contains("application/tlsrpt+json") {
             trace!("Detected uncompressed JSON attachment for mail with UID {uid} in part {index}");
             let json = part
                 .get_body_raw()
