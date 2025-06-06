@@ -83,11 +83,11 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
                         FileType::Xml => {
                             xml_files.insert(file.hash.clone(), file);
                             mail.xml_files += 1;
-                        },
+                        }
                         FileType::Json => {
                             json_files.insert(file.hash.clone(), file);
                             mail.json_files += 1;
-                        },
+                        }
                     }
                 }
             }
@@ -97,7 +97,11 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
     if mails_without_reports > 0 {
         warn!("Found {mails_without_reports} mail(s) without report files");
     }
-    info!("Extracted {} XML report file(s) and {} JSON report file(s)", xml_files.len(), json_files.len());
+    info!(
+        "Extracted {} XML report file(s) and {} JSON report file(s)",
+        xml_files.len(),
+        json_files.len()
+    );
 
     let mut dmarc_parsing_errors = HashMap::new();
     let mut dmarc_reports = HashMap::new();
@@ -150,8 +154,8 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
                     report,
                     uid: json_file.mail_uid,
                 };
-                let binary =
-                    serde_json::to_vec(&rwu).context("Failed to serialize TLS-RPT report with UID")?;
+                let binary = serde_json::to_vec(&rwu)
+                    .context("Failed to serialize TLS-RPT report with UID")?;
                 let hash = create_hash(&binary, None);
                 tlsrpt_reports.insert(hash, rwu);
             }
@@ -183,7 +187,11 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
         );
     }
 
-    info!("Parsed {} DMARC reports and {} TLS-RPT reports successfully", dmarc_reports.len(), tlsrpt_reports.len());
+    info!(
+        "Parsed {} DMARC reports and {} TLS-RPT reports successfully",
+        dmarc_reports.len(),
+        tlsrpt_reports.len()
+    );
 
     let timestamp = SystemTime::now()
         .duration_since(SystemTime::UNIX_EPOCH)
