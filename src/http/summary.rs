@@ -49,10 +49,14 @@ pub async fn handler(
     }
     let summary = Summary::new(
         guard.mails.len(),
-        guard.xml_files,
-        guard.json_files,
-        &guard.dmarc_reports,
-        &guard.tlsrpt_reports,
+        Files {
+            xml: guard.xml_files,
+            json: guard.json_files,
+        },
+        Reports {
+            dmarc: &guard.dmarc_reports,
+            tlsrpt: &guard.tlsrpt_reports,
+        },
         guard.last_update,
         time_span,
         filters.domain,
@@ -117,6 +121,21 @@ pub struct TlsRptSummary {
     pub tlsa_failure_types: HashMap<FailureResultType, usize>,
 }
 
+pub struct Files {
+    /// Number of XML files found in mails from IMAP inbox
+    pub xml: usize,
+
+    /// Number of JSON files found in mails from IMAP inbox
+    pub json: usize,
+}
+
+pub struct Reports<'a> {
+    /// Parsed DMARC reports with mail UID and corresponding hash as key
+    pub dmarc: &'a HashMap<String, DmarcReportWithUid>,
+
+    /// Parsed TLS-RPT reports with mail UID and corresponding hash as key
+    pub tlsrpt: &'a HashMap<String, TlsRptReportWithUid>,
+}
 
 #[derive(Serialize, Default, Clone)]
 pub struct Summary {
@@ -136,10 +155,8 @@ pub struct Summary {
 impl Summary {
     pub fn new(
         mails: usize,
-        xml_files: usize,
-        json_files: usize,
-        dmarc_reports: &HashMap<String, DmarcReportWithUid>,
-        tlsrpt_reports: &HashMap<String, TlsRptReportWithUid>,
+        files: Files,
+        reports: Reports,
         last_update: u64,
         time_span: Option<Duration>,
         domain: Option<String>,
@@ -151,8 +168,8 @@ impl Summary {
         let spf_auth_results: HashMap<SpfResultType, usize> = HashMap::new();
         let dkim_auth_results: HashMap<DkimResultType, usize> = HashMap::new();
         let mut dmarc = DmarcSummary {
-            files: xml_files,
-            reports: dmarc_reports.len(),
+            files: files.xml,
+            reports: reports.dmarc.len(),
             orgs: dmarc_orgs,
             domains: dmarc_domains,
             spf_policy_results,
@@ -169,11 +186,11 @@ impl Summary {
         let sts_failure_types: HashMap<FailureResultType, usize> = HashMap::new();
         let tlsa_failure_types: HashMap<FailureResultType, usize> = HashMap::new();
         let mut tlsrpt = TlsRptSummary {
-            files: json_files,
-            reports: tlsrpt_reports.len(),
+            files: files.json,
+            reports: reports.tlsrpt.len(),
             orgs: tlsrpt_orgs,
             domains: tlsrpt_domains,
-            policy_types: policy_types,
+            policy_types,
             sts_policy_results,
             tlsa_policy_results,
             sts_failure_types,
@@ -182,7 +199,7 @@ impl Summary {
 
         let threshold = time_span.map(|d| (Utc::now() - d).timestamp() as u64);
         let threshold_datetime = time_span.map(|d| Utc::now() - d);
-        for DmarcReportWithUid { report, .. } in dmarc_reports.values() {
+        for DmarcReportWithUid { report, .. } in reports.dmarc.values() {
             if let Some(threshold) = threshold {
                 if report.report_metadata.date_range.end < threshold {
                     continue;
@@ -238,7 +255,7 @@ impl Summary {
                 }
             }
         }
-        for TlsRptReportWithUid { report, .. } in tlsrpt_reports.values() {
+        for TlsRptReportWithUid { report, .. } in reports.tlsrpt.values() {
             if let Some(threshold_datetime) = threshold_datetime {
                 if report.date_range.end_datetime < threshold_datetime {
                     continue;
