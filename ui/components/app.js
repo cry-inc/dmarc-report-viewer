@@ -77,9 +77,14 @@ export class App extends LitElement {
         // Parse routes and route parameters
         if (hash == "#/dmarc-reports") {
             this.component = "dmarc-reports";
+        } else if (hash == "#/tlsrpt-reports") {
+            this.component = "tlsrpt-reports";
         } else if (hash.startsWith("#/dmarc-reports/")) {
             this.component = "dmarc-report";
             this.reportHash = hash.substring(16);
+        } else if (hash.startsWith("#/tlsrpt-reports/")) {
+            this.component = "tlsrpt-report";
+            this.reportHash = hash.substring(17);
         } else if (hash == "#/mails") {
             this.component = "mails";
         } else if (hash.startsWith("#/mails/")) {
@@ -96,8 +101,12 @@ export class App extends LitElement {
         let component;
         if (this.component == "dmarc-reports") {
             component = html`<drv-dmarc-reports .params="${this.params}"></drv-dmarc-reports>`;
+        } else if (this.component == "tlsrpt-reports") {
+            component = html`<drv-tlsrpt-reports .params="${this.params}"></drv-tlsrpt-reports>`;
         } else if (this.component == "dmarc-report") {
             component = html`<drv-dmarc-report hash="${this.reportHash}"></drv-dmarc-report>`;
+        } else if (this.component == "tlsrpt-report") {
+            component = html`<drv-tlsrpt-report hash="${this.reportHash}"></drv-tlsrpt-report>`;
         } else if (this.component == "mails") {
             component = html`<drv-mails .params="${this.params}"></drv-mails>`;
         } else if (this.component == "mail") {
@@ -112,8 +121,9 @@ export class App extends LitElement {
             <nav>
                 <a class="${this.component === "dashboard" ? "active" : ""}" href="#/dashboard">Dashboard</a>
                 <a class="${this.component === "mails" || this.component === "mail" ? "active" : ""}" href="#/mails">Mails</a>
-                <a class="${this.component === "dmarc-reports" || this.component === "dmarc-report" ? "active" : ""}" href="#/dmarc-reports">DMARC Reports</a>
-                <a class="${this.component === "about" ? "active" : ""} right" href="#/about">About</a>
+                <a class="${this.component === "dmarc-reports" || this.component === "dmarc-report" ? "active" : ""}" href="#/dmarc-reports">DMARC<span class="xs-hidden">&nbsp;Reports</span></a>
+                <a class="${this.component === "tlsrpt-reports" || this.component === "tlsrpt-report" ? "active" : ""}" href="#/tlsrpt-reports">TLS-RPT<span class="xs-hidden">&nbsp;Reports</span></a>
+                <a class="xs-hidden ${this.component === "about" ? "active" : ""} right" href="#/about">About</a>
             </nav>
             <main>${component}</main>
         `;

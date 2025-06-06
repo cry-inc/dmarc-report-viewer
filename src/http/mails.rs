@@ -56,26 +56,41 @@ pub async fn errors_handler(
             format!("Cannot find mail with ID {id}"),
         );
     }
+
+    let mut errors_map = serde_json::Map::new();
+
     if let Some(errors) = lock.dmarc_parsing_errors.get(&parsed_uid) {
-        let errors_json = serde_json::to_string(errors).expect("Failed to serialize JSON");
-        (
-            StatusCode::OK,
-            [(header::CONTENT_TYPE, "application/json")],
-            errors_json,
-        )
-    } else {
-        (
-            StatusCode::OK,
-            [(header::CONTENT_TYPE, "application/json")],
-            String::from("[]"),
-        )
+        errors_map.insert("xml".to_string(), serde_json::Value::Array(
+            errors.iter().map(|e| serde_json::to_value(e).expect("Failed to serialize error")).collect()
+        ));
     }
+
+    if let Some(errors) = lock.tlsrpt_parsing_errors.get(&parsed_uid) {
+        errors_map.insert("json".to_string(), serde_json::Value::Array(
+            errors.iter().map(|e| serde_json::to_value(e).expect("Failed to serialize error")).collect()
+        ));
+    }
+
+    let errors_json = serde_json::to_string(&errors_map).expect("Failed to serialize JSON");
+    (
+        StatusCode::OK,
+        [(header::CONTENT_TYPE, "application/json")],
+        errors_json,
+    )
+}
+
+#[derive(Deserialize, Debug, Clone)]
+#[serde(rename_all = "lowercase")]
+pub enum AttachmentFilterType {
+    Dmarc,
+    TlsRpt,
+    Empty,
 }
 
 #[derive(Deserialize, Debug)]
 pub struct MailFilters {
     sender: Option<String>,
-    count: Option<usize>,
+    r#type: Option<AttachmentFilterType>,
     oversized: Option<bool>,
     errors: Option<bool>,
 }
@@ -84,7 +99,7 @@ impl MailFilters {
     fn url_decode(&self) -> Self {
         Self {
             oversized: self.oversized,
-            count: self.count,
+            r#type: self.r#type.clone(),
             errors: self.errors,
             sender: self
                 .sender
@@ -121,15 +136,19 @@ pub async fn list_handler(
             }
         })
         .filter(|m| {
-            if let Some(queried_count) = &filters.count {
-                m.xml_files == *queried_count
+            if let Some(queried_type) = &filters.r#type {
+                match queried_type {
+                    AttachmentFilterType::Dmarc => m.xml_files > 0,
+                    AttachmentFilterType::TlsRpt => m.json_files > 0,
+                    AttachmentFilterType::Empty => m.xml_files == 0 && m.json_files == 0,
+                }
             } else {
                 true
             }
         })
         .filter(|m| {
             if let Some(queried_errors) = &filters.errors {
-                (m.parsing_errors > 0) == *queried_errors
+                (m.xml_parsing_errors > 0 || m.json_parsing_errors > 0) == *queried_errors
             } else {
                 true
             }

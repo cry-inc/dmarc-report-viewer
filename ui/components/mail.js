@@ -15,8 +15,8 @@ export class Mail extends LitElement {
         return {
             uid: { type: String },
             mail: { type: Object, attribute: false },
-            reports: { type: Array, attribute: false },
-            errors: { type: Array, attribute: false }
+            reports: { type: Object, attribute: false },
+            errors: { type: Object, attribute: false }
         };
     }
 
@@ -24,18 +24,28 @@ export class Mail extends LitElement {
         super();
         this.uid = null;
         this.mail = null;
-        this.reports = [];
-        this.errors = [];
+        this.reports = {};
+        this.errors = {};
     }
 
     async updated(changedProperties) {
         if (changedProperties.has("uid") && changedProperties.uid !== this.uid && this.uid) {
-            const mailsResponse = await fetch("mails/" + this.uid);
-            this.mail = await mailsResponse.json();
-            const reportsResponse = await fetch("dmarc-reports?uid=" + this.uid);
-            this.reports = await reportsResponse.json();
-            const errorsResponse = await fetch("mails/" + this.uid + "/errors");
-            this.errors = await errorsResponse.json();
+            fetch("mails/" + this.uid)
+                .then(async (response) => {
+                    this.mail = await response.json();
+                });
+            fetch("dmarc-reports?uid=" + this.uid)
+                .then(async (response) => {
+                    this.reports.dmarc = await response.json();
+                });
+            fetch("tlsrpt-reports?uid=" + this.uid)
+                .then(async (response) => {
+                    this.reports.tlsrpt = await response.json();
+                });
+            fetch("mails/" + this.uid + "/errors")
+                .then(async (response) => {
+                    this.errors = await response.json();
+                });
         }
     }
 
@@ -89,17 +99,46 @@ export class Mail extends LitElement {
                 </tr>
             </table>
 
-            <h2>DMARC Reports</h2>
-            <drv-dmarc-report-table .reports="${this.reports}"></drv-dmarc-report-table>
+            ${Object.values(this.reports).every((reports) => reports.length === 0) ?
+                html`<p>No reports found.</p>`
+                : html``
+            }
 
-            ${this.errors.length > 0 ?
+            ${"dmarc" in this.reports && this.reports.dmarc.length > 0 ?
+                html`
+                    <h2>DMARC Reports</h2>
+                    <drv-dmarc-report-table .reports="${this.reports.dmarc}"></drv-dmarc-report-table>`
+                : html``
+            }
+
+            ${"xml" in this.errors && this.errors.xml.length > 0 ?
                 html`
                     <h2>XML Parsing Errors</h2>
-                    ${this.errors.map((e) =>
+                    ${this.errors.xml.map((e) =>
                     html`
                         <div class="error">
                             ${e.error}
                             <pre>${e.xml}</pre>
+                        </div>`
+                    )}`
+                : html``
+            }
+
+            ${"tlsrpt" in this.reports && this.reports.tlsrpt.length > 0 ?
+                html`
+                    <h2>TLS-RPT Reports</h2>
+                    <drv-tlsrpt-report-table .reports="${this.reports.tlsrpt}"></drv-tlsrpt-report-table>`
+                : html``
+            }
+
+            ${"json" in this.errors && this.errors.json.length > 0 ?
+                html`
+                    <h2>JSON Parsing Errors</h2>
+                    ${this.errors.json.map((e) =>
+                    html`
+                        <div class="error">
+                            ${e.error}
+                            <pre>${e.json}</pre>
                         </div>`
                     )}`
                 : html``

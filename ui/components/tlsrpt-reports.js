@@ -1,7 +1,7 @@
 import { LitElement, html } from "lit";
 import { globalStyle } from "./style.js";
 
-export class DmarcReports extends LitElement {
+export class TlsRptReports extends LitElement {
     static styles = [globalStyle];
 
     static properties = {
@@ -27,11 +27,11 @@ export class DmarcReports extends LitElement {
         if (this.params.flagged === "true" || this.params.flagged === "false") {
             urlParams.push("flagged=" + this.params.flagged);
         }
-        if (this.params.flagged_dkim === "true" || this.params.flagged_dkim === "false") {
-            urlParams.push("flagged_dkim=" + this.params.flagged_dkim);
+        if (this.params.flagged_sts === "true" || this.params.flagged_sts === "false") {
+            urlParams.push("flagged_sts=" + this.params.flagged_sts);
         }
-        if (this.params.flagged_spf === "true" || this.params.flagged_spf === "false") {
-            urlParams.push("flagged_spf=" + this.params.flagged_spf);
+        if (this.params.flagged_tlsa === "true" || this.params.flagged_tlsa === "false") {
+            urlParams.push("flagged_tlsa=" + this.params.flagged_tlsa);
         }
         if (this.params.domain) {
             urlParams.push("domain=" + encodeURIComponent(this.params.domain));
@@ -39,32 +39,32 @@ export class DmarcReports extends LitElement {
         if (this.params.org) {
             urlParams.push("org=" + encodeURIComponent(this.params.org));
         }
-        let url = "dmarc-reports";
+        let url = "tlsrpt-reports";
         if (urlParams.length > 0) {
             url += "?" + urlParams.join("&");
         }
         const response = await fetch(url);
         this.reports = await response.json();
-        this.reports.sort((a, b) => b.date_begin - a.date_begin);
+        this.reports.sort((a, b) => new Date(b.date_begin) - new Date(a.date_begin));
         this.filtered = this.filtered = urlParams.length > 0;
     }
 
     render() {
         return html`
-            <h1>DMARC Reports</h1>
+            <h1>TLS-RPT Reports</h1>
             <div>
                 ${this.filtered ?
-                    html`Filter active! <a class="ml button" href="#/dmarc-reports">Show all Reports</a>` :
+                    html`Filter active! <a class="ml button" href="#/tlsrpt-reports">Show all Reports</a>` :
                     html`Filters:
-                        <a class="ml button mr-5" href="#/dmarc-reports?flagged=true">Reports with Problems</a>
-                        <a class="button mr-5" href="#/dmarc-reports?flagged_dkim=true">Reports with DKIM Problems</a>
-                        <a class="button mr-5" href="#/dmarc-reports?flagged_spf=true">Reports with SPF Problems</a>
+                        <a class="ml button mr-5" href="#/tlsrpt-reports?flagged=true">Reports with Problems</a>
+                        <a class="button mr-5" href="#/tlsrpt-reports?flagged_sts=true">Reports with STS Problems</a>
+                        <a class="button mr-5" href="#/tlsrpt-reports?flagged_tlsa=true">Reports with TLSA Problems</a>
                     `
                 }
             </div>
-            <drv-dmarc-report-table .reports="${this.reports}"></drv-dmarc-report-table>
+            <drv-tlsrpt-report-table .reports="${this.reports}"></drv-tlsrpt-report-table>
         `;
     }
 }
 
-customElements.define("drv-dmarc-reports", DmarcReports);
+customElements.define("drv-tlsrpt-reports", TlsRptReports);

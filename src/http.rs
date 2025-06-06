@@ -3,6 +3,7 @@ mod ips;
 mod mails;
 mod static_files;
 mod summary;
+mod tlsrpt_reports;
 
 use crate::config::Configuration;
 use crate::state::AppState;
@@ -41,6 +42,9 @@ pub async fn run_http_server(config: &Configuration, state: Arc<Mutex<AppState>>
         .route("/dmarc-reports/{id}", get(dmarc_reports::single_handler))
         .route("/dmarc-reports/{id}/json", get(dmarc_reports::json_handler))
         .route("/dmarc-reports/{id}/xml", get(dmarc_reports::xml_handler))
+        .route("/tlsrpt-reports", get(tlsrpt_reports::list_handler))
+        .route("/tlsrpt-reports/{id}", get(tlsrpt_reports::single_handler))
+        .route("/tlsrpt-reports/{id}/json", get(tlsrpt_reports::json_handler))
         .route("/ips/{ip}/dns", get(ips::to_dns_handler))
         .route("/ips/{ip}/location", get(ips::to_location_handler))
         .route("/ips/{ip}/whois", get(ips::to_whois_handler))

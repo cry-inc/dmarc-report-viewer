@@ -35,9 +35,13 @@ export class Dashboard extends LitElement {
         params: { type: Object },
         mails: { type: Number },
         xmlFiles: { type: Number },
+        jsonFiles: { type: Number },
         dmarcReports: { type: Number },
+        tlsrptReports: { type: Number },
         lastUpdate: { type: Number },
-        domains: { type: Array },
+        dmarcDomains: { type: Array },
+        tlsrptDomains: { type: Array },
+        classesToHide: { type: Array },
     };
 
     constructor() {
@@ -46,9 +50,13 @@ export class Dashboard extends LitElement {
         this.params = {};
         this.mails = 0;
         this.xmlFiles = 0;
+        this.jsonFiles = 0;
         this.dmarcReports = 0;
+        this.tlsrptReports = 0;
         this.lastUpdate = 0;
-        this.domains = [];
+        this.dmarcDomains = [];
+        this.tlsrptDomains = [];
+        this.filterDomains = [];
 
         this.getDomains();
     }
@@ -56,8 +64,14 @@ export class Dashboard extends LitElement {
     async getDomains() {
         const response = await fetch("summary");
         const summary = await response.json();
-        this.domains = Object.keys(summary.dmarc_domains);
-        this.domains.sort();
+        this.dmarcDomains = Object.keys(summary.dmarc.domains);
+        this.dmarcDomains.sort();
+        this.tlsrptDomains = Object.keys(summary.tlsrpt.domains);
+        this.tlsrptDomains.sort();
+        this.filterDomains = [...new Set([
+            ...this.dmarcDomains,
+            ...this.tlsrptDomains
+        ])].sort();
     }
 
     updated(changedProperties) {
@@ -114,6 +128,7 @@ export class Dashboard extends LitElement {
         const summary = await response.json();
 
         const resultColorMap = {
+            // DMARC result colors
             "none": "rgb(108, 117, 125)",
             "fail": "rgb(220, 53, 69)",
             "pass": "rgb(25, 135, 84)",
@@ -122,9 +137,13 @@ export class Dashboard extends LitElement {
             "neutral": "rgb(13, 202, 240)",
             "temperror": "rgb(253, 126, 20)",
             "permerror": "rgb(132, 32, 41)",
+            // TLS-RPT result colors
+            "failure": "rgb(220, 53, 69)",
+            "successful": "rgb(25, 135, 84)",
         };
 
         const orgColorMap = {
+            // DMARC organization colors
             "google.com": "#ea4335",
             "Yahoo": "#6001d2",
             "WEB.DE": "#ffd800",
@@ -134,34 +153,84 @@ export class Dashboard extends LitElement {
             "Enterprise Outlook": "#0078d4",
             "Fastmail Pty Ltd": "#0067b9",
             "AMAZON-SES": "#ff9900",
+            // TLS-RPT organization colors
+            "Microsoft Corporation": "#0078d4",
+            "Google Inc.": "#ea4335",
         };
 
         this.mails = summary.mails;
-        this.xmlFiles = summary.xml_files;
-        this.dmarcReports = summary.dmarc_reports;
+        this.xmlFiles = summary.dmarc.files;
+        this.jsonFiles = summary.tlsrpt.files;
+        this.dmarcReports = summary.dmarc.reports;
+        this.tlsrptReports = summary.tlsrpt.reports;
         this.lastUpdate = summary.last_update;
 
-        if (this.orgs_chart) this.orgs_chart.destroy();
-        this.orgs_chart = await this.createPieChart("orgs_chart", this.sortedMap(summary.dmarc_orgs), orgColorMap, function (label) {
+        this.classesToHide = [];
+        if (this.dmarcReports === 0) this.classesToHide.push("dmarc");
+        if (this.tlsrptReports === 0) this.classesToHide.push("tlsrpt");
+        if (this.dmarcReports > 0) this.classesToHide.push("no_dmarc_reports");
+        if (this.tlsrptReports > 0) this.classesToHide.push("no_tlsrpt_reports");
+        if (Object.values(summary.dmarc.orgs).every((v) => v === 0)) this.classesToHide.push("dmarc_orgs");
+        if (Object.values(summary.dmarc.domains).every((v) => v === 0)) this.classesToHide.push("dmarc_domains");
+        if (Object.values(summary.dmarc.spf_policy_results).every((v) => v === 0)) this.classesToHide.push("spf_policy");
+        if (Object.values(summary.dmarc.dkim_policy_results).every((v) => v === 0)) this.classesToHide.push("dkim_policy");
+        if (Object.values(summary.dmarc.spf_auth_results).every((v) => v === 0)) this.classesToHide.push("spf_auth");
+        if (Object.values(summary.dmarc.dkim_auth_results).every((v) => v === 0)) this.classesToHide.push("dkim_auth");
+        if (Object.values(summary.tlsrpt.orgs).every((v) => v === 0)) this.classesToHide.push("tlsrpt_orgs");
+        if (Object.values(summary.tlsrpt.domains).every((v) => v === 0)) this.classesToHide.push("tlsrpt_domains");
+        if (Object.values(summary.tlsrpt.policy_types).every((v) => v === 0)) this.classesToHide.push("tlsrpt_policy_types");
+        if (Object.values(summary.tlsrpt.sts_policy_results).every((v) => v === 0)) this.classesToHide.push("sts_policy_results");
+        if (Object.values(summary.tlsrpt.sts_failure_types).every((v) => v === 0)) this.classesToHide.push("sts_failure_types");
+        if (Object.values(summary.tlsrpt.tlsa_policy_results).every((v) => v === 0)) this.classesToHide.push("tlsa_policy_results");
+        if (Object.values(summary.tlsrpt.tlsa_failure_types).every((v) => v === 0)) this.classesToHide.push("tlsa_failure_types");
+        
+        if (this.dmarc_orgs_chart) this.dmarc_orgs_chart.destroy();
+        this.dmarc_orgs_chart = await this.createPieChart("dmarc_orgs_chart", this.sortedMap(summary.dmarc.orgs), orgColorMap, function (label) {
             window.location.hash = "#/dmarc-reports?org=" + encodeURIComponent(label);
         });
 
-        if (this.domains_chart) this.domains_chart.destroy();
-        this.domains_chart = await this.createPieChart("domains_chart", this.sortedMap(summary.dmarc_domains), null, function (label) {
+        if (this.dmarc_domains_chart) this.dmarc_domains_chart.destroy();
+        this.dmarc_domains_chart = await this.createPieChart("dmarc_domains_chart", this.sortedMap(summary.dmarc.domains), null, function (label) {
             window.location.hash = "#/dmarc-reports?domain=" + encodeURIComponent(label);
         });
 
         if (this.spf_policy_chart) this.spf_policy_chart.destroy();
-        this.spf_policy_chart = await this.createPieChart("spf_policy_chart", this.sortedMap(summary.spf_policy_results), resultColorMap);
+        this.spf_policy_chart = await this.createPieChart("spf_policy_chart", this.sortedMap(summary.dmarc.spf_policy_results), resultColorMap);
 
         if (this.dkim_policy_chart) this.dkim_policy_chart.destroy();
-        this.dkim_policy_chart = await this.createPieChart("dkim_policy_chart", this.sortedMap(summary.dkim_policy_results), resultColorMap);
+        this.dkim_policy_chart = await this.createPieChart("dkim_policy_chart", this.sortedMap(summary.dmarc.dkim_policy_results), resultColorMap);
 
         if (this.spf_auth_chart) this.spf_auth_chart.destroy();
-        this.spf_auth_chart = await this.createPieChart("spf_auth_chart", this.sortedMap(summary.spf_auth_results), resultColorMap);
+        this.spf_auth_chart = await this.createPieChart("spf_auth_chart", this.sortedMap(summary.dmarc.spf_auth_results), resultColorMap);
 
         if (this.dkim_auth_chart) this.dkim_auth_chart.destroy();
-        this.dkim_auth_chart = await this.createPieChart("dkim_auth_chart", this.sortedMap(summary.dkim_auth_results), resultColorMap);
+        this.dkim_auth_chart = await this.createPieChart("dkim_auth_chart", this.sortedMap(summary.dmarc.dkim_auth_results), resultColorMap);
+
+
+        if (this.tlsrpt_orgs_chart) this.tlsrpt_orgs_chart.destroy();
+        this.tlsrpt_orgs_chart = await this.createPieChart("tlsrpt_orgs_chart", this.sortedMap(summary.tlsrpt.orgs), orgColorMap, function (label) {
+            window.location.hash = "#/tlsrpt-reports?org=" + encodeURIComponent(label);
+        });
+
+        if (this.tlsrpt_domains_chart) this.tlsrpt_domains_chart.destroy();
+        this.tlsrpt_domains_chart = await this.createPieChart("tlsrpt_domains_chart", this.sortedMap(summary.tlsrpt.domains), null, function (label) {
+            window.location.hash = "#/tlsrpt-reports?domain=" + encodeURIComponent(label);
+        });
+
+        if (this.tlsrpt_policy_types) this.tlsrpt_policy_types.destroy();
+        this.tlsrpt_policy_types = await this.createPieChart("tlsrpt_policy_types_chart", this.sortedMap(summary.tlsrpt.policy_types), null);
+
+        if (this.sts_policy_results) this.sts_policy_results.destroy();
+        this.sts_policy_results = await this.createPieChart("sts_policy_results_chart", this.sortedMap(summary.tlsrpt.sts_policy_results), resultColorMap);
+
+        if (this.sts_failure_types) this.sts_failure_types.destroy();
+        this.sts_failure_types = await this.createPieChart("sts_failure_types_chart", this.sortedMap(summary.tlsrpt.sts_failure_types), resultColorMap);
+
+        if (this.tlsa_policy_results) this.tlsa_policy_results.destroy();
+        this.tlsa_policy_results = await this.createPieChart("tlsa_policy_results_chart", this.sortedMap(summary.tlsrpt.tlsa_policy_results), resultColorMap);
+
+        if (this.tlsa_failure_types) this.tlsa_failure_types.destroy();
+        this.tlsa_failure_types = await this.createPieChart("tlsa_failure_types_chart", this.sortedMap(summary.tlsrpt.tlsa_failure_types), resultColorMap);
     }
 
     sortedMap(map) {
@@ -239,12 +308,20 @@ export class Dashboard extends LitElement {
 
     render() {
         return html`
+            <style>
+                ${(this.classesToHide ?? []).map(c => `.${c}`).join(",\n")} {
+                    display: none;
+                }
+            </style>
+
             <h1>Dashboard</h1>
 
             <div class="module stats">
                 <span>Mails: <b>${this.mails}</b></span>
-                <span>XML Files: <b>${this.xmlFiles}</b></span>
-                <span>DMARC Reports: <b>${this.dmarcReports}</b></span>
+                <span class="dmarc">XML Files: <b>${this.xmlFiles}</b></span>
+                <span class="dmarc">DMARC Reports: <b>${this.dmarcReports}</b></span>
+                <span class="tlsrpt">JSON Files: <b>${this.jsonFiles}</b></span>
+                <span class="tlsrpt">TLS-RPT Reports: <b>${this.tlsrptReports}</b></span>
                 <span>Last Update: <b>${new Date(this.lastUpdate * 1000).toLocaleString()}</b></span>
             </div>
 
@@ -265,7 +342,7 @@ export class Dashboard extends LitElement {
                     Domain:
                     <select @change="${this.onDomainChange}">
                         <option value="all">All</option>
-                        ${this.domains.map((domain) =>
+                        ${this.filterDomains.map((domain) =>
                         html`<option
                                 ?selected=${this.params.domain === encodeURIComponent(domain)}
                                 value="${encodeURIComponent(domain)}">${domain}</option>`
@@ -274,35 +351,78 @@ export class Dashboard extends LitElement {
                 </span>
             </div>
 
-            <div class="grid">
-                <div class="module">
+            <h2>DMARC Summary</h2>
+            <p class="no_dmarc_reports">No DMARC reports found.</p>
+
+            <div class="grid dmarc">
+                <div class="module dmarc dmarc_orgs">
                     <h2>DMARC Organizations</h2>
-                    <canvas class="orgs_chart"></canvas>
+                    <canvas class="dmarc_orgs_chart"></canvas>
                 </div>
 
-                <div class="module">
+                <div class="module dmarc dmarc_domains">
                     <h2>DMARC Domains</h2>
-                    <canvas class="domains_chart"></canvas>
+                    <canvas class="dmarc_domains_chart"></canvas>
                 </div>
 
-                <div class="module">
+                <div class="module dmarc spf_policy">
                     <h2>SPF Policy Results</h2>
                     <canvas class="spf_policy_chart"></canvas>
                 </div>
 
-                <div class="module">
+                <div class="module dmarc dkim_policy">
                     <h2>DKIM Policy Results</h2>
                     <canvas class="dkim_policy_chart"></canvas>
                 </div>
 
-                <div class="module">
+                <div class="module dmarc spf_auth">
                     <h2>SPF Auth Results</h2>
                     <canvas class="spf_auth_chart"></canvas>
                 </div>
 
-                <div class="module">
+                <div class="module dmarc dkim_auth">
                     <h2>DKIM Auth Results</h2>
                     <canvas class="dkim_auth_chart"></canvas>
+                </div>
+            </div>
+
+            <h2>TLS-RPT Summary</h2>
+            <p class="no_tlsrpt_reports">No TLS-RPT reports found.</p>
+
+            <div class="grid tlsrpt">
+                <div class="module tlsrpt tlsrpt_orgs">
+                    <h2>TLS-RPT Organizations</h2>
+                    <canvas class="tlsrpt_orgs_chart"></canvas>
+                </div>
+
+                <div class="module tlsrpt tlsrpt_domains">
+                    <h2>TLS-RPT Domains</h2>
+                    <canvas class="tlsrpt_domains_chart"></canvas>
+                </div>
+
+                <div class="module tlsrpt tlsrpt_policy_types">
+                    <h2>TLS-RPT Policy Types</h2>
+                    <canvas class="tlsrpt_policy_types_chart"></canvas>
+                </div>
+
+                <div class="module tlsrpt sts_policy_results">
+                    <h2>MTA-STS Policy Results</h2>
+                    <canvas class="sts_policy_results_chart"></canvas>
+                </div>
+
+                <div class="module tlsrpt sts_failure_types">
+                    <h2>MTA-STS Failure Types</h2>
+                    <canvas class="sts_failure_types_chart"></canvas>
+                </div>
+
+                <div class="module tlsrpt tlsa_policy_results">
+                    <h2>DANE TLSA Policy Results</h2>
+                    <canvas class="tlsa_policy_results_chart"></canvas>
+                </div>
+
+                <div class="module tlsrpt tlsa_failure_types">
+                    <h2>DANE TLSA Failure Types</h2>
+                    <canvas class="tlsa_failure_types_chart"></canvas>
                 </div>
             </div>
         `;
