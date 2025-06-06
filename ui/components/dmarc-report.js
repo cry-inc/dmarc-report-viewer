@@ -1,7 +1,7 @@
 import { LitElement, html, css } from "lit";
 import { globalStyle } from "./style.js";
 
-export class Report extends LitElement {
+export class DmarcReport extends LitElement {
     static styles = [globalStyle];
 
     static get properties() {
@@ -87,6 +87,9 @@ export class Report extends LitElement {
     }
 
     renderLocation(lat, lon) {
+        if (lat === undefined || lon === undefined) {
+            return html`<span class="faded">n/a</span>`;
+        }
         return html`<a target="_blank" title="Show on OpenStreeMap" href="https://www.openstreetmap.org/#map=8/${lat}/${lon}">${lat}, ${lon}</a>`;
     }
 
@@ -132,11 +135,11 @@ export class Report extends LitElement {
                     <th colspan="2">Report Header</td>
                 </tr>
                 <tr>
-                    <td class="name">Id</td>
+                    <td class="name">ID</td>
                     <td>${this.report.report_metadata.report_id}</td>
                 </tr>
                 <tr>
-                    <td class="name">Org</td>
+                    <td class="name">Organization</td>
                     <td>${this.report.report_metadata.org_name}</td>
                 </tr>
                 <tr>
@@ -168,7 +171,7 @@ export class Report extends LitElement {
                     <td>${this.renderOptional(this.report.version)}</td>
                 </tr>
                 <tr>
-                    <th class="name" colspan="2">Published Policy</th>
+                    <th colspan="2">Published Policy</th>
                 </tr>
                 <tr>
                     <td class="name">Domain</td>
@@ -210,7 +213,7 @@ export class Report extends LitElement {
                         <td>
                             ${record.row.source_ip}
                             <button @click="${() => this.lookupIp(record.row.source_ip)}" class="button sm help" title="Search DNS hostname for IP and geolocate it">DNS and Location</button>
-                            <a class="button sm help" title="Look up whois record for IP and show in new tab" target="blank" href="/ips/${record.row.source_ip}/whois">Whois</a>
+                            <a class="button sm help" title="Look up WHOIS record for IP and show in new tab" target="blank" href="/ips/${record.row.source_ip}/whois">WHOIS</a>
                         </td>
                     </tr>
                     <tbody class="sourceip" style="${this.ipDetails[record.row.source_ip] ? "": "display:none"}">
@@ -247,7 +250,7 @@ export class Report extends LitElement {
                             <td class="name">Source IP Location</td>
                             <td>${this.ip2location[record.row.source_ip] === undefined ?
                                     html`<span class="faded">loading</span>` :
-                                    this.renderLocation(this.ip2location[record.row.source_ip].lat, this.ip2location[record.row.source_ip].lon)
+                                    this.renderLocation(this.ip2location[record.row.source_ip]?.lat, this.ip2location[record.row.source_ip]?.lon)
                                 }
                             </td>
                         </tr>
@@ -335,4 +338,4 @@ export class Report extends LitElement {
     }
 }
 
-customElements.define("drv-dmarc-report", Report);
+customElements.define("drv-dmarc-report", DmarcReport);

@@ -34,20 +34,23 @@ export class MailTable extends LitElement {
         }
     }
 
-    prepareXmlFileCount(mail) {
+    prepareReportType(mail) {
         if (mail.oversized) {
             return html`<span class="faded">n/a</span>`;
-        } else if (mail.xml_files < 1) {
-            return html`<span class="badge badge-negative">${mail.xml_files}</span>`;
+        } else if (mail.xml_files < 1 && mail.json_files < 1) {
+            return html`<span class="badge badge-negative">None</span>`;
         } else {
-            return html`<span class="faded">${mail.xml_files}</span>`;
+            const files = [];
+            if (mail.xml_files > 0) files.push("DMARC");
+            if (mail.json_files > 0) files.push("TLS-RPT");
+            return html`<span class="faded">${files.join(", ")}</span>`;
         }
     }
 
     prepareParsingError(mail) {
         if (mail.oversized) {
             return html`<span class="faded">n/a</span>`;
-        } else if (mail.parsing_errors > 0) {
+        } else if (mail.xml_parsing_errors > 0 || mail.json_parsing_errors > 0) {
             return html`<span class="badge badge-negative">Yes</span>`;
         } else {
             return html`<span class="faded">No</span>`;
@@ -62,8 +65,8 @@ export class MailTable extends LitElement {
                     <th class="sm-hidden">Sender</th>
                     <th class="md-hidden">Date</th>
                     <th class="xs-hidden help" title="Size of E-Mail in Bytes">Size</th>
-                    <th class="md-hidden help" title="Number of XML files in the Mail">XMLs</th>
-                    <th class="xs-hidden help" title="Did the Mail cause DMARC Parsing Errors?">Errors</th>
+                    <th class="md-hidden help" title="Type of reports in the Mail">Type</th>
+                    <th class="xs-hidden help" title="Did the Mail cause Parsing Errors?">Errors</th>
                 </tr>
                 ${this.mails.length !== 0 ? this.mails.map((mail) =>
                     html`<tr> 
@@ -71,11 +74,11 @@ export class MailTable extends LitElement {
                         <td class="sm-hidden"><a href="#/mails?sender=${encodeURIComponent(mail.sender)}">${mail.sender}</a></td>
                         <td class="md-hidden">${new Date(mail.date * 1000).toLocaleString()}</td>
                         <td class="xs-hidden">${this.prepareSize(mail)}</td>
-                        <td class="md-hidden">${this.prepareXmlFileCount(mail)}</td>
+                        <td class="md-hidden">${this.prepareReportType(mail)}</td>
                         <td class="xs-hidden">${this.prepareParsingError(mail)}</td>
                     </tr>`
                 ) : html`<tr>
-                        <td colspan="4">No mails found.</td>
+                        <td colspan="6">No mails found.</td>
                     </tr>`
                 }
             </table>

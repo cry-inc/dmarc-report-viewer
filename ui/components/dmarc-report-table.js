@@ -1,7 +1,7 @@
-import { LitElement, html, css } from "lit";
+import { LitElement, html } from "lit";
 import { globalStyle } from "./style.js";
 
-export class ReportTable extends LitElement {
+export class DmarcReportTable extends LitElement {
     static styles = [globalStyle];
 
     static properties = {
@@ -65,4 +65,4 @@ export class ReportTable extends LitElement {
     }
 }
 
-customElements.define("drv-dmarc-report-table", ReportTable);
+customElements.define("drv-dmarc-report-table", DmarcReportTable);

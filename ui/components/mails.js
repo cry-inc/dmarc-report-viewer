@@ -30,8 +30,8 @@ export class Mails extends LitElement {
         if (this.params.sender) {
             queryParams.push("sender=" + encodeURIComponent(this.params.sender));
         }
-        if (this.params.count) {
-            queryParams.push("count=" + encodeURIComponent(this.params.count));
+        if (this.params.type) {
+            queryParams.push("type=" + encodeURIComponent(this.params.type));
         }
         if (this.params.errors === "true" || this.params.errors === "false") {
             queryParams.push("errors=" + this.params.errors);
@@ -53,7 +53,9 @@ export class Mails extends LitElement {
                 ${this.filtered ?
                     html`Filter active! <a class="ml button" href="#/mails">Show all Mails</a>` :
                     html`Filters: <a class="ml button" href="#/mails?oversized=true">Oversized Mails</a>
-                         <a class="button" href="#/mails?count=0&oversized=false">Without XML Files</a>
+                         <a class="button" href="#/mails?type=dmarc&oversized=false">With DMARC</a>
+                         <a class="button" href="#/mails?type=tlsrpt&oversized=false">With TLS-RPT</a>
+                         <a class="button" href="#/mails?type=empty&oversized=false">Without Files</a>
                          <a class="button" href="#/mails?errors=true">Parsing Errors</a>`
             }
             </div>
