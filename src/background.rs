@@ -1,10 +1,9 @@
 use crate::config::Configuration;
-use crate::dmarc::{self, DmarcParsingError};
 use crate::hasher::create_hash;
 use crate::imap::get_mails;
-use crate::state::{AppState, DmarcReportWithUid, TlsRptReportWithUid};
-use crate::tlsrpt::{self, TlsRptParsingError};
+use crate::state::{AppState, DmarcReportWithUid, ReportParsingError, TlsRptReportWithUid};
 use crate::unpack::{extract_report_files, FileType};
+use crate::{dmarc, tlsrpt};
 use anyhow::{Context, Result};
 use chrono::Local;
 use std::collections::HashMap;
@@ -120,14 +119,13 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
             Err(err) => {
                 // Prepare error information
                 let error_str = format!("{err:#}");
-                let error = DmarcParsingError {
+                let error = ReportParsingError {
                     error: error_str,
-                    xml: String::from_utf8_lossy(&xml_file.data).to_string(),
+                    report: String::from_utf8_lossy(&xml_file.data).to_string(),
                 };
 
                 // Store in error hashmap for fast lookup
-                let entry: &mut Vec<DmarcParsingError> =
-                    dmarc_parsing_errors.entry(xml_file.mail_uid).or_default();
+                let entry: &mut Vec<_> = dmarc_parsing_errors.entry(xml_file.mail_uid).or_default();
                 entry.push(error);
 
                 // Increase error counter for mail
@@ -158,13 +156,13 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
             Err(err) => {
                 // Prepare error information
                 let error_str = format!("{err:#}");
-                let error = TlsRptParsingError {
+                let error = ReportParsingError {
                     error: error_str,
-                    json: String::from_utf8_lossy(&json_file.data).to_string(),
+                    report: String::from_utf8_lossy(&json_file.data).to_string(),
                 };
 
                 // Store in error hashmap for fast lookup
-                let entry: &mut Vec<TlsRptParsingError> =
+                let entry: &mut Vec<_> =
                     tlsrpt_parsing_errors.entry(json_file.mail_uid).or_default();
                 entry.push(error);
 

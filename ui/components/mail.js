@@ -118,7 +118,7 @@ export class Mail extends LitElement {
                     html`
                         <div class="error">
                             ${e.error}
-                            <pre>${e.xml}</pre>
+                            <pre>${e.report}</pre>
                         </div>`
                     )}`
                 : html``
@@ -138,7 +138,7 @@ export class Mail extends LitElement {
                     html`
                         <div class="error">
                             ${e.error}
-                            <pre>${e.json}</pre>
+                            <pre>${e.report}</pre>
                         </div>`
                     )}`
                 : html``

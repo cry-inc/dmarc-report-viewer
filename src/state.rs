@@ -1,7 +1,6 @@
-use crate::dmarc::{self, DmarcParsingError};
 use crate::geolocate::Location;
-use crate::tlsrpt::{self, TlsRptParsingError};
 use crate::{cache_map::CacheMap, mail::Mail};
+use crate::{dmarc, tlsrpt};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::net::IpAddr;
@@ -20,6 +19,13 @@ pub struct DmarcReportWithUid {
 pub struct TlsRptReportWithUid {
     pub uid: u32,
     pub report: tlsrpt::Report,
+}
+
+/// Parsing errors for DMARC or TLS reports
+#[derive(Serialize)]
+pub struct ReportParsingError {
+    pub error: String,
+    pub report: String,
 }
 
 /// Shared state between the different parts of the application.
@@ -46,10 +52,10 @@ pub struct AppState {
     pub last_update: u64,
 
     /// XML DMARC parsing errors keyed by mail UID
-    pub dmarc_parsing_errors: HashMap<u32, Vec<DmarcParsingError>>,
+    pub dmarc_parsing_errors: HashMap<u32, Vec<ReportParsingError>>,
 
     /// JSON TLS-RPT parsing errors keyed by mail UID
-    pub tlsrpt_parsing_errors: HashMap<u32, Vec<TlsRptParsingError>>,
+    pub tlsrpt_parsing_errors: HashMap<u32, Vec<ReportParsingError>>,
 
     /// IP to DNS cache
     pub ip_dns_cache: CacheMap<IpAddr, String>,

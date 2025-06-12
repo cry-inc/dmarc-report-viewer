@@ -278,12 +278,6 @@ impl Report {
     }
 }
 
-#[derive(Serialize)]
-pub struct DmarcParsingError {
-    pub error: String,
-    pub xml: String,
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -8,7 +8,6 @@ use tracing::{trace, warn};
 use zip::ZipArchive;
 
 /// The type of a file that can contain report data
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FileType {
     Json,
     Xml,

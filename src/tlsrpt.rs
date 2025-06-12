@@ -168,12 +168,6 @@ impl Report {
     }
 }
 
-#[derive(Serialize)]
-pub struct TlsRptParsingError {
-    pub error: String,
-    pub json: String,
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
