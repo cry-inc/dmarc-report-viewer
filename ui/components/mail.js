@@ -126,7 +126,7 @@ export class Mail extends LitElement {
 
             ${"tlsrpt" in this.reports && this.reports.tlsrpt.length > 0 ?
                 html`
-                    <h2>TLS-RPT Reports</h2>
+                    <h2>SMTP TLS Reports</h2>
                     <drv-tlsrpt-report-table .reports="${this.reports.tlsrpt}"></drv-tlsrpt-report-table>`
                 : html``
             }

@@ -122,7 +122,7 @@ export class App extends LitElement {
                 <a class="${this.component === "dashboard" ? "active" : ""}" href="#/dashboard">Dashboard</a>
                 <a class="${this.component === "mails" || this.component === "mail" ? "active" : ""}" href="#/mails">Mails</a>
                 <a class="${this.component === "dmarc-reports" || this.component === "dmarc-report" ? "active" : ""}" href="#/dmarc-reports">DMARC<span class="xs-hidden">&nbsp;Reports</span></a>
-                <a class="${this.component === "tlsrpt-reports" || this.component === "tlsrpt-report" ? "active" : ""}" href="#/tlsrpt-reports">TLS-RPT<span class="xs-hidden">&nbsp;Reports</span></a>
+                <a class="${this.component === "tlsrpt-reports" || this.component === "tlsrpt-report" ? "active" : ""}" href="#/tlsrpt-reports"><span class="xs-hidden">SMTP&nbsp;</span>TLS<span class="xs-hidden">&nbsp;Reports</span></a>
                 <a class="xs-hidden ${this.component === "about" ? "active" : ""} right" href="#/about">About</a>
             </nav>
             <main>${component}</main>

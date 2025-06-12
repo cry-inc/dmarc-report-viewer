@@ -356,72 +356,72 @@ export class Dashboard extends LitElement {
 
             <div class="grid dmarc">
                 <div class="module dmarc dmarc_orgs">
-                    <h2>DMARC Organizations</h2>
+                    <h3>DMARC Organizations</h3>
                     <canvas class="dmarc_orgs_chart"></canvas>
                 </div>
 
                 <div class="module dmarc dmarc_domains">
-                    <h2>DMARC Domains</h2>
+                    <h3>DMARC Domains</h3>
                     <canvas class="dmarc_domains_chart"></canvas>
                 </div>
 
                 <div class="module dmarc spf_policy">
-                    <h2>SPF Policy Results</h2>
+                    <h3>SPF Policy Results</h3>
                     <canvas class="spf_policy_chart"></canvas>
                 </div>
 
                 <div class="module dmarc dkim_policy">
-                    <h2>DKIM Policy Results</h2>
+                    <h3>DKIM Policy Results</h3>
                     <canvas class="dkim_policy_chart"></canvas>
                 </div>
 
                 <div class="module dmarc spf_auth">
-                    <h2>SPF Auth Results</h2>
+                    <h3>SPF Auth Results</h3>
                     <canvas class="spf_auth_chart"></canvas>
                 </div>
 
                 <div class="module dmarc dkim_auth">
-                    <h2>DKIM Auth Results</h2>
+                    <h3>DKIM Auth Results</h3>
                     <canvas class="dkim_auth_chart"></canvas>
                 </div>
             </div>
 
-            <h2>TLS-RPT Summary</h2>
+            <h2>SMTP TLS Report Summary</h2>
             <p class="no_tlsrpt_reports">No TLS-RPT reports found.</p>
 
             <div class="grid tlsrpt">
                 <div class="module tlsrpt tlsrpt_orgs">
-                    <h2>TLS-RPT Organizations</h2>
+                    <h3>TLS Organizations</h3>
                     <canvas class="tlsrpt_orgs_chart"></canvas>
                 </div>
 
                 <div class="module tlsrpt tlsrpt_domains">
-                    <h2>TLS-RPT Domains</h2>
+                    <h3>TLS Domains</h3>
                     <canvas class="tlsrpt_domains_chart"></canvas>
                 </div>
 
                 <div class="module tlsrpt tlsrpt_policy_types">
-                    <h2>TLS-RPT Policy Types</h2>
+                    <h3>TLS Policy Types</h3>
                     <canvas class="tlsrpt_policy_types_chart"></canvas>
                 </div>
 
                 <div class="module tlsrpt sts_policy_results">
-                    <h2>MTA-STS Policy Results</h2>
+                    <h3>MTA-STS Policy Results</h3>
                     <canvas class="sts_policy_results_chart"></canvas>
                 </div>
 
                 <div class="module tlsrpt sts_failure_types">
-                    <h2>MTA-STS Failure Types</h2>
+                    <h3>MTA-STS Failure Types</h3>
                     <canvas class="sts_failure_types_chart"></canvas>
                 </div>
 
                 <div class="module tlsrpt tlsa_policy_results">
-                    <h2>DANE TLSA Policy Results</h2>
+                    <h3>DANE TLSA Policy Results</h3>
                     <canvas class="tlsa_policy_results_chart"></canvas>
                 </div>
 
                 <div class="module tlsrpt tlsa_failure_types">
-                    <h2>DANE TLSA Failure Types</h2>
+                    <h3>DANE TLSA Failure Types</h3>
                     <canvas class="tlsa_failure_types_chart"></canvas>
                 </div>
             </div>

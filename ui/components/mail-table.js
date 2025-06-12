@@ -66,7 +66,7 @@ export class MailTable extends LitElement {
                     <th class="md-hidden">Date</th>
                     <th class="xs-hidden help" title="Size of E-Mail in Bytes">Size</th>
                     <th class="md-hidden help" title="Type of reports in the Mail">Type</th>
-                    <th class="xs-hidden help" title="Did the Mail cause Parsing Errors?">Errors</th>
+                    <th class="xs-hidden help" title="Did the mail cause parsing errors?">Errors</th>
                 </tr>
                 ${this.mails.length !== 0 ? this.mails.map((mail) =>
                     html`<tr> 
