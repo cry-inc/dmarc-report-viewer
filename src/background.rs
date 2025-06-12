@@ -102,9 +102,9 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
         json_files.len()
     );
 
-    let mut dmarc_parsing_errors = HashMap::new();
+    let mut dmarc_parsing_errors: HashMap<u32, Vec<ReportParsingError>> = HashMap::new();
     let mut dmarc_reports = HashMap::new();
-    let mut tlsrpt_parsing_errors = HashMap::new();
+    let mut tlsrpt_parsing_errors: HashMap<u32, Vec<ReportParsingError>> = HashMap::new();
     let mut tlsrpt_reports = HashMap::new();
     for xml_file in xml_files.values() {
         match dmarc::Report::from_slice(&xml_file.data) {
@@ -125,8 +125,10 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
                 };
 
                 // Store in error hashmap for fast lookup
-                let entry: &mut Vec<_> = dmarc_parsing_errors.entry(xml_file.mail_uid).or_default();
-                entry.push(error);
+                dmarc_parsing_errors
+                    .entry(xml_file.mail_uid)
+                    .or_default()
+                    .push(error);
 
                 // Increase error counter for mail
                 let mail = mails
@@ -162,9 +164,10 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
                 };
 
                 // Store in error hashmap for fast lookup
-                let entry: &mut Vec<_> =
-                    tlsrpt_parsing_errors.entry(json_file.mail_uid).or_default();
-                entry.push(error);
+                tlsrpt_parsing_errors
+                    .entry(json_file.mail_uid)
+                    .or_default()
+                    .push(error);
 
                 // Increase error counter for mail
                 let mail = mails
