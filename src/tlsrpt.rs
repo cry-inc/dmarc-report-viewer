@@ -1,7 +1,6 @@
 use anyhow::{Context, Result};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use std::io::Cursor;
 
 /// The time range covered by messages in this report.
 /// Formatted according to "Internet Date/Time Format", Section 5.6 of RFC3339.
@@ -163,8 +162,7 @@ pub struct Report {
 
 impl Report {
     pub fn from_slice(json_file: &[u8]) -> Result<Report> {
-        let mut cursor = Cursor::new(json_file);
-        serde_json::from_reader(&mut cursor).context("Failed to parse JSON as TLS-RPT report")
+        serde_json::from_slice(json_file).context("Failed to parse JSON as TLS-RPT report")
     }
 }
 

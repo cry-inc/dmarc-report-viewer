@@ -5,7 +5,6 @@
 
 use anyhow::{Context, Result};
 use serde::{de, Deserialize, Deserializer, Serialize};
-use std::io::Cursor;
 use std::net::IpAddr;
 
 /// The time range in UTC covered by messages in this report.
@@ -273,8 +272,7 @@ pub struct Report {
 
 impl Report {
     pub fn from_slice(xml_file: &[u8]) -> Result<Report> {
-        let mut cursor = Cursor::new(xml_file);
-        quick_xml::de::from_reader(&mut cursor).context("Failed to parse XML as DMARC report")
+        quick_xml::de::from_reader(xml_file).context("Failed to parse XML as DMARC report")
     }
 }
 
