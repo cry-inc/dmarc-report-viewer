@@ -114,9 +114,7 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
                     report,
                     uid: xml_file.mail_uid,
                 };
-                let binary =
-                    serde_json::to_vec(&rwu).context("Failed to serialize report with UID")?;
-                let hash = create_hash(&binary, None);
+                let hash = create_hash(&xml_file.data, Some(xml_file.mail_uid));
                 dmarc_reports.insert(hash, rwu);
             }
             Err(err) => {
@@ -154,9 +152,7 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
                     report,
                     uid: json_file.mail_uid,
                 };
-                let binary = serde_json::to_vec(&rwu)
-                    .context("Failed to serialize TLS-RPT report with UID")?;
-                let hash = create_hash(&binary, None);
+                let hash = create_hash(&json_file.data, Some(json_file.mail_uid));
                 tlsrpt_reports.insert(hash, rwu);
             }
             Err(err) => {
