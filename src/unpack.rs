@@ -48,29 +48,25 @@ fn get_reports_from_zip(zip_bytes: &[u8]) -> Result<Vec<FileDataWithType>> {
     for i in 0..file_count {
         let mut file = archive.by_index(i).context("Unable to get file from ZIP")?;
         let file_name = file.name();
-
-        match file_name {
-            name if name.ends_with(".json") => {
-                let mut json_file = Vec::new();
-                file.read_to_end(&mut json_file)
-                    .context("Failed to read JSON from ZIP")?;
-                files.push(FileDataWithType {
-                    file_type: FileType::Json,
-                    data: json_file,
-                });
-            }
-            name if name.ends_with(".xml") => {
-                let mut xml_file = Vec::new();
-                file.read_to_end(&mut xml_file)
-                    .context("Failed to read XML from ZIP")?;
-                files.push(FileDataWithType {
-                    file_type: FileType::Xml,
-                    data: xml_file,
-                });
-            }
-            _ => {
-                warn!("File {file_name} in ZIP is not a JSON or XML file, skipping...");
-            }
+        let lower_file_name = file_name.to_lowercase();
+        if lower_file_name.ends_with(".json") {
+            let mut json_file = Vec::new();
+            file.read_to_end(&mut json_file)
+                .context("Failed to read JSON from ZIP")?;
+            files.push(FileDataWithType {
+                file_type: FileType::Json,
+                data: json_file,
+            });
+        } else if lower_file_name.ends_with(".xml") {
+            let mut xml_file = Vec::new();
+            file.read_to_end(&mut xml_file)
+                .context("Failed to read XML from ZIP")?;
+            files.push(FileDataWithType {
+                file_type: FileType::Xml,
+                data: xml_file,
+            });
+        } else {
+            warn!("File {file_name} in ZIP is not a JSON or XML file, skipping...");
         }
     }
 
