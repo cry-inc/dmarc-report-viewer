@@ -8,14 +8,14 @@ use std::net::IpAddr;
 const CACHE_SIZE: usize = 10000;
 
 /// DMARC Report with UID of the mail that contained the report
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct DmarcReportWithUid {
     pub uid: u32,
     pub report: dmarc::Report,
 }
 
 /// TLS-RPT Report with UID of the mail that contained the report
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct TlsRptReportWithUid {
     pub uid: u32,
     pub report: tlsrpt::Report,

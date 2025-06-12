@@ -5,7 +5,7 @@ use std::io::Cursor;
 
 /// The time range covered by messages in this report.
 /// Formatted according to "Internet Date/Time Format", Section 5.6 of RFC3339.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct DateRange {
     pub start_datetime: DateTime<Utc>,
@@ -25,7 +25,7 @@ pub enum PolicyType {
 }
 
 /// The policy evaluated by the reporting organization.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct Policy {
     /// The type of policy that was applied by the sending domain.
@@ -44,7 +44,7 @@ pub struct Policy {
 
 /// A simplified representation of the TLS-RPT policy evaluation result, which
 /// is used to summarize the report.
-#[derive(Debug, Clone, Serialize, Deserialize, Hash, PartialEq, Eq)]
+#[derive(Clone, Serialize, Deserialize, Hash, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum TlsRptResultType {
     Successful,
@@ -52,7 +52,7 @@ pub enum TlsRptResultType {
 }
 
 /// A summary of the policy evaluation result.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct Summary {
     pub total_successful_session_count: usize,
@@ -101,7 +101,7 @@ pub enum FailureResultType {
 }
 
 /// Aggregated failure details for a single result type.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct FailureDetails {
     /// The type of the failure.
@@ -133,7 +133,7 @@ pub struct FailureDetails {
 }
 
 /// An evaluation result for a single policy.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct PolicyResult {
     /// The policy that was evaluated.
@@ -146,7 +146,7 @@ pub struct PolicyResult {
     pub failure_details: Option<Vec<FailureDetails>>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct Report {
     /// The name of the organization responsible for the report.
