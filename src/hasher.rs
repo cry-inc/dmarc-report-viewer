@@ -1,11 +1,10 @@
-use sha2::{Digest, Sha256};
+use std::hash::{DefaultHasher, Hash, Hasher};
 
-pub fn create_hash(data: &[u8], uid: Option<u32>) -> String {
-    let mut hasher = Sha256::new();
-    hasher.update(data);
+pub fn create_hash(data: &[u8], uid: Option<u32>) -> u32 {
+    let mut hasher = DefaultHasher::new();
+    data.hash(&mut hasher);
     if let Some(uid) = uid {
-        hasher.update(uid.to_le_bytes());
+        uid.hash(&mut hasher);
     }
-    let hash = hasher.finalize();
-    format!("{:x}", hash)
+    hasher.finish() as u32
 }

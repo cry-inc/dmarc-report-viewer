@@ -21,7 +21,7 @@ pub async fn single_handler(
         );
     };
     let lock = state.lock().await;
-    if let Some((_, mail)) = lock.mails.iter().find(|(uid, _)| **uid == parsed_uid) {
+    if let Some(mail) = lock.mails.get(&parsed_uid) {
         let mail_json = serde_json::to_string(mail).expect("Failed to serialize JSON");
         (
             StatusCode::OK,

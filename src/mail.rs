@@ -6,7 +6,9 @@ use serde::Serialize;
 
 #[derive(Serialize)]
 pub struct Mail {
+    /// Unique identifier of the mail, constructed from the IMAP UID and folder name.
     pub uid: u32,
+
     pub size: usize,
     pub oversized: bool,
     pub date: i64,

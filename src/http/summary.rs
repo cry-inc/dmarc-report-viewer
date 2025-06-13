@@ -131,10 +131,10 @@ pub struct Files {
 
 pub struct Reports<'a> {
     /// Parsed DMARC reports with mail UID and corresponding hash as key
-    pub dmarc: &'a HashMap<String, DmarcReportWithUid>,
+    pub dmarc: &'a HashMap<u32, DmarcReportWithUid>,
 
     /// Parsed SMTP TLS reports with mail UID and corresponding hash as key
-    pub tlsrpt: &'a HashMap<String, TlsRptReportWithUid>,
+    pub tlsrpt: &'a HashMap<u32, TlsRptReportWithUid>,
 }
 
 #[derive(Serialize, Default, Clone)]

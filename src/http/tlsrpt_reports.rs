@@ -17,7 +17,7 @@ use tokio::sync::Mutex;
 
 #[derive(Serialize)]
 struct ReportHeader {
-    hash: String,
+    hash: u32,
     id: String,
     org: String,
     domains: Vec<String>,
@@ -30,10 +30,10 @@ struct ReportHeader {
 }
 
 impl ReportHeader {
-    pub fn from_report(hash: &str, report: &Report) -> Self {
+    pub fn from_report(hash: u32, report: &Report) -> Self {
         let (flagged_sts, flagged_tlsa) = Self::report_is_flagged(report);
         Self {
-            hash: hash.to_string(),
+            hash,
             id: report.report_id.clone(),
             org: report.organization_name.clone(),
             domains: {
@@ -143,7 +143,7 @@ pub async fn list_handler(
                 true
             }
         })
-        .map(|(hash, rwu)| ReportHeader::from_report(hash, &rwu.report))
+        .map(|(hash, rwu)| ReportHeader::from_report(*hash, &rwu.report))
         .filter(|rh| {
             if let Some(flagged) = &filters.flagged {
                 rh.flagged == *flagged
@@ -173,8 +173,15 @@ pub async fn single_handler(
     State(state): State<Arc<Mutex<AppState>>>,
     Path(id): Path<String>,
 ) -> impl IntoResponse {
+    let Ok(parsed_id) = id.parse::<u32>() else {
+        return (
+            StatusCode::BAD_REQUEST,
+            [(header::CONTENT_TYPE, "text/plain")],
+            format!("Invalid ID {id}"),
+        );
+    };
     let lock = state.lock().await;
-    if let Some(rwu) = lock.tlsrpt_reports.get(&id) {
+    if let Some(rwu) = lock.tlsrpt_reports.get(&parsed_id) {
         let report_json = serde_json::to_string(rwu).expect("Failed to serialize JSON");
         (
             StatusCode::OK,
@@ -194,8 +201,15 @@ pub async fn json_handler(
     State(state): State<Arc<Mutex<AppState>>>,
     Path(id): Path<String>,
 ) -> impl IntoResponse {
+    let Ok(parsed_id) = id.parse::<u32>() else {
+        return (
+            StatusCode::BAD_REQUEST,
+            [(header::CONTENT_TYPE, "text/plain")],
+            format!("Invalid ID {id}"),
+        );
+    };
     let lock = state.lock().await;
-    if let Some(rwu) = lock.tlsrpt_reports.get(&id) {
+    if let Some(rwu) = lock.tlsrpt_reports.get(&parsed_id) {
         let report_json = serde_json::to_string(&rwu.report).expect("Failed to serialize JSON");
         (
             StatusCode::OK,

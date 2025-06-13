@@ -1,8 +1,9 @@
 use crate::config::Configuration;
 use crate::hasher::create_hash;
-use crate::imap::get_mails;
+use crate::imap::{get_mails, ReportType};
+use crate::mail::Mail;
 use crate::state::{AppState, DmarcReportWithUid, ReportParsingError, TlsRptReportWithUid};
-use crate::unpack::{extract_report_files, FileType};
+use crate::unpack::{extract_report_files, FileType, ReportFile};
 use crate::{dmarc, tlsrpt};
 use anyhow::{Context, Result};
 use chrono::Local;
@@ -58,12 +59,13 @@ pub fn start_bg_task(
     })
 }
 
-async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Result<()> {
-    let mut mails = get_mails(config).await.context("Failed to get mails")?;
-
-    let mut xml_files = HashMap::new();
-    let mut json_files = HashMap::new();
-    let mut mails_without_reports = 0;
+fn extract_files_from_mails(
+    mails: &mut HashMap<u32, Mail>,
+    xml_files: &mut HashMap<u32, ReportFile>,
+    json_files: &mut HashMap<u32, ReportFile>,
+    mails_without_reports: &mut usize,
+    file_type: Option<FileType>,
+) {
     for mail in &mut mails.values_mut() {
         if mail.body.is_none() {
             trace!(
@@ -72,19 +74,19 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
             );
             continue;
         }
-        match extract_report_files(mail) {
+        match extract_report_files(mail, file_type) {
             Ok(files) => {
                 if files.is_empty() {
-                    mails_without_reports += 1;
+                    *mails_without_reports += 1;
                 }
                 for file in files {
                     match file.file_type {
                         FileType::Xml => {
-                            xml_files.insert(file.hash.clone(), file);
+                            xml_files.insert(file.hash, file);
                             mail.xml_files += 1;
                         }
                         FileType::Json => {
-                            json_files.insert(file.hash.clone(), file);
+                            json_files.insert(file.hash, file);
                             mail.json_files += 1;
                         }
                     }
@@ -92,6 +94,51 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
             }
             Err(err) => warn!("Failed to extract report files from mail: {err:#}"),
         }
+    }
+}
+
+async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Result<()> {
+    let mut xml_files = HashMap::new();
+    let mut json_files = HashMap::new();
+    let mut mails_without_reports = 0;
+
+    let mut mails;
+    if config.use_different_imap_folders() {
+        let mut dmarc_mails = get_mails(config, Some(ReportType::Dmarc))
+            .await
+            .context("Failed to get DMARC mails")?;
+        extract_files_from_mails(
+            &mut dmarc_mails,
+            &mut xml_files,
+            &mut json_files,
+            &mut mails_without_reports,
+            Some(FileType::Xml),
+        );
+        let mut tlsrpt_mails = get_mails(config, Some(ReportType::TlsRpt))
+            .await
+            .context("Failed to get TLS-RPT mails")?;
+        extract_files_from_mails(
+            &mut tlsrpt_mails,
+            &mut xml_files,
+            &mut json_files,
+            &mut mails_without_reports,
+            Some(FileType::Json),
+        );
+
+        mails = HashMap::new();
+        mails.extend(dmarc_mails);
+        mails.extend(tlsrpt_mails);
+    } else {
+        mails = get_mails(config, None)
+            .await
+            .context("Failed to get mails")?;
+        extract_files_from_mails(
+            &mut mails,
+            &mut xml_files,
+            &mut json_files,
+            &mut mails_without_reports,
+            None,
+        );
     }
     if mails_without_reports > 0 {
         warn!("Found {mails_without_reports} mail(s) without report files");

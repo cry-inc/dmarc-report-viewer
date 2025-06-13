@@ -1,4 +1,5 @@
 use crate::config::Configuration;
+use crate::hasher::create_hash;
 use crate::mail::{decode_subject, Mail};
 use anyhow::{anyhow, Context, Result};
 use async_imap::imap_proto::Address;
@@ -19,7 +20,16 @@ use tokio_rustls::TlsConnector;
 use tokio_util::either::Either;
 use tracing::{debug, info, trace, warn};
 
-pub async fn get_mails(config: &Configuration) -> Result<HashMap<u32, Mail>> {
+#[derive(Clone)]
+pub enum ReportType {
+    Dmarc,
+    TlsRpt,
+}
+
+pub async fn get_mails(
+    config: &Configuration,
+    from_folder: Option<ReportType>,
+) -> Result<HashMap<u32, Mail>> {
     let client = create_client(config)
         .await
         .context("Failed to create IMAP client")?;
@@ -31,7 +41,11 @@ pub async fn get_mails(config: &Configuration) -> Result<HashMap<u32, Mail>> {
         .context("Failed to log in and create IMAP session")?;
     debug!("IMAP login successful");
 
-    let imap_folder = &config.imap_folder;
+    let imap_folder: &String = match from_folder {
+        Some(ReportType::Dmarc) => config.dmarc_imap_folder.as_ref().unwrap(),
+        Some(ReportType::TlsRpt) => config.tlsrpt_imap_folder.as_ref().unwrap(),
+        None => &config.imap_folder,
+    };
     let mailbox = session
         .select(imap_folder)
         .await
@@ -40,6 +54,7 @@ pub async fn get_mails(config: &Configuration) -> Result<HashMap<u32, Mail>> {
 
     // Get metadata for all all mails and filter by size
     let mut mails = HashMap::new();
+    let mut non_oversized_imap_uids = Vec::new();
     debug!(
         "Number of mails in {imap_folder} folder: {}",
         mailbox.exists
@@ -54,8 +69,12 @@ pub async fn get_mails(config: &Configuration) -> Result<HashMap<u32, Mail>> {
         while let Some(fetch_result) = stream.next().await {
             let fetched =
                 fetch_result.context("Failed to get next mail header from IMAP fetch response")?;
-            let mail = extract_metadata(&fetched, config.max_mail_size as usize)
-                .context("Unable to extract mail metadata")?;
+            let mail =
+                extract_metadata(&fetched, config.max_mail_size as usize, imap_folder.clone())
+                    .context("Unable to extract mail metadata")?;
+            if !mail.oversized {
+                non_oversized_imap_uids.push(fetched.uid.unwrap().to_string());
+            }
             mails.insert(mail.uid, mail);
         }
         info!("Downloaded metadata of {} mails", mails.len());
@@ -75,15 +94,10 @@ pub async fn get_mails(config: &Configuration) -> Result<HashMap<u32, Mail>> {
     }
 
     // Get full mail body for all non-oversized mails
-    let uids: Vec<String> = mails
-        .values()
-        .filter(|m| !m.oversized)
-        .map(|m| m.uid.to_string())
-        .collect();
-    if !uids.is_empty() {
+    if !non_oversized_imap_uids.is_empty() {
         // We need to get the mails in chunks.
         // It will fail silently if the requested sequences become too big!
-        for chunk in uids.chunks(config.imap_chunk_size) {
+        for chunk in non_oversized_imap_uids.chunks(config.imap_chunk_size) {
             debug!("Downloading chunk with {} mails...", chunk.len());
             let sequence: String = chunk.join(",");
             let body_request = config.imap_body_request.to_request_string();
@@ -101,15 +115,16 @@ pub async fn get_mails(config: &Configuration) -> Result<HashMap<u32, Mail>> {
                 fetched += 1;
                 let fetched = fetch_result
                     .context("Failed to get next mail header from IMAP fetch response")?;
-                let uid = fetched
+                let imap_uid = fetched
                     .uid
                     .context("Failed to get UID from IMAP fetch result")?;
+                let uid = create_hash(imap_folder.as_bytes(), Some(imap_uid));
                 let Some(mail) = mails.get_mut(&uid) else {
                     warn!("Cannot find mail metadata for UID {uid}");
                     continue;
                 };
                 let Some(body) = fetched.body() else {
-                    warn!("Mail with UID {} has no body!", mail.uid);
+                    warn!("Mail with UID {} has no body!", uid);
                     continue;
                 };
                 mail.body = Some(body.to_vec());
@@ -134,7 +149,7 @@ pub async fn get_mails(config: &Configuration) -> Result<HashMap<u32, Mail>> {
             }
         }
 
-        info!("Downloaded {} mails", uids.len());
+        info!("Downloaded {} mails", non_oversized_imap_uids.len());
     }
 
     // We have everything we need, an error is no longer preventing an update.
@@ -254,8 +269,9 @@ async fn create_tls_stream(
     Ok(tls_stream)
 }
 
-fn extract_metadata(mail: &Fetch, max_size: usize) -> Result<Mail> {
-    let uid = mail.uid.context("Mail server did not provide UID")?;
+fn extract_metadata(mail: &Fetch, max_size: usize, imap_folder: String) -> Result<Mail> {
+    let imap_uid = mail.uid.context("Mail server did not provide UID")?;
+    let uid = create_hash(imap_folder.as_bytes(), Some(imap_uid));
     let size = mail.size.unwrap_or(0) as usize; // In case the mail server ignored our request for the size
     let env = mail
         .envelope()

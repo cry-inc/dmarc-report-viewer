@@ -8,6 +8,7 @@ use tracing::{trace, warn};
 use zip::ZipArchive;
 
 /// The type of a file that can contain report data
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub enum FileType {
     Json,
     Xml,
@@ -31,7 +32,7 @@ pub struct ReportFile {
     pub data: Vec<u8>,
     /// Hash of the report data AND mail UID.
     /// UID needs to be included to avoid the same report file from multiple mails being treated as the same file!
-    pub hash: String,
+    pub hash: u32,
 }
 
 /// Get zero or more report files from a ZIP archive
@@ -116,7 +117,10 @@ fn get_report_from_gz(gz_bytes: &[u8]) -> Result<Vec<u8>> {
     Ok(report_file)
 }
 
-pub fn extract_report_files(mail: &mut Mail) -> Result<Vec<ReportFile>> {
+pub fn extract_report_files(
+    mail: &mut Mail,
+    file_type: Option<FileType>,
+) -> Result<Vec<ReportFile>> {
     // Consume mail body to avoid keeping the longer needed data in memory
     let body = mail.body.take().context("Missing mail body")?;
 
@@ -159,6 +163,9 @@ pub fn extract_report_files(mail: &mut Mail) -> Result<Vec<ReportFile>> {
                 report_files_zip.len()
             );
             for report in report_files_zip {
+                if file_type.is_some() && report.file_type != file_type.unwrap() {
+                    continue;
+                }
                 let hash = create_hash(&report.data, Some(mail.uid));
                 report_files.push(ReportFile {
                     file_type: report.file_type,
@@ -170,6 +177,10 @@ pub fn extract_report_files(mail: &mut Mail) -> Result<Vec<ReportFile>> {
         } else if content_type.contains("application/gzip")
             || content_type.contains("application/octet-stream") && content_type.contains(".xml.gz")
         {
+            if file_type.is_some() && file_type.unwrap() != FileType::Xml {
+                trace!("Skipping gzipped XML attachment for mail with UID {uid} in part {index} because of file type filter");
+                continue;
+            }
             trace!("Detected gzipped XML attachment for mail with UID {uid} in part {index}");
             let body = part
                 .get_body_raw()
@@ -186,6 +197,10 @@ pub fn extract_report_files(mail: &mut Mail) -> Result<Vec<ReportFile>> {
         } else if content_type.contains("text/xml")
             || content_type.contains("application/octet-stream") && content_type.contains(".xml")
         {
+            if file_type.is_some() && file_type.unwrap() != FileType::Xml {
+                trace!("Skipping uncompressed XML attachment for mail with UID {uid} in part {index} because of file type filter");
+                continue;
+            }
             trace!("Detected uncompressed XML attachment for mail with UID {uid} in part {index}");
             let xml = part
                 .get_body_raw()
@@ -198,6 +213,10 @@ pub fn extract_report_files(mail: &mut Mail) -> Result<Vec<ReportFile>> {
                 hash,
             });
         } else if content_type.contains("application/tlsrpt+gzip") {
+            if file_type.is_some() && file_type.unwrap() != FileType::Json {
+                trace!("Skipping gzipped JSON attachment for mail with UID {uid} in part {index} because of file type filter");
+                continue;
+            }
             trace!("Detected gzipped JSON attachment for mail with UID {uid} in part {index}");
             let body = part
                 .get_body_raw()
@@ -214,6 +233,10 @@ pub fn extract_report_files(mail: &mut Mail) -> Result<Vec<ReportFile>> {
         } else if content_type.contains("application/tlsrpt+json")
             || content_type.contains("application/json")
         {
+            if file_type.is_some() && file_type.unwrap() != FileType::Json {
+                trace!("Skipping uncompressed JSON attachment for mail with UID {uid} in part {index} because of file type filter");
+                continue;
+            }
             trace!("Detected uncompressed JSON attachment for mail with UID {uid} in part {index}");
             let json = part
                 .get_body_raw()
