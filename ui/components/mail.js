@@ -1,4 +1,4 @@
-import { LitElement, html, css } from "lit";
+import { LitElement, html, css, nothing } from "lit";
 import { globalStyle } from "./style.js";
 
 export class Mail extends LitElement {
@@ -15,7 +15,8 @@ export class Mail extends LitElement {
         return {
             uid: { type: String },
             mail: { type: Object, attribute: false },
-            reports: { type: Object, attribute: false },
+            reportsDmarc: { type: Array, attribute: false },
+            reportsTls: { type: Array, attribute: false },
             errors: { type: Object, attribute: false }
         };
     }
@@ -24,28 +25,25 @@ export class Mail extends LitElement {
         super();
         this.uid = null;
         this.mail = null;
-        this.reports = {};
+        this.reportsDmarc = [];
+        this.reportsTls = [];
         this.errors = {};
     }
 
     async updated(changedProperties) {
         if (changedProperties.has("uid") && changedProperties.uid !== this.uid && this.uid) {
-            fetch("mails/" + this.uid)
-                .then(async (response) => {
-                    this.mail = await response.json();
-                });
-            fetch("dmarc-reports?uid=" + this.uid)
-                .then(async (response) => {
-                    this.reports.dmarc = await response.json();
-                });
-            fetch("tlsrpt-reports?uid=" + this.uid)
-                .then(async (response) => {
-                    this.reports.tlsrpt = await response.json();
-                });
-            fetch("mails/" + this.uid + "/errors")
-                .then(async (response) => {
-                    this.errors = await response.json();
-                });
+            fetch("mails/" + this.uid).then(async (response) => {
+                this.mail = await response.json();
+            });
+            fetch("dmarc-reports?uid=" + this.uid).then(async (response) => {
+                this.reportsDmarc = await response.json();
+            });
+            fetch("tlsrpt-reports?uid=" + this.uid).then(async (response) => {
+                this.reportsTls = await response.json();
+            });
+            fetch("mails/" + this.uid + "/errors").then(async (response) => {
+                this.errors = await response.json();
+            });
         }
     }
 
@@ -99,16 +97,15 @@ export class Mail extends LitElement {
                 </tr>
             </table>
 
-            ${Object.values(this.reports).every((reports) => reports.length === 0) ?
-                html`<p>No reports found.</p>`
-                : html``
+            ${this.reportsDmarc.length === 0 && this.reportsTls.length === 0 ?
+                html`<p>No reports found!</p>` : nothing
             }
 
-            ${"dmarc" in this.reports && this.reports.dmarc.length > 0 ?
+            ${this.reportsDmarc.length > 0 ?
                 html`
                     <h2>DMARC Reports</h2>
-                    <drv-dmarc-report-table .reports="${this.reports.dmarc}"></drv-dmarc-report-table>`
-                : html``
+                    <drv-dmarc-report-table .reports="${this.reportsDmarc}"></drv-dmarc-report-table>`
+                : nothing
             }
 
             ${"xml" in this.errors && this.errors.xml.length > 0 ?
@@ -121,14 +118,14 @@ export class Mail extends LitElement {
                             <pre>${e.report}</pre>
                         </div>`
                     )}`
-                : html``
+                : nothing
             }
 
-            ${"tlsrpt" in this.reports && this.reports.tlsrpt.length > 0 ?
+            ${this.reportsTls.length > 0 ?
                 html`
                     <h2>SMTP TLS Reports</h2>
-                    <drv-tlsrpt-report-table .reports="${this.reports.tlsrpt}"></drv-tlsrpt-report-table>`
-                : html``
+                    <drv-tlsrpt-report-table .reports="${this.reportsTls}"></drv-tlsrpt-report-table>`
+                : nothing
             }
 
             ${"json" in this.errors && this.errors.json.length > 0 ?
@@ -141,7 +138,7 @@ export class Mail extends LitElement {
                             <pre>${e.report}</pre>
                         </div>`
                     )}`
-                : html``
+                : nothing
             }
         `;
     }
