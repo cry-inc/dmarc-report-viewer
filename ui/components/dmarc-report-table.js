@@ -37,7 +37,7 @@ export class DmarcReportTable extends LitElement {
         return html`
             <table>
                 <tr>
-                    <th>ID</th>
+                    <th class="help" title="Report ID, might be incomplete! Check details for full report ID.">ID</th>
                     <th class="xs-hidden">Organization</th>
                     <th class="sm-hidden">Domain</th>
                     <th class="help" title="Reports with SPF or DKIM problems are highlighted in red">Problems</th>

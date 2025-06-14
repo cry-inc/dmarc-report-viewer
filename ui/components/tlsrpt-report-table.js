@@ -14,11 +14,15 @@ export class TlsRptReportTable extends LitElement {
     }
 
     prepareId(id) {
+        // Many reports contain a piece of the timestamp that is always the same,
+        // lets remove it to save some screen space!
+        const shortened = id.replace("T00:00:00Z", "");
+
         const limit = 25;
-        if (id.length <= limit) {
-            return id;
+        if (shortened.length <= limit) {
+            return shortened;
         } else {
-            return id.substring(0, limit) + "...";
+            return shortened.substring(0, limit) + "...";
         }
     }
 
@@ -46,7 +50,7 @@ export class TlsRptReportTable extends LitElement {
         return html`
             <table>
                 <tr>
-                    <th>ID</th>
+                    <th class="help" title="Report ID, might be incomplete! Check details for full report ID.">ID</th>
                     <th class="xs-hidden">Organization</th>
                     <th class="sm-hidden">Domains</th>
                     <th class="help" title="Reports with MTA-STS or TLSA problems are highlighted in red">Problems</th>
