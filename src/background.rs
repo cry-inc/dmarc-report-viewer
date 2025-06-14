@@ -140,7 +140,7 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
     }
     if !dmarc_parsing_errors.is_empty() {
         warn!(
-            "Failed to parse {} XML file as DMARC reports",
+            "Failed to parse {} XML file(s) as DMARC report(s)",
             dmarc_parsing_errors.len()
         );
     }
@@ -179,13 +179,13 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
     }
     if !tlsrpt_parsing_errors.is_empty() {
         warn!(
-            "Failed to parse {} JSON file as TLS-RPT reports",
+            "Failed to parse {} JSON file(s) as SMTP TLS report(s)",
             tlsrpt_parsing_errors.len()
         );
     }
 
     info!(
-        "Parsed {} DMARC reports and {} TLS-RPT reports successfully",
+        "Parsed {} DMARC reports and {} SMTP TLS reports successfully",
         dmarc_reports.len(),
         tlsrpt_reports.len()
     );

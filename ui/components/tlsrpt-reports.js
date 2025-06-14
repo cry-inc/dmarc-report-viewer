@@ -51,7 +51,7 @@ export class TlsRptReports extends LitElement {
 
     render() {
         return html`
-            <h1>TLS-RPT Reports</h1>
+            <h1>SMTP TLS Reports</h1>
             <div>
                 ${this.filtered ?
                     html`Filter active! <a class="ml button" href="#/tlsrpt-reports">Show all Reports</a>` :

@@ -41,7 +41,7 @@ pub struct Policy {
     pub mx_host: Option<Vec<String>>,
 }
 
-/// A simplified representation of the TLS-RPT policy evaluation result, which
+/// A simplified representation of the SMTP TLS policy evaluation result, which
 /// is used to summarize the report.
 #[derive(Clone, Serialize, Deserialize, Hash, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
@@ -162,7 +162,7 @@ pub struct Report {
 
 impl Report {
     pub fn from_slice(json_file: &[u8]) -> Result<Report> {
-        serde_json::from_slice(json_file).context("Failed to parse JSON as TLS-RPT report")
+        serde_json::from_slice(json_file).context("Failed to parse JSON as SMTP TLS report")
     }
 }
 

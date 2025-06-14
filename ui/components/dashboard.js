@@ -137,7 +137,7 @@ export class Dashboard extends LitElement {
             "neutral": "rgb(13, 202, 240)",
             "temperror": "rgb(253, 126, 20)",
             "permerror": "rgb(132, 32, 41)",
-            // TLS-RPT result colors
+            // SMTP TLS result colors
             "failure": "rgb(220, 53, 69)",
             "successful": "rgb(25, 135, 84)",
         };
@@ -153,7 +153,7 @@ export class Dashboard extends LitElement {
             "Enterprise Outlook": "#0078d4",
             "Fastmail Pty Ltd": "#0067b9",
             "AMAZON-SES": "#ff9900",
-            // TLS-RPT organization colors
+            // SMTP TLS organization colors
             "Microsoft Corporation": "#0078d4",
             "Google Inc.": "#ea4335",
         };
@@ -321,7 +321,7 @@ export class Dashboard extends LitElement {
                 <span class="dmarc">XML Files: <b>${this.xmlFiles}</b></span>
                 <span class="dmarc">DMARC Reports: <b>${this.dmarcReports}</b></span>
                 <span class="tlsrpt">JSON Files: <b>${this.jsonFiles}</b></span>
-                <span class="tlsrpt">TLS-RPT Reports: <b>${this.tlsrptReports}</b></span>
+                <span class="tlsrpt">SMTP TLS Reports: <b>${this.tlsrptReports}</b></span>
                 <span>Last Update: <b>${new Date(this.lastUpdate * 1000).toLocaleString()}</b></span>
             </div>
 
@@ -387,7 +387,7 @@ export class Dashboard extends LitElement {
             </div>
 
             <h2>SMTP TLS Report Summary</h2>
-            <p class="no_tlsrpt_reports">No TLS-RPT reports found.</p>
+            <p class="no_tlsrpt_reports">No SMTP TLS reports found.</p>
 
             <div class="grid tlsrpt">
                 <div class="module tlsrpt tlsrpt_orgs">

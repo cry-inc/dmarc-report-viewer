@@ -42,7 +42,7 @@ export class MailTable extends LitElement {
         } else {
             const files = [];
             if (mail.xml_files > 0) files.push("DMARC");
-            if (mail.json_files > 0) files.push("TLS-RPT");
+            if (mail.json_files > 0) files.push("TLS");
             return html`<span class="faded">${files.join(", ")}</span>`;
         }
     }

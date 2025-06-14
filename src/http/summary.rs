@@ -96,28 +96,28 @@ pub struct TlsRptSummary {
     /// Number of JSON files found in mails from IMAP inbox
     pub files: usize,
 
-    /// Number of successfully parsed TLS-RPT reports JSON files found in IMAP inbox
+    /// Number of successfully parsed SMTP TLS reports JSON files found in IMAP inbox
     pub reports: usize,
 
-    /// Map of organizations with number of corresponding TLS-RPT reports
+    /// Map of organizations with number of corresponding SMTP TLS reports
     pub orgs: HashMap<String, usize>,
 
-    /// Map of domains with number of corresponding TLS-RPT policy evaluations
+    /// Map of domains with number of corresponding SMTP TLS policy evaluations
     pub domains: HashMap<String, usize>,
 
-    /// Map of TLS-RPT policy types
+    /// Map of SMTP TLS policy types
     pub policy_types: HashMap<PolicyType, usize>,
 
-    /// Map of TLS-RPT STS policy evaluation results
+    /// Map of SMTP TLS STS policy evaluation results
     pub sts_policy_results: HashMap<TlsRptResultType, usize>,
 
-    /// Map of TLS-RPT TLSA policy evaluation results
+    /// Map of SMTP TLS TLSA policy evaluation results
     pub tlsa_policy_results: HashMap<TlsRptResultType, usize>,
 
-    /// Map of TLS-RPT STS failure results
+    /// Map of SMTP TLS STS failure results
     pub sts_failure_types: HashMap<FailureResultType, usize>,
 
-    /// Map of TLS-RPT TLSA failure results
+    /// Map of SMTP TLS TLSA failure results
     pub tlsa_failure_types: HashMap<FailureResultType, usize>,
 }
 
@@ -133,7 +133,7 @@ pub struct Reports<'a> {
     /// Parsed DMARC reports with mail UID and corresponding hash as key
     pub dmarc: &'a HashMap<String, DmarcReportWithUid>,
 
-    /// Parsed TLS-RPT reports with mail UID and corresponding hash as key
+    /// Parsed SMTP TLS reports with mail UID and corresponding hash as key
     pub tlsrpt: &'a HashMap<String, TlsRptReportWithUid>,
 }
 
@@ -148,7 +148,7 @@ pub struct Summary {
     /// Information about DMARC reports
     pub dmarc: DmarcSummary,
 
-    /// Information about TLS-RPT reports
+    /// Information about SMTP TLS reports
     pub tlsrpt: TlsRptSummary,
 }
 

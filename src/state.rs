@@ -7,21 +7,21 @@ use std::net::IpAddr;
 
 const CACHE_SIZE: usize = 10000;
 
-/// DMARC Report with UID of the mail that contained the report
+/// DMARC report with UID of the mail that contained the report
 #[derive(Serialize, Deserialize)]
 pub struct DmarcReportWithUid {
     pub uid: u32,
     pub report: dmarc::Report,
 }
 
-/// TLS-RPT Report with UID of the mail that contained the report
+/// SMTP TLS report with UID of the mail that contained the report
 #[derive(Serialize, Deserialize)]
 pub struct TlsRptReportWithUid {
     pub uid: u32,
     pub report: tlsrpt::Report,
 }
 
-/// Parsing errors for DMARC or TLS reports
+/// Parsing errors for DMARC or SMTP TLS reports
 #[derive(Serialize)]
 pub struct ReportParsingError {
     pub error: String,
@@ -39,7 +39,7 @@ pub struct AppState {
     /// Parsed DMARC reports with mail UID and corresponding hash as key
     pub dmarc_reports: HashMap<String, DmarcReportWithUid>,
 
-    /// Parsed TLS-RPT reports with mail UID and corresponding hash as key
+    /// Parsed SMTP TLS reports with mail UID and corresponding hash as key
     pub tlsrpt_reports: HashMap<String, TlsRptReportWithUid>,
 
     /// Number of XML files extracted from mails
@@ -54,7 +54,7 @@ pub struct AppState {
     /// XML DMARC parsing errors keyed by mail UID
     pub dmarc_parsing_errors: HashMap<u32, Vec<ReportParsingError>>,
 
-    /// JSON TLS-RPT parsing errors keyed by mail UID
+    /// JSON SMTP TLS parsing errors keyed by mail UID
     pub tlsrpt_parsing_errors: HashMap<u32, Vec<ReportParsingError>>,
 
     /// IP to DNS cache

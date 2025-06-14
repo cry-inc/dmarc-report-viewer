@@ -54,7 +54,7 @@ export class Mails extends LitElement {
                     html`Filter active! <a class="ml button" href="#/mails">Show all Mails</a>` :
                     html`Filters: <a class="ml button" href="#/mails?oversized=true">Oversized Mails</a>
                          <a class="button" href="#/mails?type=dmarc&oversized=false">With DMARC</a>
-                         <a class="button" href="#/mails?type=tlsrpt&oversized=false">With TLS-RPT</a>
+                         <a class="button" href="#/mails?type=tlsrpt&oversized=false">With TLS</a>
                          <a class="button" href="#/mails?type=empty&oversized=false">Without Files</a>
                          <a class="button" href="#/mails?errors=true">Parsing Errors</a>`
             }
