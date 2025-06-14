@@ -57,7 +57,7 @@ export class TlsRptReports extends LitElement {
                     html`Filter active! <a class="ml button" href="#/tlsrpt-reports">Show all Reports</a>` :
                     html`Filters:
                         <a class="ml button mr-5" href="#/tlsrpt-reports?flagged=true">Reports with Problems</a>
-                        <a class="button mr-5" href="#/tlsrpt-reports?flagged_sts=true">Reports with STS Problems</a>
+                        <a class="button mr-5" href="#/tlsrpt-reports?flagged_sts=true">Reports with MTA-STS Problems</a>
                         <a class="button mr-5" href="#/tlsrpt-reports?flagged_tlsa=true">Reports with TLSA Problems</a>
                     `
                 }
