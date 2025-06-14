@@ -4,11 +4,11 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Dependencies](https://deps.rs/repo/github/cry-inc/dmarc-report-viewer/status.svg)](https://deps.rs/repo/github/cry-inc/dmarc-report-viewer)
 
-A lightweight selfhosted standalone DMARC report viewer that automatically fetches input data periodically from an IMAP mailbox.
-Ideal for smaller selfhosted mailservers to browse, visualize and analyze the DMARC reports.
+A lightweight selfhosted standalone [DMARC](https://en.wikipedia.org/wiki/DMARC#Aggregate_reports) and [SMTP TLS](https://en.wikipedia.org/wiki/Simple_Mail_Transfer_Protocol#SMTP_TLS_Reporting) report viewer.
+Ideal for smaller selfhosted mailservers to browse, visualize and analyze the reports.
 
 The application is a single fully statically linked executable written in Rust.
-It combines a DMARC report parser with an IMAP client and an HTTP server.
+It combines a report parser with an IMAP client and an HTTP server.
 The embedded HTTP server offers a web UI for easy access and filtering of the reports.
 
 You can run the precompiled executable directly on any Linux, Windows or MacOS system.
@@ -24,6 +24,7 @@ You can find more screenshots [here](screenshots/screenshots.md).
 - [x] Runs out of the box on a Raspberry Pi
 - [x] Secure IMAP client (TLS & STARTTLS)
 - [x] Robust parsing of XML DMARC reports
+- [x] Robust parsing of JSON SMTP TLS reports
 - [x] Embedded HTTP server for Web UI
 - [x] Responsive Web UI that works also on small screens
 - [x] Automatic fetching of reports from IMAP inbox
@@ -33,12 +34,13 @@ You can find more screenshots [here](screenshots/screenshots.md).
 - [x] Easy configuration via command line arguments or ENV variables
 - [x] Configurable maximum size of mails (to skip oversized mails)
 - [x] Summary with charts for domains, organizations and passed/failed checks
+- [x] Filter charts summary by domain or time span
 - [x] Viewing filtered lists of reports
-- [x] Viewing of individual DMARC reports
-- [x] Export DMARC reports as XML or JSON documents
+- [x] Viewing of individual reports
+- [x] Export reports as XML or JSON documents
 - [x] List all mails in the IMAP inbox
 - [x] Viewing of individual mail metadata with a list of extracted reports
-- [x] Show parsing errors for DMARC reports
+- [x] Show parsing errors for reports
 - [x] Lookup of DNS, location, whois and other source IP properties
 
 ## Changelog
@@ -61,6 +63,9 @@ You can configure the application with command line arguments or environment var
 For the Docker use case, environment variables are recommended.
 Do not forget to forward the port for the HTTP server!
 By default the HTTP server will use port 8080.
+
+Currently only one combined IMAP inbox for both report types, DMARC and SMTP TLS, is supported.
+You might have to setup some additional forwarding if you are receiving them separate.
 
 Here is an example: 
 
@@ -116,6 +121,7 @@ The Dockerfile works for `amd64` and `arm64` architectures.
 4. You should now be able to see the new Docker image using the command `sudo docker images`
 
 ## Acknowledgments
-- https://github.com/bbustin/dmarc_aggregate_parser was used as foundation for the slightly modified DMARC report parser
-- [Charts.js](https://github.com/chartjs/Chart.js) and [Lit](https://lit.dev/) as embedded as JavaScript libraries for the UI
-- All the other Rust dependencies in [Cargo.toml](Cargo.toml) that make this application possible!
+- All the Rust dependencies in [Cargo.toml](Cargo.toml) that make this application possible!
+- [Charts.js](https://github.com/chartjs/Chart.js) and [Lit](https://lit.dev/) as embedded as JavaScript libraries for the UI.
+- [@bbustin](https://github.com/bbustin) for his [dmarc_aggregate_parser](https://github.com/bbustin/dmarc_aggregate_parser) that was used as starting point for the DMARC report parser.
+- [@marvinruder](https://github.com/marvinruder) implemented support for SMTP TLS reports!
