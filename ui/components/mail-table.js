@@ -17,6 +17,7 @@ export class MailTable extends LitElement {
         subject = subject.replace(/Report Domain: |Report domain: /, "D: ");
         subject = subject.replace(/Submitter: /, "S: ");
         subject = subject.replace(/Report-ID: /, "ID: ");
+        subject = subject.replace(/T00\.00\.00Z/, "");
 
         const limit = 70;
         if (subject.length <= limit) {
@@ -61,7 +62,7 @@ export class MailTable extends LitElement {
         return html`
             <table>
                 <tr>
-                    <th>Subject</th>
+                    <th class="help" title="Subject might be incomplete! Check details for full mail subject.">Subject</th>
                     <th class="sm-hidden">Sender</th>
                     <th class="md-hidden">Date</th>
                     <th class="xs-hidden help" title="Size of E-Mail in Bytes">Size</th>
