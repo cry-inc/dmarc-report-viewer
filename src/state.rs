@@ -37,10 +37,10 @@ pub struct AppState {
     pub mails: HashMap<u32, Mail>,
 
     /// Parsed DMARC reports with mail UID and corresponding hash as key
-    pub dmarc_reports: HashMap<String, DmarcReportWithUid>,
+    pub dmarc_reports: HashMap<u32, DmarcReportWithUid>,
 
     /// Parsed SMTP TLS reports with mail UID and corresponding hash as key
-    pub tlsrpt_reports: HashMap<String, TlsRptReportWithUid>,
+    pub tlsrpt_reports: HashMap<u32, TlsRptReportWithUid>,
 
     /// Number of XML files extracted from mails
     pub xml_files: usize,
