@@ -211,7 +211,9 @@ pub fn extract_report_files(mail: &mut Mail) -> Result<Vec<ReportFile>> {
                 mail_uid: mail.uid,
                 hash,
             });
-        } else if content_type.contains("application/tlsrpt+json") {
+        } else if content_type.contains("application/tlsrpt+json")
+            || content_type.contains("application/json")
+        {
             trace!("Detected uncompressed JSON attachment for mail with UID {uid} in part {index}");
             let json = part
                 .get_body_raw()
