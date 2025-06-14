@@ -93,16 +93,16 @@ pub async fn errors_handler(
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "lowercase")]
-pub enum AttachmentFilterType {
+pub enum Attachment {
     Dmarc,
-    TlsRpt,
-    Empty,
+    Tls,
+    None,
 }
 
 #[derive(Deserialize, Debug)]
 pub struct MailFilters {
     sender: Option<String>,
-    r#type: Option<AttachmentFilterType>,
+    attachment: Option<Attachment>,
     oversized: Option<bool>,
     errors: Option<bool>,
 }
@@ -111,7 +111,7 @@ impl MailFilters {
     fn url_decode(&self) -> Self {
         Self {
             oversized: self.oversized,
-            r#type: self.r#type.clone(),
+            attachment: self.attachment.clone(),
             errors: self.errors,
             sender: self
                 .sender
@@ -148,11 +148,11 @@ pub async fn list_handler(
             }
         })
         .filter(|m| {
-            if let Some(queried_type) = &filters.r#type {
+            if let Some(queried_type) = &filters.attachment {
                 match queried_type {
-                    AttachmentFilterType::Dmarc => m.xml_files > 0,
-                    AttachmentFilterType::TlsRpt => m.json_files > 0,
-                    AttachmentFilterType::Empty => m.xml_files == 0 && m.json_files == 0,
+                    Attachment::Dmarc => m.xml_files > 0,
+                    Attachment::Tls => m.json_files > 0,
+                    Attachment::None => m.xml_files == 0 && m.json_files == 0,
                 }
             } else {
                 true
