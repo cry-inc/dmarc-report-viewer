@@ -14,20 +14,12 @@ use tokio::task::spawn_blocking;
 
 pub async fn to_dns_handler(
     State(state): State<Arc<Mutex<AppState>>>,
-    Path(ip): Path<String>,
+    Path(ip): Path<IpAddr>,
 ) -> impl IntoResponse {
-    let Ok(parsed_ip) = ip.parse::<IpAddr>() else {
-        return (
-            StatusCode::BAD_REQUEST,
-            [(header::CONTENT_TYPE, "text/plain")],
-            format!("Invalid IP {ip}"),
-        );
-    };
-
     // Check cache
     let cached = {
         let app = state.lock().await;
-        app.ip_dns_cache.get(&parsed_ip).map(|dns| dns.to_string())
+        app.ip_dns_cache.get(&ip).map(|dns| dns.to_string())
     };
 
     let result = if let Some(host_name) = cached {
@@ -37,7 +29,7 @@ pub async fn to_dns_handler(
         // Nothing in cache, send new DNS request!
         // Do not block here and use a special async task
         // where blocking calls are acceptable
-        let handle = spawn_blocking(move || lookup_addr(&parsed_ip));
+        let handle = spawn_blocking(move || lookup_addr(&ip));
 
         // Join async task
         let Ok(result) = handle.await else {
@@ -51,7 +43,7 @@ pub async fn to_dns_handler(
         // Cache any positive result
         if let Ok(host_name) = result {
             let mut app = state.lock().await;
-            app.ip_dns_cache.insert(parsed_ip, host_name.clone());
+            app.ip_dns_cache.insert(ip, host_name.clone());
             Some(host_name)
         } else {
             None
@@ -75,20 +67,12 @@ pub async fn to_dns_handler(
 
 pub async fn to_location_handler(
     State(state): State<Arc<Mutex<AppState>>>,
-    Path(ip): Path<String>,
+    Path(ip): Path<IpAddr>,
 ) -> impl IntoResponse {
-    let Ok(parsed_ip) = ip.parse::<IpAddr>() else {
-        return (
-            StatusCode::BAD_REQUEST,
-            [(header::CONTENT_TYPE, "text/plain")],
-            format!("Invalid IP {ip}"),
-        );
-    };
-
     // Check cache
     let cached = {
         let app = state.lock().await;
-        app.ip_location_cache.get(&parsed_ip).cloned()
+        app.ip_location_cache.get(&ip).cloned()
     };
 
     let result = if let Some(location) = cached {
@@ -96,7 +80,7 @@ pub async fn to_location_handler(
         Some(location)
     } else {
         // Nothing in cache, send new request!
-        let Ok(result) = Location::from_ip(&parsed_ip).await else {
+        let Ok(result) = Location::from_ip(&ip).await else {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 [(header::CONTENT_TYPE, "text/plain")],
@@ -107,7 +91,7 @@ pub async fn to_location_handler(
         // Cache any positive result
         if let Some(location) = result {
             let mut app = state.lock().await;
-            app.ip_location_cache.insert(parsed_ip, location.clone());
+            app.ip_location_cache.insert(ip, location.clone());
             Some(location)
         } else {
             None
@@ -129,17 +113,9 @@ pub async fn to_location_handler(
     )
 }
 
-pub async fn to_whois_handler(Path(ip): Path<String>) -> impl IntoResponse {
-    let Ok(parsed_ip) = ip.parse::<IpAddr>() else {
-        return (
-            StatusCode::BAD_REQUEST,
-            [(header::CONTENT_TYPE, "text/plain")],
-            format!("Invalid IP {ip}"),
-        );
-    };
-
+pub async fn to_whois_handler(Path(ip): Path<IpAddr>) -> impl IntoResponse {
     let whois = WhoIsIp::default();
-    let Ok(whois) = whois.lookup(&parsed_ip).await else {
+    let Ok(whois) = whois.lookup(&ip).await else {
         return (
             StatusCode::NOT_FOUND,
             [(header::CONTENT_TYPE, "text/plain")],

@@ -11,17 +11,10 @@ use tokio::sync::Mutex;
 
 pub async fn single_handler(
     State(state): State<Arc<Mutex<AppState>>>,
-    Path(id): Path<String>,
+    Path(uid): Path<u32>,
 ) -> impl IntoResponse {
-    let Ok(parsed_uid) = id.parse::<u32>() else {
-        return (
-            StatusCode::BAD_REQUEST,
-            [(header::CONTENT_TYPE, "text/plain")],
-            format!("Invalid ID {id}"),
-        );
-    };
     let lock = state.lock().await;
-    if let Some((_, mail)) = lock.mails.iter().find(|(uid, _)| **uid == parsed_uid) {
+    if let Some((_, mail)) = lock.mails.iter().find(|(id, _)| **id == uid) {
         let mail_json = serde_json::to_string(mail).expect("Failed to serialize JSON");
         (
             StatusCode::OK,
@@ -32,34 +25,27 @@ pub async fn single_handler(
         (
             StatusCode::NOT_FOUND,
             [(header::CONTENT_TYPE, "text/plain")],
-            format!("Cannot find mail with ID {id}"),
+            String::from("Cannot find mail"),
         )
     }
 }
 
 pub async fn errors_handler(
     State(state): State<Arc<Mutex<AppState>>>,
-    Path(id): Path<String>,
+    Path(uid): Path<u32>,
 ) -> impl IntoResponse {
-    let Ok(parsed_uid) = id.parse::<u32>() else {
-        return (
-            StatusCode::BAD_REQUEST,
-            [(header::CONTENT_TYPE, "text/plain")],
-            format!("Invalid ID {id}"),
-        );
-    };
     let lock = state.lock().await;
-    if !lock.mails.contains_key(&parsed_uid) {
+    if !lock.mails.contains_key(&uid) {
         return (
             StatusCode::NOT_FOUND,
             [(header::CONTENT_TYPE, "text/plain")],
-            format!("Cannot find mail with ID {id}"),
+            String::from("Cannot find mail"),
         );
     }
 
     let mut errors_map = serde_json::Map::new();
 
-    if let Some(errors) = lock.dmarc_parsing_errors.get(&parsed_uid) {
+    if let Some(errors) = lock.dmarc_parsing_errors.get(&uid) {
         errors_map.insert(
             "xml".to_string(),
             serde_json::Value::Array(
@@ -71,7 +57,7 @@ pub async fn errors_handler(
         );
     }
 
-    if let Some(errors) = lock.tlsrpt_parsing_errors.get(&parsed_uid) {
+    if let Some(errors) = lock.tlsrpt_parsing_errors.get(&uid) {
         errors_map.insert(
             "json".to_string(),
             serde_json::Value::Array(
