@@ -86,7 +86,7 @@ fn decode_word(charset: &str, encoding: &str, data: &str) -> Result<String> {
 /// Supported charsets: Only UTF-8
 /// Supported encodings: Base64 and Q
 pub fn decode_subject(value: &str) -> String {
-    let re = Regex::new(r"=\?(.+?)\?(.)\?(.+?)\?=").unwrap();
+    let re = Regex::new(r"=\?(.+?)\?(.)\?(.+?)\?=").expect("Failed to parse Regex");
     let mut result = value.to_owned();
     for capture in re.captures_iter(value) {
         let (matched, [charset, encoding, encoded]) = capture.extract();
