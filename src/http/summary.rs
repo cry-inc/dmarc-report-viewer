@@ -301,21 +301,19 @@ impl Summary {
                         .policy_types
                         .insert(policy_result.policy.policy_type.clone(), 1);
                 }
-                let policy_results;
-                let failure_types;
-                match &policy_result.policy.policy_type {
-                    PolicyType::Sts => {
-                        policy_results = &mut tlsrpt.sts_policy_results;
-                        failure_types = &mut tlsrpt.sts_failure_types;
-                    }
-                    PolicyType::Tlsa => {
-                        policy_results = &mut tlsrpt.tlsa_policy_results;
-                        failure_types = &mut tlsrpt.tlsa_failure_types;
-                    }
+                let (policy_results, failure_types) = match &policy_result.policy.policy_type {
+                    PolicyType::Sts => (
+                        &mut tlsrpt.sts_policy_results,
+                        &mut tlsrpt.sts_failure_types,
+                    ),
+                    PolicyType::Tlsa => (
+                        &mut tlsrpt.tlsa_policy_results,
+                        &mut tlsrpt.tlsa_failure_types,
+                    ),
                     PolicyType::NoPolicyFound => {
                         continue;
                     }
-                }
+                };
                 let success_count = policy_result.summary.total_successful_session_count;
                 let failure_count = policy_result.summary.total_failure_session_count;
                 if let Some(entry) = policy_results.get_mut(&TlsRptResultType::Successful) {

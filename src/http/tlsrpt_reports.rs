@@ -61,14 +61,10 @@ impl ReportHeader {
         let mut tlsa_flagged = false;
         for policy_result in &report.policies {
             if policy_result.summary.total_failure_session_count > 0 {
-                match &policy_result.policy.policy_type {
-                    PolicyType::Sts => {
-                        sts_flagged = true;
-                    }
-                    PolicyType::Tlsa => {
-                        tlsa_flagged = true;
-                    }
-                    _ => {}
+                if policy_result.policy.policy_type == PolicyType::Sts {
+                    sts_flagged = true;
+                } else if policy_result.policy.policy_type == PolicyType::Tlsa {
+                    tlsa_flagged = true;
                 }
             }
         }
