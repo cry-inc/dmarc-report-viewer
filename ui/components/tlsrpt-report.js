@@ -1,4 +1,4 @@
-import { LitElement, html, css } from "lit";
+import { LitElement, html, nothing } from "lit";
 import { globalStyle } from "./style.js";
 
 export class TlsRptReport extends LitElement {
@@ -199,7 +199,7 @@ export class TlsRptReport extends LitElement {
                                 <td class="name">Policy String</td>
                                 <td>${this.renderMultilineCell(policy.policy["policy-string"])}</td>
                             </tr>
-                        ` : html``}
+                        ` : nothing}
                         <tr>
                             <td class="name">Policy Domain</td>
                             <td>${policy.policy["policy-domain"]}</td>
@@ -209,7 +209,7 @@ export class TlsRptReport extends LitElement {
                                 <td class="name">MX Host</td>
                                 <td>${this.renderMultilineCell(policy.policy["mx-host"])}</td>
                             </tr>
-                        ` : html``}
+                        ` : nothing}
 
                         <tr>
                             <th colspan="2">Summary</td>
@@ -291,7 +291,7 @@ export class TlsRptReport extends LitElement {
                                     <td class="name">Receiving MTA HELO</td>
                                     <td>${failureDetails["receiving-mx-helo"]}</td>
                                 </tr>
-                            ` : html``}
+                            ` : nothing}
                         </tbody>
                         ${"receiving-ip" in failureDetails ? html`
                             <tbody>
@@ -343,7 +343,7 @@ export class TlsRptReport extends LitElement {
                                     </td>
                                 </tr>
                             </tbody>
-                        ` : html``}
+                        ` : nothing}
                         <tbody>
                             <tr>
                                 <td class="name">Failed Session Count</td>
@@ -354,15 +354,15 @@ export class TlsRptReport extends LitElement {
                                     <td class="name">Additional Information</td>
                                     <td>${failureDetails["additional-information"]}</td>
                                 </tr>
-                            ` : html``}
+                            ` : nothing}
                             ${"failure-reason-code" in failureDetails ? html`
                                 <tr>
                                     <td class="name">Failure Reason Code</td>
                                     <td>${failureDetails["failure-reason-code"]}</td>
                                 </tr>
-                            ` : html``}
+                            ` : nothing}
                         </tbody>
-                    `) : html``}
+                    `) : nothing}
                 </table>
             `)}
         `;
