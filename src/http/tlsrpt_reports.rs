@@ -181,7 +181,7 @@ pub async fn single_handler(
         (
             StatusCode::NOT_FOUND,
             [(header::CONTENT_TYPE, "text/plain")],
-            format!("Cannot find report with ID {id}"),
+            String::from("Cannot find report"),
         )
     }
 }
@@ -202,7 +202,7 @@ pub async fn json_handler(
         (
             StatusCode::NOT_FOUND,
             [(header::CONTENT_TYPE, "text/plain")],
-            format!("Cannot find report with ID {id}"),
+            String::from("Cannot find report"),
         )
     }
 }
