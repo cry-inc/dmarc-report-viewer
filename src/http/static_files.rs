@@ -42,13 +42,13 @@ const STATIC_FILES: &[StaticFile] = &[
     },
     StaticFile {
         http_path: "/chart.js",
-        file_path: "ui/chart.umd.4.4.2.min.js",
-        _data: include_bytes!("../../ui/chart.umd.4.4.2.min.js"),
+        file_path: "ui/chart.umd.4.5.0.min.js",
+        _data: include_bytes!("../../ui/chart.umd.4.5.0.min.js"),
     },
     StaticFile {
         http_path: "/lit.js",
-        file_path: "ui/lit-core.3.1.4.min.js",
-        _data: include_bytes!("../../ui/lit-core.3.1.4.min.js"),
+        file_path: "ui/lit-core.3.3.0.min.js",
+        _data: include_bytes!("../../ui/lit-core.3.3.0.min.js"),
     },
     StaticFile {
         http_path: "/components/style.js",
