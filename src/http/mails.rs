@@ -108,26 +108,21 @@ pub struct MailFilters {
 }
 
 impl MailFilters {
-    fn url_decode(&self) -> Self {
-        Self {
-            oversized: self.oversized,
-            attachment: self.attachment.clone(),
-            errors: self.errors,
-            sender: self
-                .sender
-                .as_ref()
-                .and_then(|s| urlencoding::decode(s).ok())
-                .map(|s| s.to_string()),
-        }
+    fn url_decode(&mut self) {
+        self.sender = self
+            .sender
+            .as_ref()
+            .and_then(|s| urlencoding::decode(s).ok())
+            .map(|s| s.to_string());
     }
 }
 
 pub async fn list_handler(
     State(state): State<Arc<Mutex<AppState>>>,
-    filters: Query<MailFilters>,
+    mut filters: Query<MailFilters>,
 ) -> impl IntoResponse {
     // Remove URL encoding from strings in filters
-    let filters = filters.url_decode();
+    filters.url_decode();
 
     let lock = state.lock().await;
     let mails: Vec<&Mail> = lock

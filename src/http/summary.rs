@@ -23,23 +23,20 @@ pub struct SummaryFilters {
 }
 
 impl SummaryFilters {
-    fn url_decode(&self) -> Self {
-        Self {
-            time_span: self.time_span,
-            domain: self
-                .domain
-                .as_ref()
-                .and_then(|s| urlencoding::decode(s).ok())
-                .map(|s| s.to_string()),
-        }
+    fn url_decode(&mut self) {
+        self.domain = self
+            .domain
+            .as_ref()
+            .and_then(|s| urlencoding::decode(s).ok())
+            .map(|s| s.to_string());
     }
 }
 
 pub async fn handler(
     State(state): State<Arc<Mutex<AppState>>>,
-    filters: Query<SummaryFilters>,
+    mut filters: Query<SummaryFilters>,
 ) -> impl IntoResponse {
-    let filters = filters.url_decode();
+    filters.url_decode();
     let guard = state.lock().await;
     let mut time_span = None;
     if let Some(hours) = filters.time_span {
@@ -59,7 +56,7 @@ pub async fn handler(
         },
         guard.last_update,
         time_span,
-        filters.domain,
+        filters.domain.clone(),
     );
     Json(summary)
 }

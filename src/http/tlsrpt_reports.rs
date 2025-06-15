@@ -83,32 +83,26 @@ pub struct ReportFilters {
 }
 
 impl ReportFilters {
-    fn url_decode(&self) -> Self {
-        Self {
-            uid: self.uid,
-            flagged: self.flagged,
-            flagged_sts: self.flagged_sts,
-            flagged_tlsa: self.flagged_tlsa,
-            domain: self
-                .domain
-                .as_ref()
-                .and_then(|d| urlencoding::decode(d).ok())
-                .map(|d| d.to_string()),
-            org: self
-                .org
-                .as_ref()
-                .and_then(|o| urlencoding::decode(o).ok())
-                .map(|o| o.to_string()),
-        }
+    fn url_decode(&mut self) {
+        self.domain = self
+            .domain
+            .as_ref()
+            .and_then(|d| urlencoding::decode(d).ok())
+            .map(|d| d.to_string());
+        self.org = self
+            .org
+            .as_ref()
+            .and_then(|o| urlencoding::decode(o).ok())
+            .map(|o| o.to_string());
     }
 }
 
 pub async fn list_handler(
     State(state): State<Arc<Mutex<AppState>>>,
-    filters: Query<ReportFilters>,
+    mut filters: Query<ReportFilters>,
 ) -> impl IntoResponse {
     // Remove URL encoding from strings in filters
-    let filters = filters.url_decode();
+    filters.url_decode();
 
     let reports: Vec<ReportHeader> = state
         .lock()
