@@ -31,7 +31,7 @@ struct ReportHeader {
 
 impl ReportHeader {
     pub fn from_report(hash: &str, report: &Report) -> Self {
-        let (flagged_sts, flagged_tlsa) = Self::report_is_flagged(report);
+        let (flagged_sts, flagged_tlsa) = Self::flags(report);
         Self {
             hash: hash.to_string(),
             id: report.report_id.clone(),
@@ -55,8 +55,8 @@ impl ReportHeader {
         }
     }
 
-    /// Checks if the report has STS or TLSA issues
-    fn report_is_flagged(report: &Report) -> (bool, bool) {
+    /// Returns if the report has STS or TLSA issues
+    fn flags(report: &Report) -> (bool, bool) {
         let mut sts_flagged = false;
         let mut tlsa_flagged = false;
         for policy_result in &report.policies {

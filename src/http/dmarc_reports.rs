@@ -31,7 +31,7 @@ struct ReportHeader {
 
 impl ReportHeader {
     pub fn from_report(hash: &str, report: &Report) -> Self {
-        let (flagged_dkim, flagged_spf) = Self::report_is_flagged(report);
+        let (flagged_dkim, flagged_spf) = Self::flags(report);
         Self {
             hash: hash.to_string(),
             id: report.report_metadata.report_id.clone(),
@@ -46,8 +46,8 @@ impl ReportHeader {
         }
     }
 
-    /// Checks if the report has DKIM or SPF issues
-    fn report_is_flagged(report: &Report) -> (bool, bool) {
+    /// Returns if the report has DKIM or SPF issues
+    fn flags(report: &Report) -> (bool, bool) {
         let mut dkim_flagged = false;
         let mut spf_flagged = false;
         for record in &report.record {
