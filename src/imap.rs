@@ -54,8 +54,13 @@ pub async fn get_mails(config: &Configuration) -> Result<HashMap<u32, Mail>> {
         while let Some(fetch_result) = stream.next().await {
             let fetched =
                 fetch_result.context("Failed to get next mail header from IMAP fetch response")?;
-            let mail = extract_metadata(&fetched, config.max_mail_size as usize)
-                .context("Unable to extract mail metadata")?;
+            let mail = extract_metadata(
+                &fetched,
+                config.max_mail_size as usize,
+                &config.imap_user,
+                &config.imap_folder,
+            )
+            .context("Unable to extract mail metadata")?;
             mails.insert(mail.uid, mail);
         }
         info!("Downloaded metadata of {} mails", mails.len());
@@ -254,7 +259,7 @@ async fn create_tls_stream(
     Ok(tls_stream)
 }
 
-fn extract_metadata(mail: &Fetch, max_size: usize) -> Result<Mail> {
+fn extract_metadata(mail: &Fetch, max_size: usize, account: &str, folder: &str) -> Result<Mail> {
     let uid = mail.uid.context("Mail server did not provide UID")?;
     let size = mail.size.unwrap_or(0) as usize; // In case the mail server ignored our request for the size
     let env = mail
@@ -277,6 +282,8 @@ fn extract_metadata(mail: &Fetch, max_size: usize) -> Result<Mail> {
             .as_ref(),
     );
     Ok(Mail {
+        account: account.to_string(),
+        folder: folder.to_string(),
         body: None,
         uid,
         sender,

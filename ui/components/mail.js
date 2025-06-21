@@ -68,6 +68,14 @@ export class Mail extends LitElement {
                     <td>${this.mail.uid}</td>
                 </tr>
                 <tr>
+                    <td class="name">Account</td>
+                    <td>${this.mail.account}</td>
+                </tr>
+                <tr>
+                    <td class="name">Folder</td>
+                    <td>${this.mail.folder}</td>
+                </tr>
+                <tr>
                     <td class="name">Size</td>
                     <td>${this.mail.size} Bytes</td>
                 </tr>
