@@ -159,7 +159,7 @@ pub fn extract_report_files(mail: &mut Mail) -> Result<Vec<ReportFile>> {
                 report_files_zip.len()
             );
             for report in report_files_zip {
-                let hash = create_hash(&report.data, Some(mail.uid));
+                let hash = create_hash(&[&report.data, &mail.uid.to_le_bytes()]);
                 report_files.push(ReportFile {
                     file_type: report.file_type,
                     data: report.data,
@@ -176,7 +176,7 @@ pub fn extract_report_files(mail: &mut Mail) -> Result<Vec<ReportFile>> {
                 .context("Failed to get raw body of attachment part")?;
             let xml =
                 get_report_from_gz(&body).context("Failed to extract XML from GZ attachment")?;
-            let hash = create_hash(&xml, Some(mail.uid));
+            let hash = create_hash(&[&xml, &mail.uid.to_le_bytes()]);
             report_files.push(ReportFile {
                 file_type: FileType::Xml,
                 data: xml,
@@ -190,7 +190,7 @@ pub fn extract_report_files(mail: &mut Mail) -> Result<Vec<ReportFile>> {
             let xml = part
                 .get_body_raw()
                 .context("Failed to get raw body of attachment part")?;
-            let hash = create_hash(&xml, Some(mail.uid));
+            let hash = create_hash(&[&xml, &mail.uid.to_le_bytes()]);
             report_files.push(ReportFile {
                 file_type: FileType::Xml,
                 data: xml,
@@ -204,7 +204,7 @@ pub fn extract_report_files(mail: &mut Mail) -> Result<Vec<ReportFile>> {
                 .context("Failed to get raw body of attachment part")?;
             let json =
                 get_report_from_gz(&body).context("Failed to extract JSON from GZ attachment")?;
-            let hash = create_hash(&json, Some(mail.uid));
+            let hash = create_hash(&[&json, &mail.uid.to_le_bytes()]);
             report_files.push(ReportFile {
                 file_type: FileType::Json,
                 data: json,
@@ -218,7 +218,7 @@ pub fn extract_report_files(mail: &mut Mail) -> Result<Vec<ReportFile>> {
             let json = part
                 .get_body_raw()
                 .context("Failed to get raw body of attachment part")?;
-            let hash = create_hash(&json, Some(mail.uid));
+            let hash = create_hash(&[&json, &mail.uid.to_le_bytes()]);
             report_files.push(ReportFile {
                 file_type: FileType::Json,
                 data: json,

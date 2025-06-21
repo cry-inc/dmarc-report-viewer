@@ -113,7 +113,7 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
                     report,
                     uid: xml_file.mail_uid,
                 };
-                let hash = create_hash(&xml_file.data, Some(xml_file.mail_uid));
+                let hash = create_hash(&[&xml_file.data, &xml_file.mail_uid.to_le_bytes()]);
                 dmarc_reports.insert(hash, rwu);
             }
             Err(err) => {
@@ -152,7 +152,7 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
                     report,
                     uid: json_file.mail_uid,
                 };
-                let hash = create_hash(&json_file.data, Some(json_file.mail_uid));
+                let hash = create_hash(&[&json_file.data, &json_file.mail_uid.to_le_bytes()]);
                 tlsrpt_reports.insert(hash, rwu);
             }
             Err(err) => {
