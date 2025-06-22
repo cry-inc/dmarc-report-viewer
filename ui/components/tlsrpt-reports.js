@@ -1,5 +1,5 @@
 import { LitElement, html } from "lit";
-import { globalStyle } from "./style.js";
+import { globalStyle } from "../style.js";
 
 export class TlsRptReports extends LitElement {
     static styles = [globalStyle];

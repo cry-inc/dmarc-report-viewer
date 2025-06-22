@@ -1,5 +1,5 @@
 import { LitElement, html, css, nothing } from "lit";
-import { globalStyle } from "./style.js";
+import { globalStyle } from "../style.js";
 
 export class Mail extends LitElement {
     static styles = [globalStyle, css`

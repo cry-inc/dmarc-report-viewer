@@ -51,9 +51,9 @@ const STATIC_FILES: &[StaticFile] = &[
         _data: include_bytes!("../../ui/lit-core.3.3.0.min.js"),
     },
     StaticFile {
-        http_path: "/components/style.js",
-        file_path: "ui/components/style.js",
-        _data: include_bytes!("../../ui/components/style.js"),
+        http_path: "/style.js",
+        file_path: "ui/style.js",
+        _data: include_bytes!("../../ui/style.js"),
     },
     StaticFile {
         http_path: "/components/app.js",
