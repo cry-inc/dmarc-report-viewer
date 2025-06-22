@@ -1,5 +1,6 @@
 import { LitElement, html } from "lit";
 import { globalStyle } from "../style.js";
+import { join } from "../utils.js";
 
 export class TlsRptReportTable extends LitElement {
     static styles = [globalStyle];
@@ -32,18 +33,19 @@ export class TlsRptReportTable extends LitElement {
             badges.push(html`<span class="badge badge-negative">MTA-STS</span>`);
         }
         if (tlsa) {
-            badges.push(html` <span class="badge badge-negative">TLSA</span>`);
+            badges.push(html`<span class="badge badge-negative">TLSA</span>`);
         }
-        return badges;
+        return join(badges, html` `);
     }
 
     renderDomains(domains) {
         if (domains.length === 0) {
             return html`<span class="faded">No domains</span>`;
         }
-        return domains.reduce((acc, domain) => acc.concat(html`, `, html`
-            <a href="#/tlsrpt-reports?domain=${encodeURIComponent(domain)}">${domain}</a>
-        `), []).slice(1);
+        const links = domains.map(
+            d => html`<a href="#/tlsrpt-reports?domain=${encodeURIComponent(d)}">${d}</a>`
+        );
+        return join(links, html`, `);
     }
 
     render() {

@@ -1,5 +1,6 @@
 import { LitElement, html, nothing } from "lit";
 import { globalStyle } from "../style.js";
+import { join } from "../utils.js";
 
 export class TlsRptReport extends LitElement {
     static styles = [globalStyle];
@@ -112,7 +113,8 @@ export class TlsRptReport extends LitElement {
     }
 
     renderMultilineCell(array) {
-        return array.reduce((acc, line) => acc.concat(html`<br>`, html`${line}`), []).slice(1);
+        const lines = array.map(l => html`${l}`);
+        return join(lines, html`<br>`);
     }
 
     renderLocation(lat, lon) {
@@ -283,7 +285,7 @@ export class TlsRptReport extends LitElement {
                         </tbody>
                         <tbody>
                             <tr>
-                                <td class="name">Receiving MX Hostname</td>
+                                <td class="name">Receiving MX Host</td>
                                 <td>${failureDetails["receiving-mx-hostname"]}</td>
                             </tr>
                             ${"receiving-mx-helo" in failureDetails ? html`
