@@ -7,17 +7,17 @@ use std::net::IpAddr;
 
 const CACHE_SIZE: usize = 10000;
 
-/// DMARC report with UID of the mail that contained the report
+/// DMARC report with ID of the mail that contained the report
 #[derive(Serialize, Deserialize)]
-pub struct DmarcReportWithUid {
-    pub uid: u32,
+pub struct DmarcReportWithMailId {
+    pub mail_id: String,
     pub report: dmarc::Report,
 }
 
-/// SMTP TLS report with UID of the mail that contained the report
+/// SMTP TLS report with ID of the mail that contained the report
 #[derive(Serialize, Deserialize)]
-pub struct TlsRptReportWithUid {
-    pub uid: u32,
+pub struct TlsRptReportWithMailId {
+    pub mail_id: String,
     pub report: tlsrpt::Report,
 }
 
@@ -33,14 +33,14 @@ pub struct ReportParsingError {
 /// parses them, analyzes DMARC reports and makes them available for
 /// the web frontend running on to the embedded HTTP server.
 pub struct AppState {
-    /// Mails from IMAP inbox with mail UID as key
-    pub mails: HashMap<u32, Mail>,
+    /// Mails from IMAP inbox with mail ID as key
+    pub mails: HashMap<String, Mail>,
 
     /// Parsed DMARC reports with mail UID and corresponding hash as key
-    pub dmarc_reports: HashMap<String, DmarcReportWithUid>,
+    pub dmarc_reports: HashMap<String, DmarcReportWithMailId>,
 
     /// Parsed SMTP TLS reports with mail UID and corresponding hash as key
-    pub tlsrpt_reports: HashMap<String, TlsRptReportWithUid>,
+    pub tlsrpt_reports: HashMap<String, TlsRptReportWithMailId>,
 
     /// Number of XML files extracted from mails
     pub xml_files: usize,
@@ -51,11 +51,11 @@ pub struct AppState {
     /// Time of last update from IMAP inbox as Unix timestamp
     pub last_update: u64,
 
-    /// XML DMARC parsing errors keyed by mail UID
-    pub dmarc_parsing_errors: HashMap<u32, Vec<ReportParsingError>>,
+    /// XML DMARC parsing errors keyed by mail ID
+    pub dmarc_parsing_errors: HashMap<String, Vec<ReportParsingError>>,
 
-    /// JSON SMTP TLS parsing errors keyed by mail UID
-    pub tlsrpt_parsing_errors: HashMap<u32, Vec<ReportParsingError>>,
+    /// JSON SMTP TLS parsing errors keyed by mail ID
+    pub tlsrpt_parsing_errors: HashMap<String, Vec<ReportParsingError>>,
 
     /// IP to DNS cache
     pub ip_dns_cache: CacheMap<IpAddr, String>,

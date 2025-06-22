@@ -81,7 +81,7 @@ impl ReportHeader {
 
 #[derive(Deserialize)]
 pub struct ReportFilters {
-    uid: Option<u32>,
+    id: Option<String>,
     flagged: Option<bool>,
     flagged_dkim: Option<bool>,
     flagged_spf: Option<bool>,
@@ -116,28 +116,28 @@ pub async fn list_handler(
         .await
         .dmarc_reports
         .iter()
-        .filter(|(_, rwu)| {
-            if let Some(queried_uid) = filters.uid {
-                rwu.uid == queried_uid
+        .filter(|(_, rwi)| {
+            if let Some(id) = &filters.id {
+                rwi.mail_id == *id
             } else {
                 true
             }
         })
-        .filter(|(_, rwu)| {
+        .filter(|(_, rwi)| {
             if let Some(org) = &filters.org {
-                rwu.report.report_metadata.org_name == *org
+                rwi.report.report_metadata.org_name == *org
             } else {
                 true
             }
         })
-        .filter(|(_, rwu)| {
+        .filter(|(_, rwi)| {
             if let Some(domain) = &filters.domain {
-                rwu.report.policy_published.domain == *domain
+                rwi.report.policy_published.domain == *domain
             } else {
                 true
             }
         })
-        .map(|(hash, rwu)| ReportHeader::from_report(hash, &rwu.report))
+        .map(|(hash, rwi)| ReportHeader::from_report(hash, &rwi.report))
         .filter(|rh| {
             if let Some(flagged) = &filters.flagged {
                 rh.flagged == *flagged
@@ -168,8 +168,8 @@ pub async fn single_handler(
     Path(id): Path<String>,
 ) -> impl IntoResponse {
     let lock = state.lock().await;
-    if let Some(rwu) = lock.dmarc_reports.get(&id) {
-        let report_json = serde_json::to_string(rwu).expect("Failed to serialize JSON");
+    if let Some(rwi) = lock.dmarc_reports.get(&id) {
+        let report_json = serde_json::to_string(rwi).expect("Failed to serialize JSON");
         (
             StatusCode::OK,
             [(header::CONTENT_TYPE, "application/json")],
@@ -189,8 +189,8 @@ pub async fn json_handler(
     Path(id): Path<String>,
 ) -> impl IntoResponse {
     let lock = state.lock().await;
-    if let Some(rwu) = lock.dmarc_reports.get(&id) {
-        let report_json = serde_json::to_string(&rwu.report).expect("Failed to serialize JSON");
+    if let Some(rwi) = lock.dmarc_reports.get(&id) {
+        let report_json = serde_json::to_string(&rwi.report).expect("Failed to serialize JSON");
         (
             StatusCode::OK,
             [(header::CONTENT_TYPE, "application/json")],
@@ -210,11 +210,11 @@ pub async fn xml_handler(
     Path(id): Path<String>,
 ) -> impl IntoResponse {
     let lock = state.lock().await;
-    if let Some(rwu) = lock.dmarc_reports.get(&id) {
+    if let Some(rwi) = lock.dmarc_reports.get(&id) {
         let mut report_xml = String::new();
         let mut serializer = quick_xml::se::Serializer::new(&mut report_xml);
         serializer.indent(' ', 2);
-        rwu.report
+        rwi.report
             .serialize(serializer)
             .expect("Failed to serialize XML");
         report_xml = String::from("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n") + &report_xml;

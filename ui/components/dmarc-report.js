@@ -7,14 +7,14 @@ export class DmarcReport extends LitElement {
     static get properties() {
         return {
             hash: { type: String },
-            uid: { type: String, attribute: false },
+            mailId: { type: String, attribute: false },
         };
     }
 
     constructor() {
         super();
         this.hash = null;
-        this.uid = null;
+        this.mailId = null;
         this.report = null;
         this.ip2dns = {};
         this.ip2location = {};
@@ -24,9 +24,9 @@ export class DmarcReport extends LitElement {
     async updated(changedProperties) {
         if (changedProperties.has("hash") && changedProperties.hash !== this.hash && this.hash) {
             const response = await fetch("dmarc-reports/" + this.hash);
-            const rwu = await response.json();
-            this.report = rwu.report;
-            this.uid = rwu.uid;
+            const rwi = await response.json();
+            this.report = rwi.report;
+            this.mailId = rwi.mail_id;
         }
     }
 
@@ -126,7 +126,7 @@ export class DmarcReport extends LitElement {
         return html`
             <h1>Report Details</h1>
             <p>
-                <a class="button" href="#/mails/${this.uid}">Show Mail</a>
+                <a class="button" href="#/mails/${this.mailId}">Show Mail</a>
                 <a class="button" href="/dmarc-reports/${this.hash}/xml" target="_blank">Open XML</a>
                 <a class="button" href="/dmarc-reports/${this.hash}/json" target="_blank">Open JSON</a>
             </p>

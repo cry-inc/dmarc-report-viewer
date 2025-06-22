@@ -1,7 +1,7 @@
 use crate::config::Configuration;
 use crate::hasher::create_hash;
 use crate::imap::get_mails;
-use crate::state::{AppState, DmarcReportWithUid, ReportParsingError, TlsRptReportWithUid};
+use crate::state::{AppState, DmarcReportWithMailId, ReportParsingError, TlsRptReportWithMailId};
 use crate::unpack::{extract_report_files, FileType};
 use crate::{dmarc, tlsrpt};
 use anyhow::{Context, Result};
@@ -102,19 +102,19 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
         json_files.len()
     );
 
-    let mut dmarc_parsing_errors: HashMap<u32, Vec<ReportParsingError>> = HashMap::new();
+    let mut dmarc_parsing_errors: HashMap<String, Vec<ReportParsingError>> = HashMap::new();
     let mut dmarc_reports = HashMap::new();
-    let mut tlsrpt_parsing_errors: HashMap<u32, Vec<ReportParsingError>> = HashMap::new();
+    let mut tlsrpt_parsing_errors: HashMap<String, Vec<ReportParsingError>> = HashMap::new();
     let mut tlsrpt_reports = HashMap::new();
     for xml_file in xml_files.values() {
         match dmarc::Report::from_slice(&xml_file.data) {
             Ok(report) => {
-                let rwu = DmarcReportWithUid {
+                let rwi = DmarcReportWithMailId {
                     report,
-                    uid: xml_file.mail_uid,
+                    mail_id: xml_file.mail_id.clone(),
                 };
-                let hash = create_hash(&[&xml_file.data, &xml_file.mail_uid.to_le_bytes()]);
-                dmarc_reports.insert(hash, rwu);
+                let hash = create_hash(&[&xml_file.data, xml_file.mail_id.as_bytes()]);
+                dmarc_reports.insert(hash, rwi);
             }
             Err(err) => {
                 // Prepare error information
@@ -126,13 +126,13 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
 
                 // Store in error hashmap for fast lookup
                 dmarc_parsing_errors
-                    .entry(xml_file.mail_uid)
+                    .entry(xml_file.mail_id.clone())
                     .or_default()
                     .push(error);
 
                 // Increase error counter for mail
                 let mail = mails
-                    .get_mut(&xml_file.mail_uid)
+                    .get_mut(&xml_file.mail_id)
                     .context("Failed to find mail")?;
                 mail.xml_parsing_errors += 1;
             }
@@ -148,12 +148,12 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
     for json_file in json_files.values() {
         match tlsrpt::Report::from_slice(&json_file.data) {
             Ok(report) => {
-                let rwu = TlsRptReportWithUid {
+                let rwi = TlsRptReportWithMailId {
                     report,
-                    uid: json_file.mail_uid,
+                    mail_id: json_file.mail_id.clone(),
                 };
-                let hash = create_hash(&[&json_file.data, &json_file.mail_uid.to_le_bytes()]);
-                tlsrpt_reports.insert(hash, rwu);
+                let hash = create_hash(&[&json_file.data, json_file.mail_id.as_bytes()]);
+                tlsrpt_reports.insert(hash, rwi);
             }
             Err(err) => {
                 // Prepare error information
@@ -165,13 +165,13 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
 
                 // Store in error hashmap for fast lookup
                 tlsrpt_parsing_errors
-                    .entry(json_file.mail_uid)
+                    .entry(json_file.mail_id.clone())
                     .or_default()
                     .push(error);
 
                 // Increase error counter for mail
                 let mail = mails
-                    .get_mut(&json_file.mail_uid)
+                    .get_mut(&json_file.mail_id)
                     .context("Failed to find mail")?;
                 mail.json_parsing_errors += 1;
             }

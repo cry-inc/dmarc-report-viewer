@@ -6,6 +6,7 @@ use serde::Serialize;
 
 #[derive(Serialize)]
 pub struct Mail {
+    pub id: String,
     pub account: String,
     pub folder: String,
     pub uid: u32,

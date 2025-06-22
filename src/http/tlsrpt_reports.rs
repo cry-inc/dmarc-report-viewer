@@ -74,7 +74,7 @@ impl ReportHeader {
 
 #[derive(Deserialize)]
 pub struct ReportFilters {
-    uid: Option<u32>,
+    id: Option<String>,
     flagged: Option<bool>,
     flagged_sts: Option<bool>,
     flagged_tlsa: Option<bool>,
@@ -109,23 +109,23 @@ pub async fn list_handler(
         .await
         .tlsrpt_reports
         .iter()
-        .filter(|(_, rwu)| {
-            if let Some(queried_uid) = filters.uid {
-                rwu.uid == queried_uid
+        .filter(|(_, rwi)| {
+            if let Some(id) = &filters.id {
+                rwi.mail_id == *id
             } else {
                 true
             }
         })
-        .filter(|(_, rwu)| {
+        .filter(|(_, rwi)| {
             if let Some(org) = &filters.org {
-                rwu.report.organization_name == *org
+                rwi.report.organization_name == *org
             } else {
                 true
             }
         })
-        .filter(|(_, rwu)| {
+        .filter(|(_, rwi)| {
             if let Some(domain) = &filters.domain {
-                rwu.report
+                rwi.report
                     .policies
                     .iter()
                     .any(|policy_result| policy_result.policy.policy_domain == *domain)
@@ -133,7 +133,7 @@ pub async fn list_handler(
                 true
             }
         })
-        .map(|(hash, rwu)| ReportHeader::from_report(hash, &rwu.report))
+        .map(|(hash, rwi)| ReportHeader::from_report(hash, &rwi.report))
         .filter(|rh| {
             if let Some(flagged) = &filters.flagged {
                 rh.flagged == *flagged
@@ -164,8 +164,8 @@ pub async fn single_handler(
     Path(id): Path<String>,
 ) -> impl IntoResponse {
     let lock = state.lock().await;
-    if let Some(rwu) = lock.tlsrpt_reports.get(&id) {
-        let report_json = serde_json::to_string(rwu).expect("Failed to serialize JSON");
+    if let Some(rwi) = lock.tlsrpt_reports.get(&id) {
+        let report_json = serde_json::to_string(rwi).expect("Failed to serialize JSON");
         (
             StatusCode::OK,
             [(header::CONTENT_TYPE, "application/json")],
@@ -185,8 +185,8 @@ pub async fn json_handler(
     Path(id): Path<String>,
 ) -> impl IntoResponse {
     let lock = state.lock().await;
-    if let Some(rwu) = lock.tlsrpt_reports.get(&id) {
-        let report_json = serde_json::to_string(&rwu.report).expect("Failed to serialize JSON");
+    if let Some(rwi) = lock.tlsrpt_reports.get(&id) {
+        let report_json = serde_json::to_string(&rwi.report).expect("Failed to serialize JSON");
         (
             StatusCode::OK,
             [(header::CONTENT_TYPE, "application/json")],

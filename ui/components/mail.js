@@ -13,7 +13,7 @@ export class Mail extends LitElement {
 
     static get properties() {
         return {
-            uid: { type: String },
+            id: { type: String },
             mail: { type: Object, attribute: false },
             reportsDmarc: { type: Array, attribute: false },
             reportsTls: { type: Array, attribute: false },
@@ -23,7 +23,7 @@ export class Mail extends LitElement {
 
     constructor() {
         super();
-        this.uid = null;
+        this.id = null;
         this.mail = null;
         this.reportsDmarc = [];
         this.reportsTls = [];
@@ -31,17 +31,17 @@ export class Mail extends LitElement {
     }
 
     async updated(changedProperties) {
-        if (changedProperties.has("uid") && changedProperties.uid !== this.uid && this.uid) {
-            fetch("mails/" + this.uid).then(async (response) => {
+        if (changedProperties.has("id") && changedProperties.id !== this.id && this.id) {
+            fetch("mails/" + this.id).then(async (response) => {
                 this.mail = await response.json();
             });
-            fetch("dmarc-reports?uid=" + this.uid).then(async (response) => {
+            fetch("dmarc-reports?id=" + this.id).then(async (response) => {
                 this.reportsDmarc = await response.json();
             });
-            fetch("tlsrpt-reports?uid=" + this.uid).then(async (response) => {
+            fetch("tlsrpt-reports?id=" + this.id).then(async (response) => {
                 this.reportsTls = await response.json();
             });
-            fetch("mails/" + this.uid + "/errors").then(async (response) => {
+            fetch("mails/" + this.id + "/errors").then(async (response) => {
                 this.errors = await response.json();
             });
         }

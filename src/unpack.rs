@@ -25,12 +25,12 @@ pub struct FileDataWithType {
 pub struct ReportFile {
     /// The type of the file
     pub file_type: FileType,
-    /// UID of the mail that contained this report file
-    pub mail_uid: u32,
+    /// ID of the mail that contained this report file
+    pub mail_id: String,
     /// Binary data of the report file
     pub data: Vec<u8>,
-    /// Hash of the report data AND mail UID.
-    /// UID needs to be included to avoid the same report file from multiple mails being treated as the same file!
+    /// Hash of the report data AND mail ID.
+    /// The mail ID needs to be included to avoid the same report file from multiple mails being treated as the same file!
     pub hash: String,
 }
 
@@ -163,7 +163,7 @@ pub fn extract_report_files(mail: &mut Mail) -> Result<Vec<ReportFile>> {
                 report_files.push(ReportFile {
                     file_type: report.file_type,
                     data: report.data,
-                    mail_uid: mail.uid,
+                    mail_id: mail.id.clone(),
                     hash,
                 });
             }
@@ -180,7 +180,7 @@ pub fn extract_report_files(mail: &mut Mail) -> Result<Vec<ReportFile>> {
             report_files.push(ReportFile {
                 file_type: FileType::Xml,
                 data: xml,
-                mail_uid: mail.uid,
+                mail_id: mail.id.clone(),
                 hash,
             });
         } else if content_type.contains("text/xml")
@@ -194,7 +194,7 @@ pub fn extract_report_files(mail: &mut Mail) -> Result<Vec<ReportFile>> {
             report_files.push(ReportFile {
                 file_type: FileType::Xml,
                 data: xml,
-                mail_uid: mail.uid,
+                mail_id: mail.id.clone(),
                 hash,
             });
         } else if content_type.contains("application/tlsrpt+gzip") {
@@ -208,7 +208,7 @@ pub fn extract_report_files(mail: &mut Mail) -> Result<Vec<ReportFile>> {
             report_files.push(ReportFile {
                 file_type: FileType::Json,
                 data: json,
-                mail_uid: mail.uid,
+                mail_id: mail.id.clone(),
                 hash,
             });
         } else if content_type.contains("application/tlsrpt+json")
@@ -222,7 +222,7 @@ pub fn extract_report_files(mail: &mut Mail) -> Result<Vec<ReportFile>> {
             report_files.push(ReportFile {
                 file_type: FileType::Json,
                 data: json,
-                mail_uid: mail.uid,
+                mail_id: mail.id.clone(),
                 hash,
             });
         }

@@ -11,10 +11,10 @@ use tokio::sync::Mutex;
 
 pub async fn single_handler(
     State(state): State<Arc<Mutex<AppState>>>,
-    Path(uid): Path<u32>,
+    Path(id): Path<String>,
 ) -> impl IntoResponse {
     let lock = state.lock().await;
-    if let Some((_, mail)) = lock.mails.iter().find(|(id, _)| **id == uid) {
+    if let Some((_, mail)) = lock.mails.iter().find(|(i, _)| **i == id) {
         let mail_json = serde_json::to_string(mail).expect("Failed to serialize JSON");
         (
             StatusCode::OK,
@@ -32,10 +32,10 @@ pub async fn single_handler(
 
 pub async fn errors_handler(
     State(state): State<Arc<Mutex<AppState>>>,
-    Path(uid): Path<u32>,
+    Path(id): Path<String>,
 ) -> impl IntoResponse {
     let lock = state.lock().await;
-    if !lock.mails.contains_key(&uid) {
+    if !lock.mails.contains_key(&id) {
         return (
             StatusCode::NOT_FOUND,
             [(header::CONTENT_TYPE, "text/plain")],
@@ -45,7 +45,7 @@ pub async fn errors_handler(
 
     let mut errors_map = serde_json::Map::new();
 
-    if let Some(errors) = lock.dmarc_parsing_errors.get(&uid) {
+    if let Some(errors) = lock.dmarc_parsing_errors.get(&id) {
         errors_map.insert(
             "xml".to_string(),
             serde_json::Value::Array(
@@ -57,7 +57,7 @@ pub async fn errors_handler(
         );
     }
 
-    if let Some(errors) = lock.tlsrpt_parsing_errors.get(&uid) {
+    if let Some(errors) = lock.tlsrpt_parsing_errors.get(&id) {
         errors_map.insert(
             "json".to_string(),
             serde_json::Value::Array(

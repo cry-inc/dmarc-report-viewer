@@ -1,5 +1,5 @@
 use crate::dmarc::{DkimResultType, DmarcResultType, SpfResultType};
-use crate::state::{AppState, DmarcReportWithUid, TlsRptReportWithUid};
+use crate::state::{AppState, DmarcReportWithMailId, TlsRptReportWithMailId};
 use crate::tlsrpt::{FailureResultType, PolicyType, TlsRptResultType};
 use axum::extract::{Query, State};
 use axum::response::IntoResponse;
@@ -128,10 +128,10 @@ pub struct Files {
 
 pub struct Reports<'a> {
     /// Parsed DMARC reports with mail UID and corresponding hash as key
-    pub dmarc: &'a HashMap<String, DmarcReportWithUid>,
+    pub dmarc: &'a HashMap<String, DmarcReportWithMailId>,
 
     /// Parsed SMTP TLS reports with mail UID and corresponding hash as key
-    pub tlsrpt: &'a HashMap<String, TlsRptReportWithUid>,
+    pub tlsrpt: &'a HashMap<String, TlsRptReportWithMailId>,
 }
 
 #[derive(Serialize, Default, Clone)]
@@ -196,7 +196,7 @@ impl Summary {
 
         let threshold = time_span.map(|d| (Utc::now() - d).timestamp() as u64);
         let threshold_datetime = time_span.map(|d| Utc::now() - d);
-        for DmarcReportWithUid { report, .. } in reports.dmarc.values() {
+        for DmarcReportWithMailId { report, .. } in reports.dmarc.values() {
             if let Some(threshold) = threshold {
                 if report.report_metadata.date_range.end < threshold {
                     continue;
@@ -260,7 +260,7 @@ impl Summary {
                 }
             }
         }
-        for TlsRptReportWithUid { report, .. } in reports.tlsrpt.values() {
+        for TlsRptReportWithMailId { report, .. } in reports.tlsrpt.values() {
             if let Some(threshold_datetime) = threshold_datetime {
                 if report.date_range.end_datetime < threshold_datetime {
                     continue;

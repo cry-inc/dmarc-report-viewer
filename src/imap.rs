@@ -1,4 +1,5 @@
 use crate::config::Configuration;
+use crate::hasher::create_hash;
 use crate::mail::{decode_subject, Mail};
 use anyhow::{anyhow, Context, Result};
 use async_imap::imap_proto::Address;
@@ -19,7 +20,7 @@ use tokio_rustls::TlsConnector;
 use tokio_util::either::Either;
 use tracing::{debug, info, trace, warn};
 
-pub async fn get_mails(config: &Configuration) -> Result<HashMap<u32, Mail>> {
+pub async fn get_mails(config: &Configuration) -> Result<HashMap<String, Mail>> {
     let client = create_client(config)
         .await
         .context("Failed to create IMAP client")?;
@@ -61,7 +62,7 @@ pub async fn get_mails(config: &Configuration) -> Result<HashMap<u32, Mail>> {
                 &config.imap_folder,
             )
             .context("Unable to extract mail metadata")?;
-            mails.insert(mail.uid, mail);
+            mails.insert(mail.id.clone(), mail);
         }
         info!("Downloaded metadata of {} mails", mails.len());
 
@@ -80,41 +81,54 @@ pub async fn get_mails(config: &Configuration) -> Result<HashMap<u32, Mail>> {
     }
 
     // Get full mail body for all non-oversized mails
-    let uids: Vec<String> = mails
+    let ids: Vec<String> = mails
         .values()
         .filter(|m| !m.oversized)
-        .map(|m| m.uid.to_string())
+        .map(|m| m.id.clone())
         .collect();
-    if !uids.is_empty() {
+    if !ids.is_empty() {
         // We need to get the mails in chunks.
         // It will fail silently if the requested sequences become too big!
-        for chunk in uids.chunks(config.imap_chunk_size) {
+        for chunk in ids.chunks(config.imap_chunk_size) {
             debug!("Downloading chunk with {} mails...", chunk.len());
-            let sequence: String = chunk.join(",");
+            let mut uid_id_map = HashMap::new();
+            let uids: Vec<String> = chunk
+                .iter()
+                .map(|id| {
+                    let me = &mails[id];
+                    uid_id_map.insert(me.uid, me.id.clone());
+                    me.uid
+                })
+                .map(|uid| uid.to_string())
+                .collect();
+            let uid_sequence: String = uids.join(",");
             let body_request = config.imap_body_request.to_request_string();
+
+            // Some servers (like iCloud Mail) seem to require BODY[] instead of just RFC822...
             let fetch_query = format!("({body_request} RFC822.SIZE UID ENVELOPE INTERNALDATE)");
+
             let mut stream = session
-                .uid_fetch(
-                    sequence,
-                    // Some servers (like iCloud Mail) seem to require BODY[] instead of just RFC822...
-                    &fetch_query,
-                )
+                .uid_fetch(uid_sequence, &fetch_query)
                 .await
                 .context("Failed to fetch message stream from IMAP inbox")?;
-            let mut fetched = 0;
+            let mut fetched_mails = 0;
             while let Some(fetch_result) = stream.next().await {
-                fetched += 1;
                 let fetched = fetch_result
                     .context("Failed to get next mail header from IMAP fetch response")?;
+                fetched_mails += 1;
                 let uid = fetched
                     .uid
                     .context("Failed to get UID from IMAP fetch result")?;
-                let Some(mail) = mails.get_mut(&uid) else {
-                    warn!("Cannot find mail metadata for UID {uid}");
+                let Some(id) = uid_id_map.get(&uid) else {
+                    warn!("Cannot find existing mail ID for UID {uid}");
+                    continue;
+                };
+                let Some(mail) = mails.get_mut(id) else {
+                    warn!("Cannot find mail entry for ID {id}");
                     continue;
                 };
                 let Some(body) = fetched.body() else {
-                    warn!("Mail with UID {} has no body!", mail.uid);
+                    warn!("Mail with UID {uid} has no body!");
                     continue;
                 };
                 mail.body = Some(body.to_vec());
@@ -131,15 +145,15 @@ pub async fn get_mails(config: &Configuration) -> Result<HashMap<u32, Mail>> {
                     mail.sender
                 );
             }
-            if fetched != chunk.len() {
+            if fetched_mails != chunk.len() {
                 warn!(
-                    "Unable to fetch some mails from chunk, expected {} mails but got {fetched}",
+                    "Unable to fetch some mails from chunk, expected {} mails but got {fetched_mails}",
                     chunk.len()
                 );
             }
         }
 
-        info!("Downloaded {} mails", uids.len());
+        info!("Downloaded {} mails", ids.len());
     }
 
     // We have everything we need, an error is no longer preventing an update.
@@ -281,7 +295,12 @@ fn extract_metadata(mail: &Fetch, max_size: usize, account: &str, folder: &str) 
             .unwrap_or("n/a".into())
             .as_ref(),
     );
+
+    // The UID is not globally unique, so we need to add some other properties!
+    let id = create_hash(&[&uid.to_le_bytes(), account.as_bytes(), folder.as_bytes()]);
+
     Ok(Mail {
+        id,
         account: account.to_string(),
         folder: folder.to_string(),
         body: None,
