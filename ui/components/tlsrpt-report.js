@@ -6,14 +6,14 @@ export class TlsRptReport extends LitElement {
 
     static get properties() {
         return {
-            hash: { type: String },
+            id: { type: String },
             mailId: { type: String, attribute: false },
         };
     }
 
     constructor() {
         super();
-        this.hash = null;
+        this.id = null;
         this.mailId = null;
         this.report = null;
         this.ip2dns = {};
@@ -22,8 +22,8 @@ export class TlsRptReport extends LitElement {
     }
 
     async updated(changedProperties) {
-        if (changedProperties.has("hash") && changedProperties.hash !== this.hash && this.hash) {
-            const response = await fetch("tlsrpt-reports/" + this.hash);
+        if (changedProperties.has("id") && changedProperties.id !== this.id && this.id) {
+            const response = await fetch("tlsrpt-reports/" + this.id);
             const rwi = await response.json();
             this.report = rwi.report;
             this.mailId = rwi.mail_id;
@@ -151,7 +151,7 @@ export class TlsRptReport extends LitElement {
             <h1>Report Details</h1>
             <p>
                 <a class="button" href="#/mails/${this.mailId}">Show Mail</a>
-                <a class="button" href="/tlsrpt-reports/${this.hash}/json" target="_blank">Open JSON</a>
+                <a class="button" href="/tlsrpt-reports/${this.id}/json" target="_blank">Open JSON</a>
             </p>
             <table>
                 <tr>

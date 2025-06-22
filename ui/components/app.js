@@ -42,7 +42,7 @@ export class App extends LitElement {
         return {
             component: { type: String },
             params: { type: Object },
-            reportHash: { type: String },
+            reportId: { type: String },
             mailId: { type: String },
         };
     }
@@ -51,7 +51,7 @@ export class App extends LitElement {
         super();
         this.component = "dashboard";
         this.params = {};
-        this.reportHash = null;
+        this.reportId = null;
         this.mailId = null;
         window.onhashchange = () => this.onHashChange();
         this.onHashChange();
@@ -81,10 +81,10 @@ export class App extends LitElement {
             this.component = "tlsrpt-reports";
         } else if (hash.startsWith("#/dmarc-reports/")) {
             this.component = "dmarc-report";
-            this.reportHash = hash.substring(16);
+            this.reportId = hash.substring(16);
         } else if (hash.startsWith("#/tlsrpt-reports/")) {
             this.component = "tlsrpt-report";
-            this.reportHash = hash.substring(17);
+            this.reportId = hash.substring(17);
         } else if (hash == "#/mails") {
             this.component = "mails";
         } else if (hash.startsWith("#/mails/")) {
@@ -104,9 +104,9 @@ export class App extends LitElement {
         } else if (this.component == "tlsrpt-reports") {
             component = html`<drv-tlsrpt-reports .params="${this.params}"></drv-tlsrpt-reports>`;
         } else if (this.component == "dmarc-report") {
-            component = html`<drv-dmarc-report hash="${this.reportHash}"></drv-dmarc-report>`;
+            component = html`<drv-dmarc-report id="${this.reportId}"></drv-dmarc-report>`;
         } else if (this.component == "tlsrpt-report") {
-            component = html`<drv-tlsrpt-report hash="${this.reportHash}"></drv-tlsrpt-report>`;
+            component = html`<drv-tlsrpt-report id="${this.reportId}"></drv-tlsrpt-report>`;
         } else if (this.component == "mails") {
             component = html`<drv-mails .params="${this.params}"></drv-mails>`;
         } else if (this.component == "mail") {
