@@ -64,9 +64,6 @@ For the Docker use case, environment variables are recommended.
 Do not forget to forward the port for the HTTP server!
 By default the HTTP server will use port 8080.
 
-Currently only one combined IMAP inbox for both report types, DMARC and SMTP TLS, is supported.
-You might have to setup some additional forwarding if you are receiving them separate.
-
 Here is an example: 
 
     sudo docker run --rm \
@@ -77,6 +74,13 @@ Here is an example:
       -e HTTP_SERVER_PASSWORD=webui-password \
       -p 8080:8080 \
       ghcr.io/cry-inc/dmarc-report-viewer
+
+### IMAP Folders
+You can define separate IMAP folders for fetching DMARC and TLS reports.
+By default one single `INBOX` is used to look for both kind of reports.
+If you specify at least one of the dedicated folders, the default folder will be disabled.
+Please note that fetching reports from different IMAP accounts is currently not supported.
+You might have to setup some forwarding if you are receiving them on separate accounts.
 
 ### IMAP with STARTTLS
 By default the IMAP client will attempt to use a TLS encrypted connection using port 993.
