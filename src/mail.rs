@@ -34,6 +34,12 @@ pub struct Mail {
     pub json_parsing_errors: usize,
 }
 
+impl Mail {
+    pub fn expect_reports(&self, folder: &String) -> bool {
+        self.folder == *folder
+    }
+}
+
 /// Decoding of Q-encoded data as described in RFC2047
 fn q_decode(mut data: &str) -> Result<Vec<u8>> {
     let mut result = Vec::new();

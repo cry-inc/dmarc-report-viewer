@@ -20,7 +20,10 @@ use tokio_rustls::TlsConnector;
 use tokio_util::either::Either;
 use tracing::{debug, info, trace, warn};
 
-pub async fn get_mails(config: &Configuration) -> Result<HashMap<String, Mail>> {
+pub async fn get_mails(
+    config: &Configuration,
+    imap_folder: &String,
+) -> Result<HashMap<String, Mail>> {
     let client = create_client(config)
         .await
         .context("Failed to create IMAP client")?;
@@ -32,7 +35,6 @@ pub async fn get_mails(config: &Configuration) -> Result<HashMap<String, Mail>> 
         .context("Failed to log in and create IMAP session")?;
     debug!("IMAP login successful");
 
-    let imap_folder = &config.imap_folder;
     let mailbox = session
         .select(imap_folder)
         .await
@@ -59,7 +61,7 @@ pub async fn get_mails(config: &Configuration) -> Result<HashMap<String, Mail>> 
                 &fetched,
                 config.max_mail_size as usize,
                 &config.imap_user,
-                &config.imap_folder,
+                imap_folder,
             )
             .context("Unable to extract mail metadata")?;
             mails.insert(mail.id.clone(), mail);
