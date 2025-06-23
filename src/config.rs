@@ -38,9 +38,17 @@ pub struct Configuration {
     #[arg(long, env, conflicts_with = "imap_starttls")]
     pub imap_disable_tls: bool,
 
-    /// IMAP folder with the DMARC reports
+    /// IMAP folder with all reports
     #[arg(long, env, default_value = "INBOX")]
-    pub imap_folder: String,
+    imap_folder: String,
+
+    /// IMAP folder with DMARC reports
+    #[arg(long, env)]
+    pub dmarc_imap_folder: Option<String>,
+
+    /// IMAP folder with TLS-RPT reports
+    #[arg(long, env)]
+    pub tlsrpt_imap_folder: Option<String>,
 
     /// Method of requesting the mail body from the IMAP server.
     /// The default should work for most IMAP servers.
@@ -130,7 +138,17 @@ pub struct Configuration {
 
 impl Configuration {
     pub fn new() -> Self {
-        Configuration::parse()
+        let mut config = Configuration::parse();
+
+        // TODO: Replace with aliases once https://github.com/clap-rs/clap/issues/5447 is implemented
+        if config.dmarc_imap_folder.is_none() {
+            config.dmarc_imap_folder = Some(config.imap_folder.clone());
+        }
+        if config.tlsrpt_imap_folder.is_none() {
+            config.tlsrpt_imap_folder = Some(config.imap_folder.clone());
+        }
+
+        config
     }
 
     pub fn log(&self) {
@@ -164,6 +182,10 @@ impl Configuration {
         info!("HTTPS Cache Dir: {:?}", self.https_auto_cert_cache);
 
         info!("Maximum Mail Body Size: {} bytes", self.max_mail_size);
+    }
+
+    pub fn use_different_mail_sources(&self) -> bool {
+        self.dmarc_imap_folder.as_ref().unwrap() != self.tlsrpt_imap_folder.as_ref().unwrap()
     }
 }
 
