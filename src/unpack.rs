@@ -1,5 +1,6 @@
+use crate::config::Configuration;
+use crate::hasher::create_hash;
 use crate::mail::Mail;
-use crate::{config::Configuration, hasher::create_hash};
 use anyhow::{Context, Result};
 use flate2::read::GzDecoder;
 use mailparse::{MailHeaderMap, ParsedMail};
@@ -121,12 +122,15 @@ pub fn extract_report_files(mail: &mut Mail, config: &Configuration) -> Result<V
     // Consume mail body to avoid keeping the longer needed data in memory
     let body = mail.body.take().context("Missing mail body")?;
 
+    let expect_all = config.imap_folder_dmarc.is_none() && config.imap_folder_tls.is_none();
+    let expect_dmarc_report =
+        expect_all || config.imap_folder_dmarc.as_deref() == Some(&mail.folder);
+    let expect_tls_report = expect_all || config.imap_folder_tls.as_deref() == Some(&mail.folder);
+
     let mut report_files = Vec::new();
     let parsed = mailparse::parse_mail(&body).context("Failed to parse mail body")?;
     let parts: Vec<&ParsedMail> = parsed.parts().collect();
     let uid = mail.uid;
-    let expect_dmarc_reports = mail.expect_reports(config.dmarc_imap_folder.as_ref().unwrap());
-    let expect_tlsrpt_reports = mail.expect_reports(config.tlsrpt_imap_folder.as_ref().unwrap());
 
     trace!("Parsed mail with UID {uid} and found {} parts", parts.len());
     for (index, part) in parts.iter().enumerate() {
@@ -164,8 +168,8 @@ pub fn extract_report_files(mail: &mut Mail, config: &Configuration) -> Result<V
             );
             for report in report_files_zip {
                 let hash = create_hash(&[&report.data, &mail.uid.to_le_bytes()]);
-                if (report.file_type == FileType::Xml && expect_dmarc_reports)
-                    || (report.file_type == FileType::Json && expect_tlsrpt_reports)
+                if (report.file_type == FileType::Xml && expect_dmarc_report)
+                    || (report.file_type == FileType::Json && expect_tls_report)
                 {
                     report_files.push(ReportFile {
                         file_type: report.file_type,
@@ -175,7 +179,7 @@ pub fn extract_report_files(mail: &mut Mail, config: &Configuration) -> Result<V
                     });
                 }
             }
-        } else if expect_dmarc_reports
+        } else if expect_dmarc_report
             && (content_type.contains("application/gzip")
                 || (content_type.contains("application/octet-stream")
                     && content_type.contains(".xml.gz")))
@@ -193,7 +197,7 @@ pub fn extract_report_files(mail: &mut Mail, config: &Configuration) -> Result<V
                 mail_id: mail.id.clone(),
                 hash,
             });
-        } else if expect_dmarc_reports
+        } else if expect_dmarc_report
             && (content_type.contains("text/xml")
                 || (content_type.contains("application/octet-stream")
                     && content_type.contains(".xml")))
@@ -209,7 +213,7 @@ pub fn extract_report_files(mail: &mut Mail, config: &Configuration) -> Result<V
                 mail_id: mail.id.clone(),
                 hash,
             });
-        } else if expect_tlsrpt_reports && content_type.contains("application/tlsrpt+gzip") {
+        } else if expect_tls_report && content_type.contains("application/tlsrpt+gzip") {
             trace!("Detected gzipped JSON attachment for mail with UID {uid} in part {index}");
             let body = part
                 .get_body_raw()
@@ -223,7 +227,7 @@ pub fn extract_report_files(mail: &mut Mail, config: &Configuration) -> Result<V
                 mail_id: mail.id.clone(),
                 hash,
             });
-        } else if expect_tlsrpt_reports
+        } else if expect_tls_report
             && (content_type.contains("application/tlsrpt+json")
                 || content_type.contains("application/json"))
         {

@@ -59,22 +59,27 @@ pub fn start_bg_task(
 }
 
 async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Result<()> {
-    let mut mails;
-    if config.use_different_mail_sources() {
-        let dmarc_mails = get_mails(config, config.dmarc_imap_folder.as_ref().unwrap())
-            .await
-            .context("Failed to get DMARC mails")?;
-        let tlsrpt_mails = get_mails(config, config.tlsrpt_imap_folder.as_ref().unwrap())
-            .await
-            .context("Failed to get TLS-RPT mails")?;
-
-        mails = HashMap::new();
-        mails.extend(dmarc_mails);
-        mails.extend(tlsrpt_mails);
-    } else {
-        mails = get_mails(config, config.dmarc_imap_folder.as_ref().unwrap())
-            .await
-            .context("Failed to get mails")?;
+    let mut mails = HashMap::new();
+    if let Some(dmarc_folder) = config.imap_folder_dmarc.as_ref() {
+        mails.extend(
+            get_mails(config, dmarc_folder)
+                .await
+                .context("Failed to get mails from DMARC folder")?,
+        );
+    }
+    if let Some(tls_folder) = config.imap_folder_tls.as_ref() {
+        mails.extend(
+            get_mails(config, tls_folder)
+                .await
+                .context("Failed to get mails from TLS folder")?,
+        );
+    }
+    if config.imap_folder_dmarc.is_none() && config.imap_folder_tls.is_none() {
+        mails.extend(
+            get_mails(config, &config.imap_folder)
+                .await
+                .context("Failed to get mails")?,
+        );
     }
 
     let mut xml_files = HashMap::new();

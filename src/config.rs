@@ -38,17 +38,20 @@ pub struct Configuration {
     #[arg(long, env, conflicts_with = "imap_starttls")]
     pub imap_disable_tls: bool,
 
-    /// IMAP folder with all reports
+    /// IMAP folder, will be used to look for all kinds of reports (DMARC and SMTP TLS).
+    /// Will be only used if the dedicated folders for TLS and DMARC are not set!
     #[arg(long, env, default_value = "INBOX")]
-    imap_folder: String,
+    pub imap_folder: String,
 
-    /// IMAP folder with DMARC reports
+    /// Optional IMAP folder (will be only checked for DMARC reports).
+    /// Will disable the normal default folder when set.
     #[arg(long, env)]
-    pub dmarc_imap_folder: Option<String>,
+    pub imap_folder_dmarc: Option<String>,
 
-    /// IMAP folder with TLS-RPT reports
+    /// Optional IMAP folder (will be only checked for SMTP TLS reports)
+    /// Will disable the normal default folder when set.
     #[arg(long, env)]
-    pub tlsrpt_imap_folder: Option<String>,
+    pub imap_folder_tls: Option<String>,
 
     /// Method of requesting the mail body from the IMAP server.
     /// The default should work for most IMAP servers.
@@ -138,17 +141,7 @@ pub struct Configuration {
 
 impl Configuration {
     pub fn new() -> Self {
-        let mut config = Configuration::parse();
-
-        // TODO: Replace with aliases once https://github.com/clap-rs/clap/issues/5447 is implemented
-        if config.dmarc_imap_folder.is_none() {
-            config.dmarc_imap_folder = Some(config.imap_folder.clone());
-        }
-        if config.tlsrpt_imap_folder.is_none() {
-            config.tlsrpt_imap_folder = Some(config.imap_folder.clone());
-        }
-
-        config
+        Configuration::parse()
     }
 
     pub fn log(&self) {
@@ -160,6 +153,9 @@ impl Configuration {
         info!("IMAP TLS CA Certificate File: {:?}", self.imap_tls_ca_certs);
         info!("IMAP TLS Disabled: {}", self.imap_disable_tls);
         info!("IMAP User: {}", self.imap_user);
+        info!("IMAP Folder: {}", self.imap_folder);
+        info!("IMAP DMARC Folder: {:?}", self.imap_folder_dmarc);
+        info!("IMAP TLS Folder: {:?}", self.imap_folder_tls);
         info!("IMAP Check Interval: {} seconds", self.imap_check_interval);
         info!(
             "IMAP Schedule: {}",
@@ -182,10 +178,6 @@ impl Configuration {
         info!("HTTPS Cache Dir: {:?}", self.https_auto_cert_cache);
 
         info!("Maximum Mail Body Size: {} bytes", self.max_mail_size);
-    }
-
-    pub fn use_different_mail_sources(&self) -> bool {
-        self.dmarc_imap_folder.as_ref().unwrap() != self.tlsrpt_imap_folder.as_ref().unwrap()
     }
 }
 
