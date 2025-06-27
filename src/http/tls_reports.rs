@@ -1,6 +1,6 @@
 use crate::state::AppState;
-use crate::tlsrpt::PolicyType;
-use crate::tlsrpt::Report;
+use crate::tls::PolicyType;
+use crate::tls::Report;
 use axum::extract::Path;
 use axum::extract::Query;
 use axum::extract::State;

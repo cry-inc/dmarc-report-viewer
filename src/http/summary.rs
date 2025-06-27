@@ -1,6 +1,6 @@
 use crate::dmarc::{DkimResultType, DmarcResultType, SpfResultType};
 use crate::state::{AppState, DmarcReportWithMailId, TlsRptReportWithMailId};
-use crate::tlsrpt::{FailureResultType, PolicyType, TlsRptResultType};
+use crate::tls::{FailureResultType, PolicyType, TlsRptResultType};
 use axum::extract::{Query, State};
 use axum::response::IntoResponse;
 use axum::Json;

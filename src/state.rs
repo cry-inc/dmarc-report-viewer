@@ -1,6 +1,6 @@
 use crate::geolocate::Location;
 use crate::{cache_map::CacheMap, mail::Mail};
-use crate::{dmarc, tlsrpt};
+use crate::{dmarc, tls};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::net::IpAddr;
@@ -18,7 +18,7 @@ pub struct DmarcReportWithMailId {
 #[derive(Serialize, Deserialize)]
 pub struct TlsRptReportWithMailId {
     pub mail_id: String,
-    pub report: tlsrpt::Report,
+    pub report: tls::Report,
 }
 
 /// Parsing errors for DMARC or SMTP TLS reports

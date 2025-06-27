@@ -3,7 +3,7 @@ use crate::hasher::create_hash;
 use crate::imap::get_mails;
 use crate::state::{AppState, DmarcReportWithMailId, ReportParsingError, TlsRptReportWithMailId};
 use crate::unpack::{extract_report_files, FileType};
-use crate::{dmarc, tlsrpt};
+use crate::{dmarc, tls};
 use anyhow::{Context, Result};
 use chrono::Local;
 use std::collections::HashMap;
@@ -167,7 +167,7 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
     }
 
     for json_file in json_files.values() {
-        match tlsrpt::Report::from_slice(&json_file.data) {
+        match tls::Report::from_slice(&json_file.data) {
             Ok(report) => {
                 let rwi = TlsRptReportWithMailId {
                     report,
