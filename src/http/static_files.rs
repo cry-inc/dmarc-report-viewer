@@ -81,9 +81,9 @@ const STATIC_FILES: &[StaticFile] = &[
         _data: include_bytes!("../../ui/components/dmarc-report.js"),
     },
     StaticFile {
-        http_path: "/components/tlsrpt-report.js",
-        file_path: "ui/components/tlsrpt-report.js",
-        _data: include_bytes!("../../ui/components/tlsrpt-report.js"),
+        http_path: "/components/tls-report.js",
+        file_path: "ui/components/tls-report.js",
+        _data: include_bytes!("../../ui/components/tls-report.js"),
     },
     StaticFile {
         http_path: "/components/dmarc-reports.js",
@@ -91,9 +91,9 @@ const STATIC_FILES: &[StaticFile] = &[
         _data: include_bytes!("../../ui/components/dmarc-reports.js"),
     },
     StaticFile {
-        http_path: "/components/tlsrpt-reports.js",
-        file_path: "ui/components/tlsrpt-reports.js",
-        _data: include_bytes!("../../ui/components/tlsrpt-reports.js"),
+        http_path: "/components/tls-reports.js",
+        file_path: "ui/components/tls-reports.js",
+        _data: include_bytes!("../../ui/components/tls-reports.js"),
     },
     StaticFile {
         http_path: "/components/mails.js",
@@ -116,9 +116,9 @@ const STATIC_FILES: &[StaticFile] = &[
         _data: include_bytes!("../../ui/components/dmarc-report-table.js"),
     },
     StaticFile {
-        http_path: "/components/tlsrpt-report-table.js",
-        file_path: "ui/components/tlsrpt-report-table.js",
-        _data: include_bytes!("../../ui/components/tlsrpt-report-table.js"),
+        http_path: "/components/tls-report-table.js",
+        file_path: "ui/components/tls-report-table.js",
+        _data: include_bytes!("../../ui/components/tls-report-table.js"),
     },
 ];
 
