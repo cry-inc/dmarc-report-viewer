@@ -57,7 +57,7 @@ pub async fn errors_handler(
         );
     }
 
-    if let Some(errors) = lock.tlsrpt_parsing_errors.get(&id) {
+    if let Some(errors) = lock.tls_parsing_errors.get(&id) {
         errors_map.insert(
             "json".to_string(),
             serde_json::Value::Array(

@@ -2,7 +2,7 @@ import { LitElement, html, nothing } from "lit";
 import { globalStyle } from "../style.js";
 import { join } from "../utils.js";
 
-export class TlsRptReport extends LitElement {
+export class TlsReport extends LitElement {
     static styles = [globalStyle];
 
     static get properties() {
@@ -153,7 +153,7 @@ export class TlsRptReport extends LitElement {
             <h1>Report Details</h1>
             <p>
                 <a class="button" href="#/mails/${this.mailId}">Show Mail</a>
-                <a class="button" href="/tlsrpt-reports/${this.id}/json" target="_blank">Open JSON</a>
+                <a class="button" href="/tls-reports/${this.id}/json" target="_blank">Open JSON</a>
             </p>
             <table>
                 <tr>
@@ -371,4 +371,4 @@ export class TlsRptReport extends LitElement {
     }
 }
 
-customElements.define("drv-tlsrpt-report", TlsRptReport);
+customElements.define("drv-tls-report", TlsReport);

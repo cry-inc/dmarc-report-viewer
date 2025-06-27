@@ -1,6 +1,6 @@
 use crate::dmarc::{DkimResultType, DmarcResultType, SpfResultType};
-use crate::state::{AppState, DmarcReportWithMailId, TlsRptReportWithMailId};
-use crate::tls::{FailureResultType, PolicyType, TlsRptResultType};
+use crate::state::{AppState, DmarcReportWithMailId, TlsReportWithMailId};
+use crate::tls::{FailureResultType, PolicyType, TlsResultType};
 use axum::extract::{Query, State};
 use axum::response::IntoResponse;
 use axum::Json;
@@ -52,7 +52,7 @@ pub async fn handler(
         },
         Reports {
             dmarc: &guard.dmarc_reports,
-            tlsrpt: &guard.tlsrpt_reports,
+            tls: &guard.tls_reports,
         },
         guard.last_update,
         time_span,
@@ -89,7 +89,7 @@ pub struct DmarcSummary {
 }
 
 #[derive(Serialize, Default, Clone)]
-pub struct TlsRptSummary {
+pub struct TlsSummary {
     /// Number of JSON files found in mails from IMAP inbox
     pub files: usize,
 
@@ -106,10 +106,10 @@ pub struct TlsRptSummary {
     pub policy_types: HashMap<PolicyType, usize>,
 
     /// Map of SMTP TLS STS policy evaluation results
-    pub sts_policy_results: HashMap<TlsRptResultType, usize>,
+    pub sts_policy_results: HashMap<TlsResultType, usize>,
 
     /// Map of SMTP TLS TLSA policy evaluation results
-    pub tlsa_policy_results: HashMap<TlsRptResultType, usize>,
+    pub tlsa_policy_results: HashMap<TlsResultType, usize>,
 
     /// Map of SMTP TLS STS failure results
     pub sts_failure_types: HashMap<FailureResultType, usize>,
@@ -131,7 +131,7 @@ pub struct Reports<'a> {
     pub dmarc: &'a HashMap<String, DmarcReportWithMailId>,
 
     /// Parsed SMTP TLS reports with mail UID and corresponding hash as key
-    pub tlsrpt: &'a HashMap<String, TlsRptReportWithMailId>,
+    pub tls: &'a HashMap<String, TlsReportWithMailId>,
 }
 
 #[derive(Serialize, Default, Clone)]
@@ -146,7 +146,7 @@ pub struct Summary {
     pub dmarc: DmarcSummary,
 
     /// Information about SMTP TLS reports
-    pub tlsrpt: TlsRptSummary,
+    pub tls: TlsSummary,
 }
 
 impl Summary {
@@ -175,18 +175,18 @@ impl Summary {
             dkim_auth_results,
         };
 
-        let tlsrpt_orgs: HashMap<String, usize> = HashMap::new();
-        let tlsrpt_domains = HashMap::new();
+        let tls_orgs: HashMap<String, usize> = HashMap::new();
+        let tls_domains = HashMap::new();
         let policy_types: HashMap<PolicyType, usize> = HashMap::new();
-        let sts_policy_results: HashMap<TlsRptResultType, usize> = HashMap::new();
-        let tlsa_policy_results: HashMap<TlsRptResultType, usize> = HashMap::new();
+        let sts_policy_results: HashMap<TlsResultType, usize> = HashMap::new();
+        let tlsa_policy_results: HashMap<TlsResultType, usize> = HashMap::new();
         let sts_failure_types: HashMap<FailureResultType, usize> = HashMap::new();
         let tlsa_failure_types: HashMap<FailureResultType, usize> = HashMap::new();
-        let mut tlsrpt = TlsRptSummary {
+        let mut tls = TlsSummary {
             files: files.json,
-            reports: reports.tlsrpt.len(),
-            orgs: tlsrpt_orgs,
-            domains: tlsrpt_domains,
+            reports: reports.tls.len(),
+            orgs: tls_orgs,
+            domains: tls_domains,
             policy_types,
             sts_policy_results,
             tlsa_policy_results,
@@ -260,7 +260,7 @@ impl Summary {
                 }
             }
         }
-        for TlsRptReportWithMailId { report, .. } in reports.tlsrpt.values() {
+        for TlsReportWithMailId { report, .. } in reports.tls.values() {
             if let Some(threshold_datetime) = threshold_datetime {
                 if report.date_range.end_datetime < threshold_datetime {
                     continue;
@@ -276,52 +276,42 @@ impl Summary {
                 }
             }
             let org = report.organization_name.clone();
-            if let Some(entry) = tlsrpt.orgs.get_mut(&org) {
+            if let Some(entry) = tls.orgs.get_mut(&org) {
                 *entry += 1;
             } else {
-                tlsrpt.orgs.insert(org, 1);
+                tls.orgs.insert(org, 1);
             }
             for policy_result in report.policies.iter() {
                 let domain = policy_result.policy.policy_domain.clone();
-                if let Some(entry) = tlsrpt.domains.get_mut(&domain) {
+                if let Some(entry) = tls.domains.get_mut(&domain) {
                     *entry += 1;
                 } else {
-                    tlsrpt.domains.insert(domain, 1);
+                    tls.domains.insert(domain, 1);
                 }
-                if let Some(entry) = tlsrpt
-                    .policy_types
-                    .get_mut(&policy_result.policy.policy_type)
-                {
+                if let Some(entry) = tls.policy_types.get_mut(&policy_result.policy.policy_type) {
                     *entry += 1;
                 } else {
-                    tlsrpt
-                        .policy_types
+                    tls.policy_types
                         .insert(policy_result.policy.policy_type.clone(), 1);
                 }
                 let (policy_results, failure_types) = match &policy_result.policy.policy_type {
-                    PolicyType::Sts => (
-                        &mut tlsrpt.sts_policy_results,
-                        &mut tlsrpt.sts_failure_types,
-                    ),
-                    PolicyType::Tlsa => (
-                        &mut tlsrpt.tlsa_policy_results,
-                        &mut tlsrpt.tlsa_failure_types,
-                    ),
+                    PolicyType::Sts => (&mut tls.sts_policy_results, &mut tls.sts_failure_types),
+                    PolicyType::Tlsa => (&mut tls.tlsa_policy_results, &mut tls.tlsa_failure_types),
                     PolicyType::NoPolicyFound => {
                         continue;
                     }
                 };
                 let success_count = policy_result.summary.total_successful_session_count;
                 let failure_count = policy_result.summary.total_failure_session_count;
-                if let Some(entry) = policy_results.get_mut(&TlsRptResultType::Successful) {
+                if let Some(entry) = policy_results.get_mut(&TlsResultType::Successful) {
                     *entry += success_count;
                 } else {
-                    policy_results.insert(TlsRptResultType::Successful, success_count);
+                    policy_results.insert(TlsResultType::Successful, success_count);
                 }
-                if let Some(entry) = policy_results.get_mut(&TlsRptResultType::Failure) {
+                if let Some(entry) = policy_results.get_mut(&TlsResultType::Failure) {
                     *entry += failure_count;
                 } else {
-                    policy_results.insert(TlsRptResultType::Failure, failure_count);
+                    policy_results.insert(TlsResultType::Failure, failure_count);
                 }
                 if let Some(failure_details) = &policy_result.failure_details {
                     for failure_detail in failure_details {
@@ -341,7 +331,7 @@ impl Summary {
             mails,
             last_update,
             dmarc,
-            tlsrpt,
+            tls,
         }
     }
 }

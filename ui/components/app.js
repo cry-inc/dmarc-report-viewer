@@ -77,14 +77,14 @@ export class App extends LitElement {
         // Parse routes and route parameters
         if (hash == "#/dmarc-reports") {
             this.component = "dmarc-reports";
-        } else if (hash == "#/tlsrpt-reports") {
-            this.component = "tlsrpt-reports";
+        } else if (hash == "#/tls-reports") {
+            this.component = "tls-reports";
         } else if (hash.startsWith("#/dmarc-reports/")) {
             this.component = "dmarc-report";
             this.reportId = hash.substring(16);
-        } else if (hash.startsWith("#/tlsrpt-reports/")) {
-            this.component = "tlsrpt-report";
-            this.reportId = hash.substring(17);
+        } else if (hash.startsWith("#/tls-reports/")) {
+            this.component = "tls-report";
+            this.reportId = hash.substring(14);
         } else if (hash == "#/mails") {
             this.component = "mails";
         } else if (hash.startsWith("#/mails/")) {
@@ -101,12 +101,12 @@ export class App extends LitElement {
         let component;
         if (this.component == "dmarc-reports") {
             component = html`<drv-dmarc-reports .params="${this.params}"></drv-dmarc-reports>`;
-        } else if (this.component == "tlsrpt-reports") {
-            component = html`<drv-tlsrpt-reports .params="${this.params}"></drv-tlsrpt-reports>`;
+        } else if (this.component == "tls-reports") {
+            component = html`<drv-tls-reports .params="${this.params}"></drv-tls-reports>`;
         } else if (this.component == "dmarc-report") {
             component = html`<drv-dmarc-report id="${this.reportId}"></drv-dmarc-report>`;
-        } else if (this.component == "tlsrpt-report") {
-            component = html`<drv-tlsrpt-report id="${this.reportId}"></drv-tlsrpt-report>`;
+        } else if (this.component == "tls-report") {
+            component = html`<drv-tls-report id="${this.reportId}"></drv-tls-report>`;
         } else if (this.component == "mails") {
             component = html`<drv-mails .params="${this.params}"></drv-mails>`;
         } else if (this.component == "mail") {
@@ -122,7 +122,7 @@ export class App extends LitElement {
                 <a class="${this.component === "dashboard" ? "active" : ""}" href="#/dashboard">Dashboard</a>
                 <a class="${this.component === "mails" || this.component === "mail" ? "active" : ""}" href="#/mails">Mails</a>
                 <a class="${this.component === "dmarc-reports" || this.component === "dmarc-report" ? "active" : ""}" href="#/dmarc-reports">DMARC<span class="xs-hidden">&nbsp;Reports</span></a>
-                <a class="${this.component === "tlsrpt-reports" || this.component === "tlsrpt-report" ? "active" : ""}" href="#/tlsrpt-reports"><span class="xs-hidden">SMTP&nbsp;</span>TLS<span class="xs-hidden">&nbsp;Reports</span></a>
+                <a class="${this.component === "tls-reports" || this.component === "tls-report" ? "active" : ""}" href="#/tls-reports"><span class="xs-hidden">SMTP&nbsp;</span>TLS<span class="xs-hidden">&nbsp;Reports</span></a>
                 <a class="xs-hidden ${this.component === "about" ? "active" : ""} right" href="#/about">About</a>
             </nav>
             <main>${component}</main>

@@ -132,7 +132,7 @@ export class Mail extends LitElement {
             ${this.reportsTls.length > 0 ?
                 html`
                     <h2>SMTP TLS Reports</h2>
-                    <drv-tlsrpt-report-table .reports="${this.reportsTls}"></drv-tlsrpt-report-table>`
+                    <drv-tls-report-table .reports="${this.reportsTls}"></drv-tls-report-table>`
                 : nothing
             }
 

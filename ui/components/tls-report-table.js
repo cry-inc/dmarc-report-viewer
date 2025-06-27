@@ -2,7 +2,7 @@ import { LitElement, html } from "lit";
 import { globalStyle } from "../style.js";
 import { join } from "../utils.js";
 
-export class TlsRptReportTable extends LitElement {
+export class TlsReportTable extends LitElement {
     static styles = [globalStyle];
 
     static properties = {
@@ -43,7 +43,7 @@ export class TlsRptReportTable extends LitElement {
             return html`<span class="faded">No domains</span>`;
         }
         const links = domains.map(
-            d => html`<a href="#/tlsrpt-reports?domain=${encodeURIComponent(d)}">${d}</a>`
+            d => html`<a href="#/tls-reports?domain=${encodeURIComponent(d)}">${d}</a>`
         );
         return join(links, html`, `);
     }
@@ -62,8 +62,8 @@ export class TlsRptReportTable extends LitElement {
                 </tr>
                 ${this.reports.length !== 0 ? this.reports.map((report) =>
                     html`<tr>
-                            <td><a href="#/tlsrpt-reports/${report.hash}" title="${report.id}">${this.prepareId(report.id)}</a></td>
-                            <td class="xs-hidden"><a href="#/tlsrpt-reports?org=${encodeURIComponent(report.org)}">${report.org}</a></td>
+                            <td><a href="#/tls-reports/${report.hash}" title="${report.id}">${this.prepareId(report.id)}</a></td>
+                            <td class="xs-hidden"><a href="#/tls-reports?org=${encodeURIComponent(report.org)}">${report.org}</a></td>
                             <td class="sm-hidden">${this.renderDomains(report.domains)}</td>
                             <td>${this.renderProblemBadges(report.flagged_sts, report.flagged_tlsa)}</td>
                             <td class="sm-hidden">${report.records}</td>
@@ -80,4 +80,4 @@ export class TlsRptReportTable extends LitElement {
     }
 }
 
-customElements.define("drv-tlsrpt-report-table", TlsRptReportTable);
+customElements.define("drv-tls-report-table", TlsReportTable);

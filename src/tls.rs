@@ -45,7 +45,7 @@ pub struct Policy {
 /// is used to summarize the report.
 #[derive(Clone, Serialize, Deserialize, Hash, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
-pub enum TlsRptResultType {
+pub enum TlsResultType {
     Successful,
     Failure,
 }

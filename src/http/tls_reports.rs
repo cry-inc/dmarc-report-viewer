@@ -107,7 +107,7 @@ pub async fn list_handler(
     let reports: Vec<ReportHeader> = state
         .lock()
         .await
-        .tlsrpt_reports
+        .tls_reports
         .iter()
         .filter(|(_, rwi)| {
             if let Some(id) = &filters.id {
@@ -164,7 +164,7 @@ pub async fn single_handler(
     Path(id): Path<String>,
 ) -> impl IntoResponse {
     let lock = state.lock().await;
-    if let Some(rwi) = lock.tlsrpt_reports.get(&id) {
+    if let Some(rwi) = lock.tls_reports.get(&id) {
         let report_json = serde_json::to_string(rwi).expect("Failed to serialize JSON");
         (
             StatusCode::OK,
@@ -185,7 +185,7 @@ pub async fn json_handler(
     Path(id): Path<String>,
 ) -> impl IntoResponse {
     let lock = state.lock().await;
-    if let Some(rwi) = lock.tlsrpt_reports.get(&id) {
+    if let Some(rwi) = lock.tls_reports.get(&id) {
         let report_json = serde_json::to_string(&rwi.report).expect("Failed to serialize JSON");
         (
             StatusCode::OK,

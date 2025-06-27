@@ -16,7 +16,7 @@ pub struct DmarcReportWithMailId {
 
 /// SMTP TLS report with ID of the mail that contained the report
 #[derive(Serialize, Deserialize)]
-pub struct TlsRptReportWithMailId {
+pub struct TlsReportWithMailId {
     pub mail_id: String,
     pub report: tls::Report,
 }
@@ -40,7 +40,7 @@ pub struct AppState {
     pub dmarc_reports: HashMap<String, DmarcReportWithMailId>,
 
     /// Parsed SMTP TLS reports with mail UID and corresponding hash as key
-    pub tlsrpt_reports: HashMap<String, TlsRptReportWithMailId>,
+    pub tls_reports: HashMap<String, TlsReportWithMailId>,
 
     /// Number of XML files extracted from mails
     pub xml_files: usize,
@@ -55,7 +55,7 @@ pub struct AppState {
     pub dmarc_parsing_errors: HashMap<String, Vec<ReportParsingError>>,
 
     /// JSON SMTP TLS parsing errors keyed by mail ID
-    pub tlsrpt_parsing_errors: HashMap<String, Vec<ReportParsingError>>,
+    pub tls_parsing_errors: HashMap<String, Vec<ReportParsingError>>,
 
     /// IP to DNS cache
     pub ip_dns_cache: CacheMap<IpAddr, String>,
@@ -69,12 +69,12 @@ impl AppState {
         Self {
             mails: HashMap::new(),
             dmarc_reports: HashMap::new(),
-            tlsrpt_reports: HashMap::new(),
+            tls_reports: HashMap::new(),
             last_update: 0,
             xml_files: 0,
             json_files: 0,
             dmarc_parsing_errors: HashMap::new(),
-            tlsrpt_parsing_errors: HashMap::new(),
+            tls_parsing_errors: HashMap::new(),
             ip_dns_cache: CacheMap::new(CACHE_SIZE).expect("Failed to create DNS cache"),
             ip_location_cache: CacheMap::new(CACHE_SIZE).expect("Failed to create location cache"),
         }

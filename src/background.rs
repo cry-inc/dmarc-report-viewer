@@ -1,7 +1,7 @@
 use crate::config::Configuration;
 use crate::hasher::create_hash;
 use crate::imap::get_mails;
-use crate::state::{AppState, DmarcReportWithMailId, ReportParsingError, TlsRptReportWithMailId};
+use crate::state::{AppState, DmarcReportWithMailId, ReportParsingError, TlsReportWithMailId};
 use crate::unpack::{extract_report_files, FileType};
 use crate::{dmarc, tls};
 use anyhow::{Context, Result};
@@ -125,8 +125,8 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
 
     let mut dmarc_parsing_errors: HashMap<String, Vec<ReportParsingError>> = HashMap::new();
     let mut dmarc_reports = HashMap::new();
-    let mut tlsrpt_parsing_errors: HashMap<String, Vec<ReportParsingError>> = HashMap::new();
-    let mut tlsrpt_reports = HashMap::new();
+    let mut tls_parsing_errors: HashMap<String, Vec<ReportParsingError>> = HashMap::new();
+    let mut tls_reports = HashMap::new();
     for xml_file in xml_files.values() {
         match dmarc::Report::from_slice(&xml_file.data) {
             Ok(report) => {
@@ -169,12 +169,12 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
     for json_file in json_files.values() {
         match tls::Report::from_slice(&json_file.data) {
             Ok(report) => {
-                let rwi = TlsRptReportWithMailId {
+                let rwi = TlsReportWithMailId {
                     report,
                     mail_id: json_file.mail_id.clone(),
                 };
                 let hash = create_hash(&[&json_file.data, json_file.mail_id.as_bytes()]);
-                tlsrpt_reports.insert(hash, rwi);
+                tls_reports.insert(hash, rwi);
             }
             Err(err) => {
                 // Prepare error information
@@ -185,7 +185,7 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
                 };
 
                 // Store in error hashmap for fast lookup
-                tlsrpt_parsing_errors
+                tls_parsing_errors
                     .entry(json_file.mail_id.clone())
                     .or_default()
                     .push(error);
@@ -198,17 +198,17 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
             }
         }
     }
-    if !tlsrpt_parsing_errors.is_empty() {
+    if !tls_parsing_errors.is_empty() {
         warn!(
             "Failed to parse {} JSON file(s) as SMTP TLS report(s)",
-            tlsrpt_parsing_errors.len()
+            tls_parsing_errors.len()
         );
     }
 
     info!(
         "Parsed {} DMARC reports and {} SMTP TLS reports successfully",
         dmarc_reports.len(),
-        tlsrpt_reports.len()
+        tls_reports.len()
     );
 
     let timestamp = SystemTime::now()
@@ -220,12 +220,12 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
         let mut locked_state = state.lock().await;
         locked_state.mails = mails;
         locked_state.dmarc_reports = dmarc_reports;
-        locked_state.tlsrpt_reports = tlsrpt_reports;
+        locked_state.tls_reports = tls_reports;
         locked_state.last_update = timestamp;
         locked_state.xml_files = xml_files.len();
         locked_state.json_files = json_files.len();
         locked_state.dmarc_parsing_errors = dmarc_parsing_errors;
-        locked_state.tlsrpt_parsing_errors = tlsrpt_parsing_errors;
+        locked_state.tls_parsing_errors = tls_parsing_errors;
     }
 
     Ok(())

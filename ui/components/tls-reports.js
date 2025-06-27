@@ -1,7 +1,7 @@
 import { LitElement, html } from "lit";
 import { globalStyle } from "../style.js";
 
-export class TlsRptReports extends LitElement {
+export class TlsReports extends LitElement {
     static styles = [globalStyle];
 
     static properties = {
@@ -54,17 +54,17 @@ export class TlsRptReports extends LitElement {
             <h1>SMTP TLS Reports</h1>
             <div>
                 ${this.filtered ?
-                    html`Filter active! <a class="ml button" href="#/tlsrpt-reports">Show all Reports</a>` :
+                    html`Filter active! <a class="ml button" href="#/tls-reports">Show all Reports</a>` :
                     html`Filters:
-                        <a class="ml button mr-5" href="#/tlsrpt-reports?flagged=true">Reports with Problems</a>
-                        <a class="button mr-5" href="#/tlsrpt-reports?flagged_sts=true">Reports with MTA-STS Problems</a>
-                        <a class="button mr-5" href="#/tlsrpt-reports?flagged_tlsa=true">Reports with TLSA Problems</a>
+                        <a class="ml button mr-5" href="#/tls-reports?flagged=true">Reports with Problems</a>
+                        <a class="button mr-5" href="#/tls-reports?flagged_sts=true">Reports with MTA-STS Problems</a>
+                        <a class="button mr-5" href="#/tls-reports?flagged_tlsa=true">Reports with TLSA Problems</a>
                     `
                 }
             </div>
-            <drv-tlsrpt-report-table .reports="${this.reports}"></drv-tlsrpt-report-table>
+            <drv-tls-report-table .reports="${this.reports}"></drv-tls-report-table>
         `;
     }
 }
 
-customElements.define("drv-tlsrpt-reports", TlsRptReports);
+customElements.define("drv-tls-reports", TlsReports);
