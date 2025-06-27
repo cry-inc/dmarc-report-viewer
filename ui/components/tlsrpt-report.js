@@ -24,7 +24,7 @@ export class TlsRptReport extends LitElement {
 
     async updated(changedProperties) {
         if (changedProperties.has("id") && changedProperties.id !== this.id && this.id) {
-            const response = await fetch("tlsrpt-reports/" + this.id);
+            const response = await fetch("tls-reports/" + this.id);
             const rwi = await response.json();
             this.report = rwi.report;
             this.mailId = rwi.mail_id;

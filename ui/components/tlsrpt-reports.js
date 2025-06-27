@@ -39,7 +39,7 @@ export class TlsRptReports extends LitElement {
         if (this.params.org) {
             urlParams.push("org=" + encodeURIComponent(this.params.org));
         }
-        let url = "tlsrpt-reports";
+        let url = "tls-reports";
         if (urlParams.length > 0) {
             url += "?" + urlParams.join("&");
         }

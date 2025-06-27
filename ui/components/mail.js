@@ -38,7 +38,7 @@ export class Mail extends LitElement {
             fetch("dmarc-reports?id=" + this.id).then(async (response) => {
                 this.reportsDmarc = await response.json();
             });
-            fetch("tlsrpt-reports?id=" + this.id).then(async (response) => {
+            fetch("tls-reports?id=" + this.id).then(async (response) => {
                 this.reportsTls = await response.json();
             });
             fetch("mails/" + this.id + "/errors").then(async (response) => {
