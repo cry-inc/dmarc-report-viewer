@@ -170,12 +170,16 @@ export class Dashboard extends LitElement {
         if (this.tlsReports === 0) this.classesToHide.push("tls");
         if (this.dmarcReports > 0) this.classesToHide.push("no_dmarc_reports");
         if (this.tlsReports > 0) this.classesToHide.push("no_tls_reports");
+
         if (Object.values(summary.dmarc.orgs).every((v) => v === 0)) this.classesToHide.push("dmarc_orgs");
         if (Object.values(summary.dmarc.domains).every((v) => v === 0)) this.classesToHide.push("dmarc_domains");
         if (Object.values(summary.dmarc.spf_policy_results).every((v) => v === 0)) this.classesToHide.push("spf_policy");
         if (Object.values(summary.dmarc.dkim_policy_results).every((v) => v === 0)) this.classesToHide.push("dkim_policy");
         if (Object.values(summary.dmarc.spf_auth_results).every((v) => v === 0)) this.classesToHide.push("spf_auth");
         if (Object.values(summary.dmarc.dkim_auth_results).every((v) => v === 0)) this.classesToHide.push("dkim_auth");
+        const allDmarcCharts = ["dmarc_orgs", "dmarc_domains", "spf_policy", "dkim_policy", "spf_auth", "dkim_auth"];
+        if (allDmarcCharts.every(c => this.classesToHide.includes(c))) this.classesToHide.push("dmarc_charts");
+
         if (Object.values(summary.tls.orgs).every((v) => v === 0)) this.classesToHide.push("tls_orgs");
         if (Object.values(summary.tls.domains).every((v) => v === 0)) this.classesToHide.push("tls_domains");
         if (Object.values(summary.tls.policy_types).every((v) => v === 0)) this.classesToHide.push("tls_policy_types");
@@ -183,7 +187,9 @@ export class Dashboard extends LitElement {
         if (Object.values(summary.tls.sts_failure_types).every((v) => v === 0)) this.classesToHide.push("sts_failure_types");
         if (Object.values(summary.tls.tlsa_policy_results).every((v) => v === 0)) this.classesToHide.push("tlsa_policy_results");
         if (Object.values(summary.tls.tlsa_failure_types).every((v) => v === 0)) this.classesToHide.push("tlsa_failure_types");
-        
+        const allTlsCharts = ["tls_orgs", "tls_domains", "tls_policy_types", "sts_policy_results", "sts_failure_types", "tlsa_policy_results", "tlsa_failure_types"];
+        if (allTlsCharts.every(c => this.classesToHide.includes(c))) this.classesToHide.push("tls_charts");
+
         if (this.dmarc_orgs_chart) this.dmarc_orgs_chart.destroy();
         this.dmarc_orgs_chart = await this.createPieChart("dmarc_orgs_chart", this.sortedMap(summary.dmarc.orgs), orgColorMap, function (label) {
             window.location.hash = "#/dmarc-reports?org=" + encodeURIComponent(label);
@@ -291,7 +297,7 @@ export class Dashboard extends LitElement {
                 }],
             },
             options: {
-                onClick: function (event, element, chart) {
+                onClick: function (event, element) {
                     if (onLabelClick) {
                         const label = labels[element[0].index];
                         onLabelClick(label);
@@ -351,7 +357,7 @@ export class Dashboard extends LitElement {
                 </span>
             </div>
 
-            <h2>DMARC Summary</h2>
+            <h2 class="dmarc_charts">DMARC Summary</h2>
             <p class="no_dmarc_reports">No DMARC reports found.</p>
 
             <div class="grid dmarc">
@@ -386,7 +392,7 @@ export class Dashboard extends LitElement {
                 </div>
             </div>
 
-            <h2>SMTP TLS Report Summary</h2>
+            <h2 class="tls_charts">SMTP TLS Report Summary</h2>
             <p class="no_tls_reports">No SMTP TLS reports found.</p>
 
             <div class="grid tls">
