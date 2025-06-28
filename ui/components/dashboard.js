@@ -164,12 +164,7 @@ export class Dashboard extends LitElement {
         this.dmarcReports = summary.dmarc.reports;
         this.tlsReports = summary.tls.reports;
         this.lastUpdate = summary.last_update;
-
         this.classesToHide = [];
-        if (this.dmarcReports === 0) this.classesToHide.push("dmarc");
-        if (this.tlsReports === 0) this.classesToHide.push("tls");
-        if (this.dmarcReports > 0) this.classesToHide.push("no_dmarc_reports");
-        if (this.tlsReports > 0) this.classesToHide.push("no_tls_reports");
 
         if (Object.values(summary.dmarc.orgs).every((v) => v === 0)) this.classesToHide.push("dmarc_orgs");
         if (Object.values(summary.dmarc.domains).every((v) => v === 0)) this.classesToHide.push("dmarc_domains");
@@ -319,7 +314,7 @@ export class Dashboard extends LitElement {
     render() {
         return html`
             <style>
-                ${(this.classesToHide ?? []).map(c => `.${c}`).join(",\n")} {
+                ${(this.classesToHide ?? []).map(c => "." + c).join(", ")} {
                     display: none;
                 }
             </style>
@@ -328,10 +323,10 @@ export class Dashboard extends LitElement {
 
             <div class="module stats">
                 <span>Mails: <b>${this.mails}</b></span>
-                <span class="dmarc">XML Files: <b>${this.xmlFiles}</b></span>
-                <span class="dmarc">DMARC Reports: <b>${this.dmarcReports}</b></span>
-                <span class="tls">JSON Files: <b>${this.jsonFiles}</b></span>
-                <span class="tls">SMTP TLS Reports: <b>${this.tlsReports}</b></span>
+                <span>XML Files: <b>${this.xmlFiles}</b></span>
+                <span>DMARC Reports: <b>${this.dmarcReports}</b></span>
+                <span>JSON Files: <b>${this.jsonFiles}</b></span>
+                <span>SMTP TLS Reports: <b>${this.tlsReports}</b></span>
                 <span>Last Update: <b>${new Date(this.lastUpdate * 1000).toLocaleString()}</b></span>
             </div>
 
@@ -362,75 +357,71 @@ export class Dashboard extends LitElement {
             </div>
 
             <h2 class="dmarc_charts">DMARC Summary</h2>
-            <p class="no_dmarc_reports">No DMARC reports found.</p>
-
-            <div class="grid dmarc">
-                <div class="module dmarc dmarc_orgs">
+            <div class="grid dmarc_charts">
+                <div class="module dmarc_orgs">
                     <h3>DMARC Organizations</h3>
                     <canvas class="dmarc_orgs_chart"></canvas>
                 </div>
 
-                <div class="module dmarc dmarc_domains">
+                <div class="module dmarc_domains">
                     <h3>DMARC Domains</h3>
                     <canvas class="dmarc_domains_chart"></canvas>
                 </div>
 
-                <div class="module dmarc spf_policy">
+                <div class="module spf_policy">
                     <h3>SPF Policy Results</h3>
                     <canvas class="spf_policy_chart"></canvas>
                 </div>
 
-                <div class="module dmarc dkim_policy">
+                <div class="module dkim_policy">
                     <h3>DKIM Policy Results</h3>
                     <canvas class="dkim_policy_chart"></canvas>
                 </div>
 
-                <div class="module dmarc spf_auth">
+                <div class="module spf_auth">
                     <h3>SPF Auth Results</h3>
                     <canvas class="spf_auth_chart"></canvas>
                 </div>
 
-                <div class="module dmarc dkim_auth">
+                <div class="module dkim_auth">
                     <h3>DKIM Auth Results</h3>
                     <canvas class="dkim_auth_chart"></canvas>
                 </div>
             </div>
 
             <h2 class="tls_charts">SMTP TLS Report Summary</h2>
-            <p class="no_tls_reports">No SMTP TLS reports found.</p>
-
-            <div class="grid tls">
-                <div class="module tls tls_orgs">
+            <div class="grid tls_charts">
+                <div class="module tls_orgs">
                     <h3>TLS Organizations</h3>
                     <canvas class="tls_orgs_chart"></canvas>
                 </div>
 
-                <div class="module tls tls_domains">
+                <div class="module tls_domains">
                     <h3>TLS Domains</h3>
                     <canvas class="tls_domains_chart"></canvas>
                 </div>
 
-                <div class="module tls tls_policy_types">
+                <div class="module tls_policy_types">
                     <h3>TLS Policy Types</h3>
                     <canvas class="tls_policy_types_chart"></canvas>
                 </div>
 
-                <div class="module tls sts_policy_results">
+                <div class="module sts_policy_results">
                     <h3>MTA-STS Policy Results</h3>
                     <canvas class="sts_policy_results_chart"></canvas>
                 </div>
 
-                <div class="module tls sts_failure_types">
+                <div class="module sts_failure_types">
                     <h3>MTA-STS Failure Types</h3>
                     <canvas class="sts_failure_types_chart"></canvas>
                 </div>
 
-                <div class="module tls tlsa_policy_results">
+                <div class="module tlsa_policy_results">
                     <h3>DANE TLSA Policy Results</h3>
                     <canvas class="tlsa_policy_results_chart"></canvas>
                 </div>
 
-                <div class="module tls tlsa_failure_types">
+                <div class="module tlsa_failure_types">
                     <h3>DANE TLSA Failure Types</h3>
                     <canvas class="tlsa_failure_types_chart"></canvas>
                 </div>
