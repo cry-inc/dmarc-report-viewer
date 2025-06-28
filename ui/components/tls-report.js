@@ -72,8 +72,9 @@ export class TlsReport extends LitElement {
                 return html`<span class="badge">MTA-STS</span>`;
             case "tlsa":
                 return html`<span class="badge">TLSA</span>`;
+            default:
+                return html`<span class="badge">${result}</span>`;
         }
-        return html`<span class="badge">${result}</span>`;
     }
 
     renderFailureCountBadge(count) {
@@ -108,8 +109,9 @@ export class TlsReport extends LitElement {
                 return html`MTA-STS policy invalid`;
             case "sts-webpki-invalid":
                 return html`MTA-STS WebPKI invalid`;
+            default:
+                return html`${type}`;
         }
-        return html`${type}`;
     }
 
     renderMultilineCell(array) {
@@ -186,50 +188,51 @@ export class TlsReport extends LitElement {
             </table>
 
             ${this.report.policies.sort((a, b) => a.policy["policy-type"].localeCompare(b.policy["policy-type"])).map((policy) => html`
-                <h2>Policy</h2>
+                <h2>Policies</h2>
                 <table>
-                    <tbody>
+                    <tr>
+                        <th colspan="2">Published Policy</td>
+                    </tr>
+                    <tr>
+                        <td class="name">Policy Type</td>
+                        <td>${this.renderPolicyTypeBadge(policy.policy["policy-type"])}</td>
+                    </tr>
+                    ${"policy-string" in policy.policy ? html`
                         <tr>
-                            <th colspan="2">Published Policy</td>
+                            <td class="name">Policy String</td>
+                            <td>${this.renderMultilineCell(policy.policy["policy-string"])}</td>
                         </tr>
+                    ` : nothing}
+                    <tr>
+                        <td class="name">Policy Domain</td>
+                        <td>${policy.policy["policy-domain"]}</td>
+                    </tr>
+                    ${"mx-host" in policy.policy ? html`
                         <tr>
-                            <td class="name">Policy Type</td>
-                            <td>${this.renderPolicyTypeBadge(policy.policy["policy-type"])}</td>
+                            <td class="name">MX Host</td>
+                            <td>${this.renderMultilineCell(policy.policy["mx-host"])}</td>
                         </tr>
-                        ${"policy-string" in policy.policy ? html`
-                            <tr>
-                                <td class="name">Policy String</td>
-                                <td>${this.renderMultilineCell(policy.policy["policy-string"])}</td>
-                            </tr>
-                        ` : nothing}
-                        <tr>
-                            <td class="name">Policy Domain</td>
-                            <td>${policy.policy["policy-domain"]}</td>
-                        </tr>
-                        ${"mx-host" in policy.policy ? html`
-                            <tr>
-                                <td class="name">MX Host</td>
-                                <td>${this.renderMultilineCell(policy.policy["mx-host"])}</td>
-                            </tr>
-                        ` : nothing}
+                    ` : nothing}
+                </table>
+                <table>
+                    <tr>
+                        <th colspan="2">Summary</td>
+                    </tr>
+                    <tr>
+                        <td class="name">Successful Count</td>
+                        <td>${policy.summary["total-successful-session-count"]}</td>
+                    </tr>
+                    <tr>
+                        <td class="name">Failure Count</td>
+                        <td>${this.renderFailureCountBadge(policy.summary["total-failure-session-count"])}</td>
+                    </tr>
+                </table>
 
-                        <tr>
-                            <th colspan="2">Summary</td>
-                        </tr>
-                        <tr>
-                            <td class="name">Successful Count</td>
-                            <td>${policy.summary["total-successful-session-count"]}</td>
-                        </tr>
-                        <tr>
-                            <td class="name">Failure Count</td>
-                            <td>${this.renderFailureCountBadge(policy.summary["total-failure-session-count"])}</td>
-                        </tr>
-                    </tbody>
-
-                    ${"failure-details" in policy ? policy["failure-details"].map((failureDetails) => html`
+                ${"failure-details" in policy ? policy["failure-details"].map((failureDetails) => html`
+                    <table>
                         <tbody>
                             <tr>
-                                <th colspan="2">Failure Details – ${this.renderFailureResultType(failureDetails["result-type"])}</td>
+                                <th colspan="2">Failure</td>
                             </tr>
                             <tr>
                                 <td class="name">Failure Result Type</td>
