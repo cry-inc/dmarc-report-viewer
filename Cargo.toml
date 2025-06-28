@@ -1,12 +1,12 @@
 [package]
 name = "dmarc-report-viewer"
-description = "Standalone DMARC report viewer that fetches input data periodically from an IMAP mailbox"
+description = "Standalone DMARC and SMTP TLS report viewer that fetches input data periodically from an IMAP mailbox"
 keywords = ["dmarc", "email"]
 categories = ["email"]
 license = "MIT"
 readme = "README.md"
 repository = "https://github.com/cry-inc/dmarc-report-viewer"
-version = "1.8.0"
+version = "2.0.0"
 edition = "2024"
 
 [dependencies]

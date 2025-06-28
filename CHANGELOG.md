@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.0.0] - 2025-06-28
+* Added support for SMTP TLS reports (implemented by @marvinruder, thank you!)
+* Added support for multiple separate inboxes for DMARC and SMTP TLS reports (also implemented by @marvinruder)
+* Introduced new unique IDs for reports and mails to keep URLs short
+* A lot of other minor improvements and fixes
+* Updated Rust Edition to 2024
+* Updated Cargo and JavaScript dependencies
+
 ## [1.8.0] - 2025-05-20
 * Dashboard UI: Add filtering for charts by time span
 * Dashboard UI: Add filtering for charts by domain
