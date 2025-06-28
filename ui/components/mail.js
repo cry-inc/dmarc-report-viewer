@@ -43,7 +43,6 @@ export class Mail extends LitElement {
             });
             fetch("mails/" + this.id + "/errors").then(async (response) => {
                 this.errors = await response.json();
-                console.log(this.errors); //////////////////////////////////// remove
             });
         }
     }
