@@ -1,10 +1,10 @@
 use crate::config::Configuration;
 use crate::hasher::create_hash;
-use crate::mail::{decode_subject, Mail};
-use anyhow::{anyhow, Context, Result};
+use crate::mail::{Mail, decode_subject};
+use anyhow::{Context, Result, anyhow};
+use async_imap::Client;
 use async_imap::imap_proto::Address;
 use async_imap::types::Fetch;
-use async_imap::Client;
 use futures::StreamExt;
 use std::collections::HashMap;
 use std::net::TcpStream as StdTcpStream;
@@ -12,11 +12,11 @@ use std::net::{SocketAddr, ToSocketAddrs};
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::net::TcpStream;
+use tokio_rustls::TlsConnector;
 use tokio_rustls::client::TlsStream;
 use tokio_rustls::rustls::pki_types::pem::PemObject;
 use tokio_rustls::rustls::pki_types::{CertificateDer, ServerName};
 use tokio_rustls::rustls::{ClientConfig, RootCertStore};
-use tokio_rustls::TlsConnector;
 use tokio_util::either::Either;
 use tracing::{debug, info, trace, warn};
 
@@ -70,7 +70,9 @@ pub async fn get_mails(
 
         let no_size_mails = mails.values().filter(|m| m.size == 0).count();
         if no_size_mails > 0 {
-            warn!("Found {no_size_mails} without size property, this will make upfront oversize filtering impossible!")
+            warn!(
+                "Found {no_size_mails} without size property, this will make upfront oversize filtering impossible!"
+            )
         }
 
         let oversized_mails = mails.values().filter(|m| m.oversized).count();
@@ -143,8 +145,7 @@ pub async fn get_mails(
                 }
                 trace!(
                     "Fetched mail with UID {uid} and size {} from {}",
-                    mail.size,
-                    mail.sender
+                    mail.size, mail.sender
                 );
             }
             if fetched_mails != chunk.len() {

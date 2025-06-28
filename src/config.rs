@@ -1,7 +1,7 @@
 use clap::{Parser, ValueEnum};
 use cron::Schedule;
 use std::path::PathBuf;
-use tracing::{info, Level};
+use tracing::{Level, info};
 
 #[derive(Parser, Clone)]
 #[command(version, about, long_about = None)]

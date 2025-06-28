@@ -1,9 +1,9 @@
 use crate::dmarc::{DkimResultType, DmarcResultType, SpfResultType};
 use crate::state::{AppState, DmarcReportWithMailId, TlsReportWithMailId};
 use crate::tls::{FailureResultType, PolicyType, TlsResultType};
+use axum::Json;
 use axum::extract::{Query, State};
 use axum::response::IntoResponse;
-use axum::Json;
 use chrono::{Duration, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;

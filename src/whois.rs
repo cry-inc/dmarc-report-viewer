@@ -3,7 +3,7 @@
 // Its a heavily modified and simplified version of an existing library.
 // See https://github.com/magiclen/whois-rust for the original code!
 
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
 use regex::Regex;
 use std::net::IpAddr;
 use std::time::Duration;

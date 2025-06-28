@@ -4,7 +4,7 @@
 // https://tools.ietf.org/html/rfc7489#appendix-C
 
 use anyhow::{Context, Result};
-use serde::{de, Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, de};
 use std::net::IpAddr;
 
 /// The time range in UTC covered by messages in this report.

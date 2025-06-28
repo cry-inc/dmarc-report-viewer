@@ -1,4 +1,4 @@
-use anyhow::{ensure, Result};
+use anyhow::{Result, ensure};
 use std::collections::HashMap;
 use std::hash::Hash;
 
