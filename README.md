@@ -55,7 +55,7 @@ The following tags are available (aside from the versioned tag for all individua
 * `latest` (Latest stable release)
 * `develop` (Last development build from master branch)
 
-### Configuration
+## Configuration
 List all available configuration parameters with the corresponding environment variables and default values by running this command:
 `sudo docker run --rm ghcr.io/cry-inc/dmarc-report-viewer ./dmarc-report-viewer --help`.
 
@@ -115,6 +115,12 @@ You should also persist the certificate caching directory on your host file syst
       -v /host/cert/folder:/certs \
       -p 443:8443 \
       ghcr.io/cry-inc/dmarc-report-viewer
+
+### IPv6 Support
+By default the HTTP server will bind to any IPv4 address of the machine.
+This is because the default bind setting is `0.0.0.0`.
+You can use the configuration option `--http-server-binding [::]` or ENV variable `HTTP_SERVER_BINDING=[::]` for IPv6.
+Note that on Linux this will bind to both, IPv4 and IPv6 by default.
 
 ## Build from Source
 1. Install Rust toolchain (see https://rustup.rs/)
