@@ -255,6 +255,10 @@ export class Dashboard extends LitElement {
     }
 
     async createPieChart(canvasId, dataMap, colorMap, onLabelClick) {
+        // There is a weird bug that leads to charts sometimes not being rendered.
+        // This bad hack seems to avoid it by waiting one cycle...
+        await new Promise(r => setTimeout(r, 0));
+
         const defaultColors = [
             "rgb(13, 202, 240)",
             "rgb(253, 126, 20)",
