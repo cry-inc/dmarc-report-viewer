@@ -75,6 +75,12 @@ Here is an example:
       -p 8080:8080 \
       ghcr.io/cry-inc/dmarc-report-viewer
 
+### Application Data
+This application does not store any reports in a database or in any other kind of file.
+All data is kept in memory and retrieved each time fresh from the configured IMAP account.
+The only exception is the certificate cache folder when using Let's Encrypt,
+this folder should be persisted and saved between application restarts.
+
 ### IMAP Folders
 You can define separate IMAP folders for fetching DMARC and TLS reports.
 By default one single `INBOX` is used to look for both kind of reports.

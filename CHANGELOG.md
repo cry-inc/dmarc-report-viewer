@@ -10,6 +10,11 @@ All notable changes to this project will be documented in this file.
 * Updated Rust Edition to 2024
 * Updated Cargo and JavaScript dependencies
 
+**Update Notes**: No configuration changes needed, it should continue to work as before.
+You only need to adjust the configuration if you want to use separate mailbox folders for DMARC and SMTP TLS reports.
+By default it checks the already configured IMAP mailbox for both types of reports!
+See `--help` for a list of all possible configuration options and values.
+
 ## [1.8.0] - 2025-05-20
 * Dashboard UI: Add filtering for charts by time span
 * Dashboard UI: Add filtering for charts by domain
