@@ -42,34 +42,9 @@ pub async fn errors_handler(
             String::from("Cannot find mail"),
         );
     }
-
-    let mut errors_map = serde_json::Map::new();
-
-    if let Some(errors) = lock.dmarc_parsing_errors.get(&id) {
-        errors_map.insert(
-            "xml".to_string(),
-            serde_json::Value::Array(
-                errors
-                    .iter()
-                    .map(|e| serde_json::to_value(e).expect("Failed to serialize error"))
-                    .collect(),
-            ),
-        );
-    }
-
-    if let Some(errors) = lock.tls_parsing_errors.get(&id) {
-        errors_map.insert(
-            "json".to_string(),
-            serde_json::Value::Array(
-                errors
-                    .iter()
-                    .map(|e| serde_json::to_value(e).expect("Failed to serialize error"))
-                    .collect(),
-            ),
-        );
-    }
-
-    let errors_json = serde_json::to_string(&errors_map).expect("Failed to serialize JSON");
+    let empty = Vec::new();
+    let errors = lock.parsing_errors.get(&id).unwrap_or(&empty);
+    let errors_json = serde_json::to_string(&errors).expect("Failed to serialize JSON");
     (
         StatusCode::OK,
         [(header::CONTENT_TYPE, "application/json")],

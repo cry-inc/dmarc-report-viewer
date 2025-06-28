@@ -1,8 +1,10 @@
 use crate::config::Configuration;
 use crate::hasher::create_hash;
 use crate::imap::get_mails;
-use crate::state::{AppState, DmarcReportWithMailId, ReportParsingError, TlsReportWithMailId};
-use crate::unpack::{extract_report_files, FileType};
+use crate::state::{
+    AppState, DmarcReportWithMailId, FileType, ReportParsingError, TlsReportWithMailId,
+};
+use crate::unpack::extract_report_files;
 use crate::{dmarc, tls};
 use anyhow::{Context, Result};
 use chrono::Local;
@@ -123,9 +125,8 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
         json_files.len()
     );
 
-    let mut dmarc_parsing_errors: HashMap<String, Vec<ReportParsingError>> = HashMap::new();
+    let mut parsing_errors: HashMap<String, Vec<ReportParsingError>> = HashMap::new();
     let mut dmarc_reports = HashMap::new();
-    let mut tls_parsing_errors: HashMap<String, Vec<ReportParsingError>> = HashMap::new();
     let mut tls_reports = HashMap::new();
     for xml_file in xml_files.values() {
         match dmarc::Report::from_slice(&xml_file.data) {
@@ -143,10 +144,11 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
                 let error = ReportParsingError {
                     error: error_str,
                     report: String::from_utf8_lossy(&xml_file.data).to_string(),
+                    kind: FileType::Xml,
                 };
 
                 // Store in error hashmap for fast lookup
-                dmarc_parsing_errors
+                parsing_errors
                     .entry(xml_file.mail_id.clone())
                     .or_default()
                     .push(error);
@@ -158,12 +160,6 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
                 mail.xml_parsing_errors += 1;
             }
         }
-    }
-    if !dmarc_parsing_errors.is_empty() {
-        warn!(
-            "Failed to parse {} XML file(s) as DMARC report(s)",
-            dmarc_parsing_errors.len()
-        );
     }
 
     for json_file in json_files.values() {
@@ -182,10 +178,11 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
                 let error = ReportParsingError {
                     error: error_str,
                     report: String::from_utf8_lossy(&json_file.data).to_string(),
+                    kind: FileType::Json,
                 };
 
                 // Store in error hashmap for fast lookup
-                tls_parsing_errors
+                parsing_errors
                     .entry(json_file.mail_id.clone())
                     .or_default()
                     .push(error);
@@ -198,10 +195,10 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
             }
         }
     }
-    if !tls_parsing_errors.is_empty() {
+    if !parsing_errors.is_empty() {
         warn!(
-            "Failed to parse {} JSON file(s) as SMTP TLS report(s)",
-            tls_parsing_errors.len()
+            "Failed to parse {} XML or JSON file(s) as DMARC or SMTP TLS report(s)",
+            parsing_errors.len()
         );
     }
 
@@ -224,8 +221,7 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
         locked_state.last_update = timestamp;
         locked_state.xml_files = xml_files.len();
         locked_state.json_files = json_files.len();
-        locked_state.dmarc_parsing_errors = dmarc_parsing_errors;
-        locked_state.tls_parsing_errors = tls_parsing_errors;
+        locked_state.parsing_errors = parsing_errors;
     }
 
     Ok(())

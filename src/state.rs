@@ -21,11 +21,19 @@ pub struct TlsReportWithMailId {
     pub report: tls::Report,
 }
 
+/// The type of a file that can contain report data
+#[derive(Serialize, PartialEq)]
+pub enum FileType {
+    Json,
+    Xml,
+}
+
 /// Parsing errors for DMARC or SMTP TLS reports
 #[derive(Serialize)]
 pub struct ReportParsingError {
     pub error: String,
     pub report: String,
+    pub kind: FileType,
 }
 
 /// Shared state between the different parts of the application.
@@ -51,11 +59,8 @@ pub struct AppState {
     /// Time of last update from IMAP inbox as Unix timestamp
     pub last_update: u64,
 
-    /// XML DMARC parsing errors keyed by mail ID
-    pub dmarc_parsing_errors: HashMap<String, Vec<ReportParsingError>>,
-
-    /// JSON SMTP TLS parsing errors keyed by mail ID
-    pub tls_parsing_errors: HashMap<String, Vec<ReportParsingError>>,
+    /// XML DMARC and JSON SMTP TLS parsing errors keyed by mail ID
+    pub parsing_errors: HashMap<String, Vec<ReportParsingError>>,
 
     /// IP to DNS cache
     pub ip_dns_cache: CacheMap<IpAddr, String>,
@@ -73,8 +78,7 @@ impl AppState {
             last_update: 0,
             xml_files: 0,
             json_files: 0,
-            dmarc_parsing_errors: HashMap::new(),
-            tls_parsing_errors: HashMap::new(),
+            parsing_errors: HashMap::new(),
             ip_dns_cache: CacheMap::new(CACHE_SIZE).expect("Failed to create DNS cache"),
             ip_location_cache: CacheMap::new(CACHE_SIZE).expect("Failed to create location cache"),
         }

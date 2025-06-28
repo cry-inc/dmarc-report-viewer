@@ -17,7 +17,7 @@ export class Mail extends LitElement {
             mail: { type: Object, attribute: false },
             reportsDmarc: { type: Array, attribute: false },
             reportsTls: { type: Array, attribute: false },
-            errors: { type: Object, attribute: false }
+            errors: { type: Array, attribute: false }
         };
     }
 
@@ -27,7 +27,7 @@ export class Mail extends LitElement {
         this.mail = null;
         this.reportsDmarc = [];
         this.reportsTls = [];
-        this.errors = {};
+        this.errors = [];
     }
 
     async updated(changedProperties) {
@@ -43,6 +43,7 @@ export class Mail extends LitElement {
             });
             fetch("mails/" + this.id + "/errors").then(async (response) => {
                 this.errors = await response.json();
+                console.log(this.errors); //////////////////////////////////// remove
             });
         }
     }
@@ -116,19 +117,6 @@ export class Mail extends LitElement {
                 : nothing
             }
 
-            ${"xml" in this.errors && this.errors.xml.length > 0 ?
-                html`
-                    <h2>XML Parsing Errors</h2>
-                    ${this.errors.xml.map((e) =>
-                    html`
-                        <div class="error">
-                            ${e.error}
-                            <pre>${e.report}</pre>
-                        </div>`
-                    )}`
-                : nothing
-            }
-
             ${this.reportsTls.length > 0 ?
                 html`
                     <h2>SMTP TLS Reports</h2>
@@ -136,10 +124,10 @@ export class Mail extends LitElement {
                 : nothing
             }
 
-            ${"json" in this.errors && this.errors.json.length > 0 ?
+            ${this.errors.length > 0 ?
                 html`
-                    <h2>JSON Parsing Errors</h2>
-                    ${this.errors.json.map((e) =>
+                    <h2>Parsing Errors</h2>
+                    ${this.errors.map((e) =>
                     html`
                         <div class="error">
                             ${e.error}

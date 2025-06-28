@@ -1,19 +1,13 @@
 use crate::config::Configuration;
 use crate::hasher::create_hash;
 use crate::mail::Mail;
+use crate::state::FileType;
 use anyhow::{Context, Result};
 use flate2::read::GzDecoder;
 use mailparse::{MailHeaderMap, ParsedMail};
 use std::io::{Cursor, Read};
 use tracing::{trace, warn};
 use zip::ZipArchive;
-
-/// The type of a file that can contain report data
-#[derive(PartialEq)]
-pub enum FileType {
-    Json,
-    Xml,
-}
 
 /// The contents of a file that can contain report data, along with its type
 pub struct FileDataWithType {
