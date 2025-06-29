@@ -90,9 +90,10 @@ pub struct Configuration {
     pub http_server_port: u16,
 
     /// Embedded HTTP server binding for web UI.
-    /// Needs to be an IP address.
-    /// The default will use all IPs of the host.
-    /// Use `127.0.0.1` to make the server only available on localhost!
+    /// Needs to be a valid IPv4 or IPv6 address.
+    /// The default will bind to all IPv4 IPs of the host.
+    /// Use `[::]` to bind to all IPV6 IPs of the host.
+    /// Use `127.0.0.1` (IPv4) or `[::1]` (IPv6) to make the server only available on localhost!
     #[arg(long, env, default_value = "0.0.0.0")]
     pub http_server_binding: String,
 
