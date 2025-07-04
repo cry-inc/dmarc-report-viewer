@@ -8,7 +8,7 @@ use crate::unpack::extract_report_files;
 use crate::{dmarc, tls};
 use anyhow::{Context, Result};
 use chrono::Local;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use std::time::{Duration, Instant, SystemTime};
 use tokio::sync::Mutex;
@@ -30,10 +30,15 @@ pub fn start_bg_task(
             let start = Instant::now();
             info!("Starting background update...");
             match bg_update(&config, &state).await {
-                Ok(..) => info!(
-                    "Finished background update after {:.3}s",
-                    start.elapsed().as_secs_f64()
-                ),
+                Ok(new_mails) => {
+                    if !new_mails.is_empty() {
+                        info!("Detected {} new mails", new_mails.len());
+                    }
+                    info!(
+                        "Finished background update after {:.3}s",
+                        start.elapsed().as_secs_f64()
+                    );
+                }
                 Err(err) => error!("Failed background update: {err:#}"),
             };
 
@@ -60,7 +65,8 @@ pub fn start_bg_task(
     })
 }
 
-async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Result<()> {
+/// Executes a background update and returns the IDs of all new mails
+async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Result<Vec<String>> {
     let mut mails = HashMap::new();
     if let Some(dmarc_folder) = config.imap_folder_dmarc.as_ref() {
         mails.extend(
@@ -213,16 +219,35 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
         .context("Failed to get Unix time stamp")?
         .as_secs();
 
-    {
+    let new_mails = {
         let mut locked_state = state.lock().await;
-        locked_state.mails = mails;
+
+        // Remember the IDs of all current mails from before the update
+        let old_mails: HashSet<String> = locked_state.mails.keys().cloned().collect();
+
+        // Update state with new values
         locked_state.dmarc_reports = dmarc_reports;
         locked_state.tls_reports = tls_reports;
         locked_state.last_update = timestamp;
         locked_state.xml_files = xml_files.len();
         locked_state.json_files = json_files.len();
         locked_state.parsing_errors = parsing_errors;
-    }
+        locked_state.mails = mails;
 
-    Ok(())
+        // Detect which of the mails are new
+        let new_mails: Vec<String> = locked_state.mails.keys().cloned().collect();
+        if locked_state.first_update {
+            locked_state.first_update = false;
+
+            // During the intial update we do not report any mails as new
+            vec![]
+        } else {
+            new_mails
+                .into_iter()
+                .filter(|id| !old_mails.contains(id))
+                .collect()
+        }
+    };
+
+    Ok(new_mails)
 }

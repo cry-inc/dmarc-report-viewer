@@ -41,6 +41,9 @@ pub struct ReportParsingError {
 /// parses them, analyzes DMARC reports and makes them available for
 /// the web frontend running on to the embedded HTTP server.
 pub struct AppState {
+    /// True until the first update after the application start finished
+    pub first_update: bool,
+
     /// Mails from IMAP inbox with mail ID as key
     pub mails: HashMap<String, Mail>,
 
@@ -72,6 +75,7 @@ pub struct AppState {
 impl AppState {
     pub fn new() -> Self {
         Self {
+            first_update: true,
             mails: HashMap::new(),
             dmarc_reports: HashMap::new(),
             tls_reports: HashMap::new(),
