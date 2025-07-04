@@ -29,11 +29,11 @@ export class About extends LitElement {
     render() {
         return html`
             <h1>About</h1>
-            <div>
-                This DMARC Report Viewer is an open source application written in Rust and JavaScript.<br>
-                You can find the source code, license and issue tracker on Github:
+            <p>
+                This application is open source and written in Rust and JavaScript.<br>
+                You can find the source code, changelog, license and issue tracker on Github:
                 <a href="https://github.com/cry-inc/dmarc-report-viewer" target="_blank">github.com/cry-inc/dmarc-report-viewer</a>
-            </div>
+            </p>
             <p>
                 Version: <b>${this.version}</b><br>
                 Git Hash: <b>${this.hash}</b><br>
