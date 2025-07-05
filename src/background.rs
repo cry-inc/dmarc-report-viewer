@@ -5,6 +5,7 @@ use crate::state::{
     AppState, DmarcReportWithMailId, FileType, ReportParsingError, TlsReportWithMailId,
 };
 use crate::unpack::extract_report_files;
+use crate::web_hook::mail_web_hook;
 use crate::{dmarc, tls};
 use anyhow::{Context, Result};
 use chrono::Local;
@@ -14,7 +15,7 @@ use std::time::{Duration, Instant, SystemTime};
 use tokio::sync::Mutex;
 use tokio::sync::mpsc::Receiver;
 use tokio::task::JoinHandle;
-use tracing::{error, info, trace, warn};
+use tracing::{debug, error, info, trace, warn};
 
 pub fn start_bg_task(
     config: Configuration,
@@ -31,13 +32,20 @@ pub fn start_bg_task(
             info!("Starting background update...");
             match bg_update(&config, &state).await {
                 Ok(new_mails) => {
-                    if !new_mails.is_empty() {
-                        info!("Detected {} new mails", new_mails.len());
-                    }
+                    info!("Detected {} new mails", new_mails.len());
                     info!(
                         "Finished background update after {:.3}s",
                         start.elapsed().as_secs_f64()
                     );
+                    if !new_mails.is_empty() && config.mail_web_hook_url.is_some() {
+                        debug!("Calling web hook for new mails...");
+                        for mail_id in &new_mails {
+                            if let Err(err) = mail_web_hook(&config, mail_id).await {
+                                warn!("Failed to call web hook for mail {mail_id}: {err:#}");
+                            }
+                        }
+                        debug!("Finished calling web hook for new mails");
+                    }
                 }
                 Err(err) => error!("Failed background update: {err:#}"),
             };
