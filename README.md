@@ -122,6 +122,11 @@ This is because the default bind setting is `0.0.0.0`.
 You can use the configuration option `--http-server-binding [::]` or ENV variable `HTTP_SERVER_BINDING=[::]` for IPv6.
 Note that on Linux this will bind to both, IPv4 and IPv6 by default.
 
+### Disable Basic HTTP Auth
+By default the application requires you to set an password to secure access via basic HTTP authentication.
+If you want to use other access controls (e.g. via reverse proxy),
+you can disable basic authentication by setting an empty string as password.
+
 ## Build from Source
 1. Install Rust toolchain (see https://rustup.rs/)
 2. Check out this repository (or download and extract the ZIP file)
