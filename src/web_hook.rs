@@ -12,6 +12,11 @@ use std::str::FromStr;
 use std::sync::Arc;
 use tokio::net::TcpStream;
 use tokio::sync::Mutex;
+use tokio_rustls::TlsConnector;
+use tokio_rustls::client::TlsStream;
+use tokio_rustls::rustls::pki_types::ServerName;
+use tokio_rustls::rustls::{ClientConfig, RootCertStore};
+use tokio_util::either::Either;
 use tracing::{debug, error};
 
 pub async fn mail_web_hook(
@@ -45,25 +50,31 @@ pub async fn mail_web_hook(
             serde_json::from_str(headers).context("Failed to parse optional header JSON")?;
     }
 
-    // Create and parse URI
+    // Parse and check URI
     let uri = url.parse::<Uri>().context("Failed to parse URL")?;
+    let scheme = uri.scheme().context("URL has no scheme")?;
     ensure!(
-        uri.scheme().context("URL has no scheme")? == &Scheme::HTTP,
-        "Only plain HTTP is supported"
+        *scheme == Scheme::HTTP || *scheme == Scheme::HTTPS,
+        "Only plain HTTP or HTTPS is supported"
     );
 
     // Get the host and the port
     let host = uri.host().context("URL has no host")?.to_string();
-    let port = uri.port_u16().unwrap_or(80);
+    let port = if let Some(port) = uri.port_u16() {
+        port
+    } else if *scheme == Scheme::HTTPS {
+        443 // HTTPS
+    } else {
+        80 // HTTP
+    };
 
     // Log details of hook call
     debug!("Calling web hook for new mail {mail_id} on URI {uri} with method {method}...");
 
-    // Open a TCP connection to the remote host
-    let address = format!("{host}:{port}");
-    let stream = TcpStream::connect(&address)
+    // Open a TCP or TLS connection to the remote host
+    let stream = create_stream(&host, port, *scheme == Scheme::HTTPS)
         .await
-        .context(format!("Failed to connect TCP stream at {address}"))?;
+        .context("Failed to create stream")?;
 
     // Create the Hyper client
     let io = TokioIo::new(stream);
@@ -177,4 +188,36 @@ async fn get_mail_details(
     result.insert("dmarc_reports", dmarc_reports.to_string());
     result.insert("tls_reports", tls_reports.to_string());
     Ok(result)
+}
+
+async fn create_stream(
+    host: &str,
+    port: u16,
+    tls: bool,
+) -> Result<Either<TcpStream, TlsStream<TcpStream>>> {
+    // Open a TCP connection to the remote host
+    let address = format!("{host}:{port}");
+    let tcp_stream = TcpStream::connect(&address)
+        .await
+        .context(format!("Failed to connect TCP stream at {address}"))?;
+
+    // Early out in case of TCP without TLS
+    if !tls {
+        return Ok(Either::Left(tcp_stream));
+    }
+
+    // Create a TLS stream for HTTPS
+    let cert_iter = webpki_roots::TLS_SERVER_ROOTS.iter().cloned();
+    let root_cert_store = RootCertStore::from_iter(cert_iter);
+    let client_config = ClientConfig::builder()
+        .with_root_certificates(root_cert_store)
+        .with_no_client_auth();
+    let connector = TlsConnector::from(Arc::new(client_config));
+    let dns_name =
+        ServerName::try_from(host.to_string()).context("Failed to get DNS name from host")?;
+    let tls_stream = connector
+        .connect(dns_name, tcp_stream)
+        .await
+        .context("Failed to create TLS stream")?;
+    Ok(Either::Right(tls_stream))
 }

@@ -42,6 +42,7 @@ You can find more screenshots [here](screenshots/screenshots.md).
 - [x] Viewing of individual mail metadata with a list of extracted reports
 - [x] Show parsing errors for reports
 - [x] Lookup of DNS, location, whois and other source IP properties
+- [x] Web Hook to notify external services about new mails
 
 ## Changelog
 Read the [CHANGELOG.md](CHANGELOG.md) file for a list of all released versions and their corresponding changes.
