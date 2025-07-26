@@ -1,7 +1,7 @@
 use crate::config::Configuration;
 use anyhow::{Context, Result, bail, ensure};
 use axum::http::uri::Scheme;
-use http_body_util::{BodyExt, Empty};
+use http_body_util::{BodyExt, Full};
 use hyper::body::Bytes;
 use hyper::client::conn::http1;
 use hyper::{Method, Request, Uri};
@@ -74,9 +74,16 @@ pub async fn mail_web_hook(config: &Configuration, mail_id: &str) -> Result<()> 
         req_builder = req_builder.header(key, val);
     }
 
+    // Prepare request body
+    let body = Full::new(if let Some(body_str) = &config.mail_web_hook_body {
+        Bytes::copy_from_slice(body_str.as_bytes())
+    } else {
+        Bytes::new()
+    });
+
     // Finish building and send request
     let req = req_builder
-        .body(Empty::<Bytes>::new())
+        .body(body)
         .context("Failed to create HTTP request")?;
     let mut res = sender
         .send_request(req)

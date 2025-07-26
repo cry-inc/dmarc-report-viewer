@@ -159,6 +159,11 @@ pub struct Configuration {
     /// Example value: {"content-type": "application/json", "api-key": "my secret API key"}
     #[arg(long, env)]
     pub mail_web_hook_headers: Option<String>,
+
+    /// Optional custom HTTP body used to for the outgoing web hook requests for new mails.
+    /// Should be an valid UTF8 or ASCII string.
+    #[arg(long, env)]
+    pub mail_web_hook_body: Option<String>,
 }
 
 impl Configuration {
@@ -206,6 +211,14 @@ impl Configuration {
         info!(
             "Mail Web Hook Headers: {}",
             if self.mail_web_hook_headers.is_some() {
+                "Hidden"
+            } else {
+                "None"
+            }
+        );
+        info!(
+            "Mail Web Hook Body: {}",
+            if self.mail_web_hook_body.is_some() {
                 "Hidden"
             } else {
                 "None"
