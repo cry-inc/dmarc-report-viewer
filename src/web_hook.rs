@@ -6,6 +6,7 @@ use hyper::body::Bytes;
 use hyper::client::conn::http1;
 use hyper::{Method, Request, Uri};
 use hyper_util::rt::TokioIo;
+use std::collections::HashMap;
 use std::str::FromStr;
 use tokio::net::TcpStream;
 use tracing::{debug, error};
@@ -21,6 +22,13 @@ pub async fn mail_web_hook(config: &Configuration, mail_id: &str) -> Result<()> 
         "Failed to parse string {} as HTTP method",
         config.mail_web_hook_method
     ))?;
+
+    // Parse optional headers from config
+    let mut header_map: HashMap<String, String> = HashMap::new();
+    if let Some(headers) = &config.mail_web_hook_headers {
+        header_map =
+            serde_json::from_str(headers).context("Failed to parse optional header JSON")?;
+    }
 
     // Create and parse URI
     let uri = url.parse::<Uri>().context("Failed to parse URL")?;
@@ -55,11 +63,19 @@ pub async fn mail_web_hook(config: &Configuration, mail_id: &str) -> Result<()> 
         }
     });
 
-    // Create and send HTTP request
-    let req = Request::builder()
+    // Create HTTP request builder
+    let mut req_builder = Request::builder()
         .uri(uri)
         .method(method)
-        .header(hyper::header::HOST, host)
+        .header(hyper::header::HOST, host);
+
+    // Append any custom headers
+    for (key, val) in header_map {
+        req_builder = req_builder.header(key, val);
+    }
+
+    // Finish building and send request
+    let req = req_builder
         .body(Empty::<Bytes>::new())
         .context("Failed to create HTTP request")?;
     let mut res = sender

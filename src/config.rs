@@ -153,6 +153,12 @@ pub struct Configuration {
     /// Example values: POST, PUT, PATCH, etc.
     #[arg(long, env, default_value = "POST")]
     pub mail_web_hook_method: String,
+
+    /// Optional custom HTTP headers used to for the outgoing web hook requests for new mails.
+    /// You should specify them using a JSON object with the header name as key and the value for the content.
+    /// Example value: {"content-type": "application/json", "api-key": "my secret API key"}
+    #[arg(long, env)]
+    pub mail_web_hook_headers: Option<String>,
 }
 
 impl Configuration {
@@ -197,6 +203,14 @@ impl Configuration {
 
         info!("Mail Web Hook URL: {:?}", self.mail_web_hook_url);
         info!("Mail Web Hook Method: {}", self.mail_web_hook_method);
+        info!(
+            "Mail Web Hook Headers: {}",
+            if self.mail_web_hook_headers.is_some() {
+                "Hidden"
+            } else {
+                "None"
+            }
+        );
     }
 }
 

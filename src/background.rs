@@ -38,13 +38,13 @@ pub fn start_bg_task(
                         start.elapsed().as_secs_f64()
                     );
                     if !new_mails.is_empty() && config.mail_web_hook_url.is_some() {
-                        debug!("Calling web hook for new mails...");
+                        debug!("Calling web hook for all new mails...");
                         for mail_id in &new_mails {
                             if let Err(err) = mail_web_hook(&config, mail_id).await {
                                 warn!("Failed to call web hook for mail {mail_id}: {err:#}");
                             }
                         }
-                        debug!("Finished calling web hook for new mails");
+                        debug!("Finished calling web hook for all new mails");
                     }
                 }
                 Err(err) => error!("Failed background update: {err:#}"),
