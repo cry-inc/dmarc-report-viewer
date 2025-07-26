@@ -6,6 +6,7 @@ use hyper::body::Bytes;
 use hyper::client::conn::http1;
 use hyper::{Method, Request, Uri};
 use hyper_util::rt::TokioIo;
+use std::str::FromStr;
 use tokio::net::TcpStream;
 use tracing::{debug, error};
 
@@ -14,6 +15,12 @@ pub async fn mail_web_hook(config: &Configuration, mail_id: &str) -> Result<()> 
         .mail_web_hook_url
         .as_deref()
         .context("Failed to get web hook URL for new mails")?;
+
+    // Select HTTP method from config
+    let method = Method::from_str(&config.mail_web_hook_method).context(format!(
+        "Failed to parse string {} as HTTP method",
+        config.mail_web_hook_method
+    ))?;
 
     // Create and parse URI
     let uri = url.parse::<Uri>().context("Failed to parse URL")?;
@@ -25,6 +32,9 @@ pub async fn mail_web_hook(config: &Configuration, mail_id: &str) -> Result<()> 
     // Get the host and the port
     let host = uri.host().context("URL has no host")?.to_string();
     let port = uri.port_u16().unwrap_or(80);
+
+    // Log details of hook call
+    debug!("Calling web hook for new mail {mail_id} on URI {uri} with method {method}...");
 
     // Open a TCP connection to the remote host
     let address = format!("{host}:{port}");
@@ -48,7 +58,7 @@ pub async fn mail_web_hook(config: &Configuration, mail_id: &str) -> Result<()> 
     // Create and send HTTP request
     let req = Request::builder()
         .uri(uri)
-        .method(Method::POST)
+        .method(method)
         .header(hyper::header::HOST, host)
         .body(Empty::<Bytes>::new())
         .context("Failed to create HTTP request")?;

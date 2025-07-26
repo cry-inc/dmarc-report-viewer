@@ -143,10 +143,16 @@ pub struct Configuration {
     /// Please note that this app does not have a persistent store for already known mails.
     /// When the application starts, all existing mails in the IMAP account are considered known.
     /// Only the subsequent updates that occur while the app is running will be able to detect new mails.
-    /// The URL only supports plain HTTP and will reveive a HTTP POST request.
+    /// The URL only supports plain HTTP (no HTTPS) and will reveive a HTTP request.
+    /// The default HTTP method used is `POST`. You can change the method using another setting.
     /// Example value: http://myserver.org/api/new_mails_endpoint
     #[arg(long, env)]
     pub mail_web_hook_url: Option<String>,
+
+    /// HTTP method (also known as HTTP verb) used for calling the web hook for new mails.
+    /// Example values: POST, PUT, PATCH, etc.
+    #[arg(long, env, default_value = "POST")]
+    pub mail_web_hook_method: String,
 }
 
 impl Configuration {
@@ -190,6 +196,7 @@ impl Configuration {
         info!("Maximum Mail Body Size: {} bytes", self.max_mail_size);
 
         info!("Mail Web Hook URL: {:?}", self.mail_web_hook_url);
+        info!("Mail Web Hook Method: {}", self.mail_web_hook_method);
     }
 }
 
