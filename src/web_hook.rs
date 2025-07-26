@@ -1,4 +1,5 @@
 use crate::config::Configuration;
+use crate::state::AppState;
 use anyhow::{Context, Result, bail, ensure};
 use axum::http::uri::Scheme;
 use http_body_util::{BodyExt, Full};
@@ -8,14 +9,28 @@ use hyper::{Method, Request, Uri};
 use hyper_util::rt::TokioIo;
 use std::collections::HashMap;
 use std::str::FromStr;
+use std::sync::Arc;
 use tokio::net::TcpStream;
+use tokio::sync::Mutex;
 use tracing::{debug, error};
 
-pub async fn mail_web_hook(config: &Configuration, mail_id: &str) -> Result<()> {
+pub async fn mail_web_hook(
+    config: &Configuration,
+    mail_id: &str,
+    state: &Arc<Mutex<AppState>>,
+) -> Result<()> {
+    let mail_details = get_mail_details(mail_id, state)
+        .await
+        .context("Failed to get mail details")?;
+
     let url = config
         .mail_web_hook_url
         .as_deref()
         .context("Failed to get web hook URL for new mails")?;
+
+    // Inject mail details into URL in case it contains template parameters
+    let url = inject_mail_details(&mail_details, url, true)
+        .context("Failed to inject templates into URL")?;
 
     // Select HTTP method from config
     let method = Method::from_str(&config.mail_web_hook_method).context(format!(
@@ -76,6 +91,8 @@ pub async fn mail_web_hook(config: &Configuration, mail_id: &str) -> Result<()> 
 
     // Prepare request body
     let body = Full::new(if let Some(body_str) = &config.mail_web_hook_body {
+        let body_str = inject_mail_details(&mail_details, body_str, false)
+            .context("Fauled to inject templates into mail body")?;
         Bytes::copy_from_slice(body_str.as_bytes())
     } else {
         Bytes::new()
@@ -110,4 +127,54 @@ pub async fn mail_web_hook(config: &Configuration, mail_id: &str) -> Result<()> 
     debug!("Web hook for new mail {mail_id} responded with body: {body}");
 
     Ok(())
+}
+
+fn inject_mail_details(
+    details: &HashMap<&'static str, String>,
+    template: &str,
+    url_encode_value: bool,
+) -> Result<String> {
+    let mut template = template.to_string();
+    for (key, value) in details {
+        let placeholder = format!("[{key}]");
+        let value = if url_encode_value {
+            urlencoding::encode(value).to_string()
+        } else {
+            value.to_string()
+        };
+        template = template.replace(&placeholder, &value);
+    }
+    Ok(template)
+}
+
+async fn get_mail_details(
+    mail_id: &str,
+    state: &Arc<Mutex<AppState>>,
+) -> Result<HashMap<&'static str, String>> {
+    let locked_state = state.lock().await;
+    let mail = locked_state
+        .mails
+        .get(mail_id)
+        .context("Failed to find details for new mail")?;
+    let dmarc_reports = locked_state
+        .dmarc_reports
+        .values()
+        .filter(|r| r.mail_id == mail_id)
+        .count();
+    let tls_reports = locked_state
+        .tls_reports
+        .values()
+        .filter(|r| r.mail_id == mail_id)
+        .count();
+
+    let mut result = HashMap::new();
+    result.insert("id", mail_id.to_string());
+    result.insert("uid", mail.uid.to_string());
+    result.insert("sender", mail.sender.clone());
+    result.insert("subject", mail.subject.clone());
+    result.insert("folder", mail.folder.clone());
+    result.insert("account", mail.account.clone());
+    result.insert("dmarc_reports", dmarc_reports.to_string());
+    result.insert("tls_reports", tls_reports.to_string());
+    Ok(result)
 }

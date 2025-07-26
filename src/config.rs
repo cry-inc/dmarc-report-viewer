@@ -145,7 +145,10 @@ pub struct Configuration {
     /// Only the subsequent updates that occur while the app is running will be able to detect new mails.
     /// The URL only supports plain HTTP (no HTTPS) and will reveive a HTTP request.
     /// The default HTTP method used is `POST`. You can change the method using another setting.
-    /// Example value: http://myserver.org/api/new_mails_endpoint
+    /// The URL also supports template parameters that will be automatically replaced.
+    /// They will be always URL-encoded to avoid issues with special characters.
+    /// Please see the documentation of the optional hook body for a complete list of supported values.
+    /// Example value: http://myserver.org/api/my_endpoint?dmarc=[dmarc_reports]&sender=[sender]
     #[arg(long, env)]
     pub mail_web_hook_url: Option<String>,
 
@@ -162,6 +165,15 @@ pub struct Configuration {
 
     /// Optional custom HTTP body used to for the outgoing web hook requests for new mails.
     /// Should be an valid UTF8 or ASCII string.
+    /// The body supports the following template parameters that will be replaced automatically:
+    /// - `[id]` ID of the mail used internally and by the web interface
+    /// - `[uid]` Mail UID provided by IMAP server
+    /// - `[sender]` Sender of the mail
+    /// - `[subject]` Subject of the mail
+    /// - `[folder]` IMAP folder of the mail
+    /// - `[account]` IMAP account that received the mail
+    /// - `[dmarc_reports]` Number of DMARC reports in the mail
+    /// - `[tls_reports]` Number of SMTP TLS Reports in the mail
     #[arg(long, env)]
     pub mail_web_hook_body: Option<String>,
 }
