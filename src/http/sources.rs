@@ -3,6 +3,7 @@ use crate::dmarc::DmarcResultType;
 use crate::dmarc::RecordType;
 use crate::dmarc::SpfResultType;
 use crate::state::AppState;
+use crate::tls::FailureResultType;
 use axum::extract::State;
 use axum::http::StatusCode;
 use axum::http::header;
@@ -11,22 +12,44 @@ use serde::Serialize;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::net::IpAddr;
+use std::str::FromStr;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
 #[derive(Serialize, PartialEq, Eq, Hash)]
-enum SourceIssue {
+enum Issue {
+    // DMARC
     SpfPolicy,
     DkimPolicy,
     SpfAuth,
     DkimAuth,
+
+    // TLS
+    StarttlsNotSupported,
+    CertificateHostMismatch,
+    CertificateExpired,
+    CertificateNotTrusted,
+    ValidationFailure,
+    TlsaInvalid,
+    DnssecInvalid,
+    DaneRequired,
+    StsPolicyFetchError,
+    StsPolicyInvalid,
+    StsWebpkiInvalid,
+}
+
+#[derive(Serialize, PartialEq, Eq, Hash)]
+enum ReportType {
+    Dmarc,
+    Tls,
 }
 
 #[derive(Serialize)]
 struct SourceDetails {
     count: usize,
     domain: String,
-    issues: HashSet<SourceIssue>,
+    issues: HashSet<Issue>,
+    types: HashSet<ReportType>,
 }
 
 #[derive(Serialize)]
@@ -40,6 +63,8 @@ pub async fn handler(State(state): State<Arc<Mutex<AppState>>>) -> impl IntoResp
     let mut ip_map = HashMap::new();
     {
         let locked_state = state.lock().await;
+
+        // Get source IPs from DMARC reports
         for report in locked_state.dmarc_reports.values() {
             for record in &report.report.record {
                 // Get or create details for IP
@@ -47,6 +72,7 @@ pub async fn handler(State(state): State<Arc<Mutex<AppState>>>) -> impl IntoResp
                     count: 0,
                     domain: report.report.policy_published.domain.clone(),
                     issues: HashSet::new(),
+                    types: HashSet::new(),
                 });
 
                 // Update count
@@ -54,6 +80,53 @@ pub async fn handler(State(state): State<Arc<Mutex<AppState>>>) -> impl IntoResp
 
                 // Detect any issues
                 detect_dmarc_issues(record, &mut details.issues);
+
+                // Add report type
+                details.types.insert(ReportType::Dmarc);
+            }
+        }
+
+        // get source IPs from TLS reports
+        for report in locked_state.tls_reports.values() {
+            for policy in &report.report.policies {
+                let Some(failures) = &policy.failure_details else {
+                    continue;
+                };
+
+                for failure in failures {
+                    let ip = IpAddr::from_str(&failure.sending_mta_ip).unwrap();
+
+                    // Get or create details for IP
+                    let details = ip_map.entry(ip).or_insert(SourceDetails {
+                        count: 0,
+                        domain: policy.policy.policy_domain.clone(),
+                        issues: HashSet::new(),
+                        types: HashSet::new(),
+                    });
+
+                    // Update count
+                    details.count += failure.failed_session_count;
+
+                    // Add issue type
+                    details.issues.insert(match failure.result_type {
+                        FailureResultType::StarttlsNotSupported => Issue::StarttlsNotSupported,
+                        FailureResultType::CertificateHostMismatch => {
+                            Issue::CertificateHostMismatch
+                        }
+                        FailureResultType::CertificateExpired => Issue::CertificateExpired,
+                        FailureResultType::CertificateNotTrusted => Issue::CertificateNotTrusted,
+                        FailureResultType::ValidationFailure => Issue::ValidationFailure,
+                        FailureResultType::TlsaInvalid => Issue::TlsaInvalid,
+                        FailureResultType::DnssecInvalid => Issue::DnssecInvalid,
+                        FailureResultType::DaneRequired => Issue::DaneRequired,
+                        FailureResultType::StsPolicyFetchError => Issue::StsPolicyFetchError,
+                        FailureResultType::StsPolicyInvalid => Issue::StsPolicyInvalid,
+                        FailureResultType::StsWebpkiInvalid => Issue::StsWebpkiInvalid,
+                    });
+
+                    // Add report type
+                    details.types.insert(ReportType::Tls);
+                }
             }
         }
     }
@@ -74,20 +147,20 @@ pub async fn handler(State(state): State<Arc<Mutex<AppState>>>) -> impl IntoResp
     )
 }
 
-fn detect_dmarc_issues(record: &RecordType, issues: &mut HashSet<SourceIssue>) {
+fn detect_dmarc_issues(record: &RecordType, issues: &mut HashSet<Issue>) {
     if let Some(dkim) = &record.row.policy_evaluated.dkim {
         if *dkim != DmarcResultType::Pass {
-            issues.insert(SourceIssue::DkimPolicy);
+            issues.insert(Issue::DkimPolicy);
         }
     }
     if let Some(spf) = &record.row.policy_evaluated.spf {
         if *spf != DmarcResultType::Pass {
-            issues.insert(SourceIssue::SpfPolicy);
+            issues.insert(Issue::SpfPolicy);
         }
     }
     if let Some(dkim) = &record.auth_results.dkim {
         if dkim.iter().any(|x| x.result != DkimResultType::Pass) {
-            issues.insert(SourceIssue::DkimAuth);
+            issues.insert(Issue::DkimAuth);
         }
     }
     if record
@@ -96,6 +169,6 @@ fn detect_dmarc_issues(record: &RecordType, issues: &mut HashSet<SourceIssue>) {
         .iter()
         .any(|x| x.result != SpfResultType::Pass)
     {
-        issues.insert(SourceIssue::SpfAuth);
+        issues.insert(Issue::SpfAuth);
     }
 }
