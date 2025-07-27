@@ -213,7 +213,7 @@ export class DmarcReport extends LitElement {
                         <td>
                             ${record.row.source_ip}
                             <button @click="${() => this.lookupIp(record.row.source_ip)}" class="button sm help" title="Search DNS hostname for IP and geolocate it">DNS and Location</button>
-                            <a class="button sm help" title="Look up WHOIS record for IP and show in new tab" target="blank" href="/ips/${record.row.source_ip}/whois">WHOIS</a>
+                            <a class="button sm help" title="Look up WHOIS record for IP and show in new tab" target="blank" href="ips/${record.row.source_ip}/whois">WHOIS</a>
                         </td>
                     </tr>
                     <tbody class="sourceip" style="${this.ipDetails[record.row.source_ip] ? "": "display:none"}">

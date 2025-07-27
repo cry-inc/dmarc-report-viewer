@@ -243,7 +243,7 @@ export class TlsReport extends LitElement {
                                 <td>
                                     ${failureDetails["sending-mta-ip"]}
                                     <button @click="${() => this.lookupIp(failureDetails["sending-mta-ip"])}" class="button sm help" title="Search DNS hostname for IP and geolocate it">DNS and Location</button>
-                                    <a class="button sm help" title="Look up WHOIS record for IP and show in new tab" target="blank" href="/ips/${failureDetails["sending-mta-ip"]}/whois">WHOIS</a>
+                                    <a class="button sm help" title="Look up WHOIS record for IP and show in new tab" target="blank" href="ips/${failureDetails["sending-mta-ip"]}/whois">WHOIS</a>
                                 </td>
                             </tr>
                         </tbody>
