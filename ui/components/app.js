@@ -114,7 +114,7 @@ export class App extends LitElement {
         } else if (this.component == "mail") {
             component = html`<drv-mail id="${this.mailId}"></drv-mail>`;
         } else if (this.component == "sources") {
-            component = html`<drv-sources></drv-sources>`;
+            component = html`<drv-sources .params="${this.params}"></drv-sources>`;
         } else if (this.component == "about") {
             component = html`<drv-about></drv-about>`;
         } else {

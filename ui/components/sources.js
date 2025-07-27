@@ -1,22 +1,35 @@
-import { LitElement, html } from "lit";
+import { LitElement, html, nothing } from "lit";
 import { globalStyle } from "../style.js";
 
 export class Sources extends LitElement {
     static styles = [globalStyle];
 
     static properties = {
+        params: { type: Object },
         sources: { type: Array },
     };
 
     constructor() {
         super();
+        this.params = {};
         this.sources = [];
-        this.updateSources();
+        this.filtered = false;
+    }
+
+    updated(changedProperties) {
+        if (changedProperties.has("params")) {
+            this.updateSources();
+        }
     }
 
     async updateSources() {
         const sourcesResponse = await fetch("sources");
+        this.filtered = false;
         this.sources = await sourcesResponse.json();
+        if (this.params.domain) {
+            this.sources = this.sources.filter(s => s.domain === this.params.domain);
+            this.filtered = true;
+        }
     }
 
     prepareIssueBadges(issues) {
@@ -42,6 +55,9 @@ export class Sources extends LitElement {
     render() {
         return html`
             <h1>DMARC Mail Sources</h1>
+            <div>
+                ${this.filtered ? html`Filter active! <a class="ml button" href="#/sources">Show all Sources</a>` : nothing}
+            </div>
             <table>
                 <tr>
                     <th>IP Address</th>
@@ -53,7 +69,7 @@ export class Sources extends LitElement {
                     html`<tr> 
                         <td>${source.ip}</a></td>
                         <td>${source.count}</td>
-                        <td class="sm-hidden">${source.domain}</td>
+                        <td class="sm-hidden"><a href="#/sources?domain=${encodeURIComponent(source.domain)}">${source.domain}</a></td>
                         <td class="xs-hidden">${this.prepareIssueBadges(source.issues)}</td>
                     </tr>`
                 ) : html`<tr>
