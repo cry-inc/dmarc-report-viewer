@@ -1,4 +1,4 @@
-import { LitElement, html, nothing } from "lit";
+import { LitElement, html } from "lit";
 import { globalStyle } from "../style.js";
 
 export class Sources extends LitElement {
@@ -30,6 +30,10 @@ export class Sources extends LitElement {
             this.sources = this.sources.filter(s => s.domain === this.params.domain);
             this.filtered = true;
         }
+        if (this.params.issues) {
+            this.sources = this.sources.filter(s => s.issues.length > 0);
+            this.filtered = true;
+        }
     }
 
     prepareIssueBadges(issues) {
@@ -56,7 +60,10 @@ export class Sources extends LitElement {
         return html`
             <h1>DMARC Mail Sources</h1>
             <div>
-                ${this.filtered ? html`Filter active! <a class="ml button" href="#/sources">Show all Sources</a>` : nothing}
+                ${this.filtered ?
+                    html`Filter active! <a class="ml button" href="#/sources">Show all Sources</a>` :
+                    html`Filters: <a class="ml button" href="#/sources?issues=true">Only Sources with Issues</a>`
+                }
             </div>
             <table>
                 <tr>
