@@ -12,7 +12,6 @@ use serde::Serialize;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::net::IpAddr;
-use std::str::FromStr;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
@@ -94,15 +93,15 @@ pub async fn handler(State(state): State<Arc<Mutex<AppState>>>) -> impl IntoResp
                 };
 
                 for failure in failures {
-                    let ip = IpAddr::from_str(&failure.sending_mta_ip).unwrap();
-
                     // Get or create details for IP
-                    let details = ip_map.entry(ip).or_insert(SourceDetails {
-                        count: 0,
-                        domain: policy.policy.policy_domain.clone(),
-                        issues: HashSet::new(),
-                        types: HashSet::new(),
-                    });
+                    let details = ip_map
+                        .entry(failure.sending_mta_ip)
+                        .or_insert(SourceDetails {
+                            count: 0,
+                            domain: policy.policy.policy_domain.clone(),
+                            issues: HashSet::new(),
+                            types: HashSet::new(),
+                        });
 
                     // Update count
                     details.count += failure.failed_session_count;

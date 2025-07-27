@@ -1,6 +1,7 @@
 use anyhow::{Context, Result};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use std::net::IpAddr;
 
 /// The time range covered by messages in this report.
 /// Formatted according to "Internet Date/Time Format", Section 5.6 of RFC3339.
@@ -107,7 +108,7 @@ pub struct FailureDetails {
     pub result_type: FailureResultType,
     /// The IP address of the Sending MTA that attempted the STARTTLS
     /// connection.
-    pub sending_mta_ip: String,
+    pub sending_mta_ip: IpAddr,
     /// The hostname of the receiving MTA MX record with which the Sending MTA
     /// attempted to negotiate a STARTTLS connection.
     pub receiving_mx_hostname: String,
@@ -118,7 +119,7 @@ pub struct FailureDetails {
     /// The destination IP address that was used when creating the outbound
     /// session.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub receiving_ip: Option<String>,
+    pub receiving_ip: Option<IpAddr>,
     /// The number of (attempted) sessions that match the relevant
     /// "result-type" for this section.
     pub failed_session_count: usize,
@@ -169,6 +170,7 @@ impl Report {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::str::FromStr;
 
     #[test]
     fn serde_roundtrip() {
@@ -239,7 +241,10 @@ mod tests {
             cert_expired_details.result_type,
             FailureResultType::CertificateExpired
         );
-        assert_eq!(cert_expired_details.sending_mta_ip, "2001:db8:abcd:0012::1");
+        assert_eq!(
+            cert_expired_details.sending_mta_ip,
+            IpAddr::from_str("2001:db8:abcd:0012::1").unwrap()
+        );
         assert_eq!(
             cert_expired_details.receiving_mx_hostname,
             "mx1.mail.company-y.example"
@@ -254,7 +259,10 @@ mod tests {
             no_starttls_details.result_type,
             FailureResultType::StarttlsNotSupported
         );
-        assert_eq!(no_starttls_details.sending_mta_ip, "2001:db8:abcd:0013::1");
+        assert_eq!(
+            no_starttls_details.sending_mta_ip,
+            IpAddr::from_str("2001:db8:abcd:0013::1").unwrap()
+        );
         assert_eq!(
             no_starttls_details.receiving_mx_hostname,
             "mx2.mail.company-y.example"
@@ -262,7 +270,7 @@ mod tests {
         assert!(no_starttls_details.receiving_mx_helo.is_none());
         assert_eq!(
             no_starttls_details.receiving_ip,
-            Some("203.0.113.56".to_string())
+            Some(IpAddr::from_str("203.0.113.56").unwrap())
         );
         assert_eq!(no_starttls_details.failed_session_count, 200);
         assert_eq!(no_starttls_details.additional_information, Some("https://reports.company-x.example/report_info?id=5065427c-23d3#StarttlsNotSupported".to_string()));
@@ -272,7 +280,10 @@ mod tests {
             validation_failure_details.result_type,
             FailureResultType::ValidationFailure
         );
-        assert_eq!(validation_failure_details.sending_mta_ip, "198.51.100.62");
+        assert_eq!(
+            validation_failure_details.sending_mta_ip,
+            IpAddr::from_str("198.51.100.62").unwrap()
+        );
         assert_eq!(
             validation_failure_details.receiving_mx_hostname,
             "mx-backup.mail.company-y.example"
@@ -280,7 +291,7 @@ mod tests {
         assert!(validation_failure_details.receiving_mx_helo.is_none());
         assert_eq!(
             validation_failure_details.receiving_ip,
-            Some("203.0.113.58".to_string())
+            Some(IpAddr::from_str("203.0.113.58").unwrap())
         );
         assert_eq!(validation_failure_details.failed_session_count, 3);
         assert!(validation_failure_details.additional_information.is_none());
