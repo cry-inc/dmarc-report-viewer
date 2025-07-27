@@ -106,6 +106,11 @@ const STATIC_FILES: &[StaticFile] = &[
         _data: include_bytes!("../../ui/components/mail.js"),
     },
     StaticFile {
+        http_path: "/components/sources.js",
+        file_path: "ui/components/sources.js",
+        _data: include_bytes!("../../ui/components/sources.js"),
+    },
+    StaticFile {
         http_path: "/components/about.js",
         file_path: "ui/components/about.js",
         _data: include_bytes!("../../ui/components/about.js"),

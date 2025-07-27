@@ -90,6 +90,8 @@ export class App extends LitElement {
         } else if (hash.startsWith("#/mails/")) {
             this.component = "mail";
             this.mailId = hash.substring(8);
+        } else if (hash == "#/sources") {
+            this.component = "sources";
         } else if (hash == "#/about") {
             this.component = "about";
         } else {
@@ -111,6 +113,8 @@ export class App extends LitElement {
             component = html`<drv-mails .params="${this.params}"></drv-mails>`;
         } else if (this.component == "mail") {
             component = html`<drv-mail id="${this.mailId}"></drv-mail>`;
+        } else if (this.component == "sources") {
+            component = html`<drv-sources></drv-sources>`;
         } else if (this.component == "about") {
             component = html`<drv-about></drv-about>`;
         } else {
@@ -123,6 +127,7 @@ export class App extends LitElement {
                 <a class="${this.component === "mails" || this.component === "mail" ? "active" : ""}" href="#/mails">Mails</a>
                 <a class="${this.component === "dmarc-reports" || this.component === "dmarc-report" ? "active" : ""}" href="#/dmarc-reports">DMARC<span class="xs-hidden">&nbsp;Reports</span></a>
                 <a class="${this.component === "tls-reports" || this.component === "tls-report" ? "active" : ""}" href="#/tls-reports"><span class="xs-hidden">SMTP&nbsp;</span>TLS<span class="xs-hidden">&nbsp;Reports</span></a>
+                <a class="${this.component === "sources" ? "active" : ""}" href="#/sources"><span class="xs-hidden">Mail&nbsp;</span>Sources</a>
                 <a class="xs-hidden ${this.component === "about" ? "active" : ""} right" href="#/about">About</a>
             </nav>
             <main>${component}</main>
