@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.1.0] - 2025-07-28
+* Implemented new ranked list that shows all sources and IPs for the different report types and domains
+* Implemented optional customizable HTTP web hook that is called for every new mail (see `--help` for more details)
+* Fixed URL for WHOIS links to use relative instead of absolute path (see bug report #50)
+* Minor help and documention improvements
+* Updated Cargo dependencies
+
 ## [2.0.0] - 2025-06-28
 * Added support for SMTP TLS reports (implemented by @marvinruder, thank you!)
 * Added support for multiple separate inboxes for DMARC and SMTP TLS reports (also implemented by @marvinruder)

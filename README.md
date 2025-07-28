@@ -35,6 +35,7 @@ You can find more screenshots [here](screenshots/screenshots.md).
 - [x] Configurable maximum size of mails (to skip oversized mails)
 - [x] Summary with charts for domains, organizations and passed/failed checks
 - [x] Filter charts summary by domain or time span
+- [x] Viewing of ranked sources/IPs by domain and report type
 - [x] Viewing filtered lists of reports
 - [x] Viewing of individual reports
 - [x] Export reports as XML or JSON documents
