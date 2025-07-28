@@ -39,6 +39,9 @@ export class TlsReports extends LitElement {
         if (this.params.org) {
             urlParams.push("org=" + encodeURIComponent(this.params.org));
         }
+        if (this.params.ip) {
+            urlParams.push("ip=" + encodeURIComponent(this.params.ip));
+        }
         let url = "tls-reports";
         if (urlParams.length > 0) {
             url += "?" + urlParams.join("&");

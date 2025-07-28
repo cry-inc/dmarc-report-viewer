@@ -12,6 +12,8 @@ use chrono::DateTime;
 use chrono::Utc;
 use serde::Deserialize;
 use serde::Serialize;
+use std::net::IpAddr;
+use std::str::FromStr;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
@@ -80,6 +82,7 @@ pub struct ReportFilters {
     flagged_tlsa: Option<bool>,
     domain: Option<String>,
     org: Option<String>,
+    ip: Option<String>,
 }
 
 impl ReportFilters {
@@ -94,6 +97,11 @@ impl ReportFilters {
             .as_ref()
             .and_then(|o| urlencoding::decode(o).ok())
             .map(|o| o.to_string());
+        self.ip = self
+            .ip
+            .as_ref()
+            .and_then(|i| urlencoding::decode(i).ok())
+            .map(|i| i.to_string());
     }
 }
 
@@ -103,6 +111,9 @@ pub async fn list_handler(
 ) -> impl IntoResponse {
     // Remove URL encoding from strings in filters
     filters.url_decode();
+
+    // Parse IP once to speed up filters
+    let ip_filter = filters.ip.as_deref().and_then(|s| IpAddr::from_str(s).ok());
 
     let reports: Vec<ReportHeader> = state
         .lock()
@@ -129,6 +140,19 @@ pub async fn list_handler(
                     .policies
                     .iter()
                     .any(|policy_result| policy_result.policy.policy_domain == *domain)
+            } else {
+                true
+            }
+        })
+        .filter(|(_, rwi)| {
+            if let Some(ip) = &ip_filter {
+                rwi.report.policies.iter().any(|p| {
+                    if let Some(failures) = &p.failure_details {
+                        failures.iter().any(|f| f.sending_mta_ip == *ip)
+                    } else {
+                        false
+                    }
+                })
             } else {
                 true
             }

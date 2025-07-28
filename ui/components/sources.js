@@ -82,16 +82,16 @@ export class Sources extends LitElement {
         })
     }
 
-    prepareTypesBadges(types) {
+    prepareTypesBadges(source) {
         // Sort to always have the same badge order
-        types.sort();
+        source.types.sort();
 
         // Convert to nice bades with tool tips
-        return types.map(type => {
+        return source.types.map(type => {
             if (type === "Tls") {
-                return html`<span class="badge">SMTP TLS</span> `;
+                return html`<a class="button sm help" href="#/tls-reports?ip=${encodeURIComponent(source.ip)}" title="Show all SMTP TLS reports for this IP">SMTP TLS</a> `;
             } else if (type === "Dmarc") {
-                return html`<span class="badge">DMARC</span> `;
+                return html`<a class="button sm help" href="#/dmarc-reports?ip=${encodeURIComponent(source.ip)}" title="Show all DMARC reports for this IP">DMARC</a> `;
             }
         })
     }
@@ -120,7 +120,7 @@ export class Sources extends LitElement {
                         <td>${source.ip}</a></td>
                         <td>${source.count}</td>
                         <td class="sm-hidden"><a href="#/sources?domain=${encodeURIComponent(source.domain)}">${source.domain}</a></td>
-                        <td class="sm-hidden">${this.prepareTypesBadges(source.types)}</td>
+                        <td class="sm-hidden">${this.prepareTypesBadges(source)}</td>
                         <td class="xs-hidden">${this.prepareIssueBadges(source.issues)}</td>
                     </tr>`
                 ) : html`<tr>
