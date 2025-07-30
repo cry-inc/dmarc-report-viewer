@@ -112,6 +112,31 @@ export class Dashboard extends LitElement {
         }
     }
 
+    groupData(data, maxPercent, minItems, label) {
+        const labels = Object.keys(data);
+        const values = labels.map(l => data[l]);
+        const sum = values.reduce((a, c) => a + c, 0);
+        const threshold = sum * (maxPercent / 100.0);
+        if (values.filter(v => v < threshold).length > 1 && labels.length > minItems) {
+            const grouped = {};
+            labels.forEach(l => {
+                const value = data[l];
+                if (value < threshold) {
+                    if (grouped[label]) {
+                        grouped[label] += value;
+                    } else {
+                        grouped[label] = value;
+                    }
+                } else {
+                    grouped[l] = value;
+                }
+            });
+            return grouped;
+        } else {
+            return data;
+        }
+    }
+
     async updateCharts() {
         const queryParams = [];
         if (this.params.ts && this.params.ts !== "0") {
@@ -156,6 +181,7 @@ export class Dashboard extends LitElement {
             // SMTP TLS organization colors
             "Microsoft Corporation": "#0078d4",
             "Google Inc.": "#ea4335",
+            "Other": "#cccccc",
         };
 
         this.mails = summary.mails;
@@ -165,6 +191,12 @@ export class Dashboard extends LitElement {
         this.tlsReports = summary.tls.reports;
         this.lastUpdate = summary.last_update;
         this.classesToHide = [];
+
+        // Group orgs and domains with very small percentages as "Other"
+        summary.dmarc.orgs = this.groupData(summary.dmarc.orgs, 2.0, 7, "Other");
+        summary.tls.orgs = this.groupData(summary.tls.orgs, 2.0, 7, "Other");
+        summary.dmarc.domains = this.groupData(summary.dmarc.domains, 2.0, 10, "Other");
+        summary.tls.domains = this.groupData(summary.tls.domains, 2.0, 10, "Other");
 
         if (Object.values(summary.dmarc.orgs).every((v) => v === 0)) this.classesToHide.push("dmarc_orgs");
         if (Object.values(summary.dmarc.domains).every((v) => v === 0)) this.classesToHide.push("dmarc_domains");
@@ -187,11 +219,13 @@ export class Dashboard extends LitElement {
 
         if (this.dmarc_orgs_chart) this.dmarc_orgs_chart.destroy();
         this.dmarc_orgs_chart = await this.createPieChart("dmarc_orgs_chart", this.sortedMap(summary.dmarc.orgs), orgColorMap, function (label) {
+            if (label === "Other") return;
             window.location.hash = "#/dmarc-reports?org=" + encodeURIComponent(label);
         });
 
         if (this.dmarc_domains_chart) this.dmarc_domains_chart.destroy();
         this.dmarc_domains_chart = await this.createPieChart("dmarc_domains_chart", this.sortedMap(summary.dmarc.domains), null, function (label) {
+            if (label === "Other") return;
             window.location.hash = "#/dmarc-reports?domain=" + encodeURIComponent(label);
         });
 
@@ -210,11 +244,13 @@ export class Dashboard extends LitElement {
 
         if (this.tls_orgs_chart) this.tls_orgs_chart.destroy();
         this.tls_orgs_chart = await this.createPieChart("tls_orgs_chart", this.sortedMap(summary.tls.orgs), orgColorMap, function (label) {
+            if (label === "Other") return;
             window.location.hash = "#/tls-reports?org=" + encodeURIComponent(label);
         });
 
         if (this.tls_domains_chart) this.tls_domains_chart.destroy();
         this.tls_domains_chart = await this.createPieChart("tls_domains_chart", this.sortedMap(summary.tls.domains), null, function (label) {
+            if (label === "Other") return;
             window.location.hash = "#/tls-reports?domain=" + encodeURIComponent(label);
         });
 
@@ -348,10 +384,10 @@ export class Dashboard extends LitElement {
                     <select @change="${this.onDomainChange}">
                         <option value="all">All</option>
                         ${this.filterDomains.map((domain) =>
-                        html`<option
+            html`<option
                                 ?selected=${this.params.domain === encodeURIComponent(domain)}
                                 value="${encodeURIComponent(domain)}">${domain}</option>`
-                        )}
+        )}
                     </select>
                 </span>
             </div>
