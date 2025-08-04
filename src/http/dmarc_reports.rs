@@ -98,7 +98,7 @@ impl ReportFilters {
             .domain
             .as_ref()
             .and_then(|d| urlencoding::decode(d).ok())
-            .map(|d| d.to_string());
+            .map(|d| d.to_lowercase());
         self.org = self
             .org
             .as_ref()
@@ -142,8 +142,8 @@ pub async fn list_handler(
             }
         })
         .filter(|(_, rwi)| {
-            if let Some(domain) = &filters.domain {
-                rwi.report.policy_published.domain == *domain
+            if let Some(fd) = &filters.domain {
+                rwi.report.policy_published.domain.to_lowercase() == *fd
             } else {
                 true
             }

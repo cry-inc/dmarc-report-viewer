@@ -27,7 +27,8 @@ export class Sources extends LitElement {
         this.filtered = false;
         this.sources = await sourcesResponse.json();
         if (this.params.domain) {
-            this.sources = this.sources.filter(s => s.domain === this.params.domain);
+            const lcDomain = this.params.domain.toLowerCase();
+            this.sources = this.sources.filter(s => s.domain.toLowerCase() === lcDomain);
             this.filtered = true;
         }
         if (this.params.issues) {

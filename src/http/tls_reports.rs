@@ -91,7 +91,7 @@ impl ReportFilters {
             .domain
             .as_ref()
             .and_then(|d| urlencoding::decode(d).ok())
-            .map(|d| d.to_string());
+            .map(|d| d.to_lowercase());
         self.org = self
             .org
             .as_ref()
@@ -135,11 +135,11 @@ pub async fn list_handler(
             }
         })
         .filter(|(_, rwi)| {
-            if let Some(domain) = &filters.domain {
+            if let Some(fd) = &filters.domain {
                 rwi.report
                     .policies
                     .iter()
-                    .any(|policy_result| policy_result.policy.policy_domain == *domain)
+                    .any(|policy_result| policy_result.policy.policy_domain.to_lowercase() == *fd)
             } else {
                 true
             }

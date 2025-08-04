@@ -74,7 +74,7 @@ impl MailFilters {
             .sender
             .as_ref()
             .and_then(|s| urlencoding::decode(s).ok())
-            .map(|s| s.to_string());
+            .map(|s| s.to_lowercase());
     }
 }
 
@@ -91,7 +91,7 @@ pub async fn list_handler(
         .values()
         .filter(|m| {
             if let Some(queried_sender) = &filters.sender {
-                m.sender == *queried_sender
+                m.sender.to_lowercase() == *queried_sender
             } else {
                 true
             }

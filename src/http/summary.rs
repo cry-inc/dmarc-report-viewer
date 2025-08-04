@@ -156,7 +156,7 @@ impl Summary {
         reports: Reports,
         last_update: u64,
         time_span: Option<Duration>,
-        domain: Option<String>,
+        domain_filter: Option<String>,
     ) -> Self {
         let dmarc_orgs: HashMap<String, usize> = HashMap::new();
         let dmarc_domains = HashMap::new();
@@ -196,18 +196,19 @@ impl Summary {
 
         let threshold = time_span.map(|d| (Utc::now() - d).timestamp() as u64);
         let threshold_datetime = time_span.map(|d| Utc::now() - d);
+        let domain_filter = domain_filter.map(|d| d.to_lowercase());
         for DmarcReportWithMailId { report, .. } in reports.dmarc.values() {
             if let Some(threshold) = threshold {
                 if report.report_metadata.date_range.end < threshold {
                     continue;
                 }
             }
-            if let Some(domain) = &domain {
-                if report.policy_published.domain != *domain {
+            if let Some(df) = &domain_filter {
+                if report.policy_published.domain.to_lowercase() != *df {
                     continue;
                 }
             }
-            let domain = report.policy_published.domain.clone();
+            let domain = report.policy_published.domain.to_lowercase();
             if let Some(entry) = dmarc.domains.get_mut(&domain) {
                 *entry += 1;
             } else {
@@ -266,11 +267,11 @@ impl Summary {
                     continue;
                 }
             }
-            if let Some(domain) = &domain {
+            if let Some(df) = &domain_filter {
                 if report
                     .policies
                     .iter()
-                    .all(|p| p.policy.policy_domain != *domain)
+                    .all(|p| p.policy.policy_domain.to_lowercase() != *df)
                 {
                     continue;
                 }
@@ -282,7 +283,7 @@ impl Summary {
                 tls.orgs.insert(org, 1);
             }
             for policy_result in report.policies.iter() {
-                let domain = policy_result.policy.policy_domain.clone();
+                let domain = policy_result.policy.policy_domain.to_lowercase();
                 if let Some(entry) = tls.domains.get_mut(&domain) {
                     *entry += 1;
                 } else {
