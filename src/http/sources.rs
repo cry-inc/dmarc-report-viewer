@@ -147,20 +147,20 @@ pub async fn handler(State(state): State<Arc<Mutex<AppState>>>) -> impl IntoResp
 }
 
 fn detect_dmarc_issues(record: &RecordType, issues: &mut HashSet<Issue>) {
-    if let Some(dkim) = &record.row.policy_evaluated.dkim {
-        if *dkim != DmarcResultType::Pass {
-            issues.insert(Issue::DkimPolicy);
-        }
+    if let Some(dkim) = &record.row.policy_evaluated.dkim
+        && *dkim != DmarcResultType::Pass
+    {
+        issues.insert(Issue::DkimPolicy);
     }
-    if let Some(spf) = &record.row.policy_evaluated.spf {
-        if *spf != DmarcResultType::Pass {
-            issues.insert(Issue::SpfPolicy);
-        }
+    if let Some(spf) = &record.row.policy_evaluated.spf
+        && *spf != DmarcResultType::Pass
+    {
+        issues.insert(Issue::SpfPolicy);
     }
-    if let Some(dkim) = &record.auth_results.dkim {
-        if dkim.iter().any(|x| x.result != DkimResultType::Pass) {
-            issues.insert(Issue::DkimAuth);
-        }
+    if let Some(dkim) = &record.auth_results.dkim
+        && dkim.iter().any(|x| x.result != DkimResultType::Pass)
+    {
+        issues.insert(Issue::DkimAuth);
     }
     if record
         .auth_results

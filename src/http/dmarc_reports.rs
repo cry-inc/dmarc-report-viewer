@@ -53,20 +53,20 @@ impl ReportHeader {
         let mut dkim_flagged = false;
         let mut spf_flagged = false;
         for record in &report.record {
-            if let Some(dkim) = &record.row.policy_evaluated.dkim {
-                if *dkim != DmarcResultType::Pass {
-                    dkim_flagged = true;
-                }
+            if let Some(dkim) = &record.row.policy_evaluated.dkim
+                && *dkim != DmarcResultType::Pass
+            {
+                dkim_flagged = true;
             }
-            if let Some(spf) = &record.row.policy_evaluated.spf {
-                if *spf != DmarcResultType::Pass {
-                    spf_flagged = true;
-                }
+            if let Some(spf) = &record.row.policy_evaluated.spf
+                && *spf != DmarcResultType::Pass
+            {
+                spf_flagged = true;
             }
-            if let Some(dkim) = &record.auth_results.dkim {
-                if dkim.iter().any(|x| x.result != DkimResultType::Pass) {
-                    dkim_flagged = true;
-                }
+            if let Some(dkim) = &record.auth_results.dkim
+                && dkim.iter().any(|x| x.result != DkimResultType::Pass)
+            {
+                dkim_flagged = true;
             }
             if record
                 .auth_results

@@ -74,19 +74,19 @@ impl WhoIsIp {
             .await
             .context("Initial whois query failed")?;
         while follow > 0 {
-            if let Some(captures) = self.regex.captures(&result.text) {
-                if let Some(addr) = captures.get(3) {
-                    let addr = addr.as_str();
-                    if addr.ne(&result.server_addr) {
-                        let server =
-                            Server::from_str(addr).context("Failed to parse server address")?;
-                        result = self
-                            .lookup_once(ip, &server)
-                            .await
-                            .context("Secondary whois query failed")?;
-                        follow -= 1;
-                        continue;
-                    }
+            if let Some(captures) = self.regex.captures(&result.text)
+                && let Some(addr) = captures.get(3)
+            {
+                let addr = addr.as_str();
+                if addr.ne(&result.server_addr) {
+                    let server =
+                        Server::from_str(addr).context("Failed to parse server address")?;
+                    result = self
+                        .lookup_once(ip, &server)
+                        .await
+                        .context("Secondary whois query failed")?;
+                    follow -= 1;
+                    continue;
                 }
             }
             break;

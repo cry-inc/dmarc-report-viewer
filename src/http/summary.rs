@@ -39,10 +39,10 @@ pub async fn handler(
     filters.url_decode();
     let guard = state.lock().await;
     let mut time_span = None;
-    if let Some(hours) = filters.time_span {
-        if hours > 0 {
-            time_span = Some(Duration::hours(hours as i64));
-        }
+    if let Some(hours) = filters.time_span
+        && hours > 0
+    {
+        time_span = Some(Duration::hours(hours as i64));
     }
     let summary = Summary::new(
         guard.mails.len(),
@@ -198,15 +198,15 @@ impl Summary {
         let threshold_datetime = time_span.map(|d| Utc::now() - d);
         let domain_filter = domain_filter.map(|d| d.to_lowercase());
         for DmarcReportWithMailId { report, .. } in reports.dmarc.values() {
-            if let Some(threshold) = threshold {
-                if report.report_metadata.date_range.end < threshold {
-                    continue;
-                }
+            if let Some(threshold) = threshold
+                && report.report_metadata.date_range.end < threshold
+            {
+                continue;
             }
-            if let Some(df) = &domain_filter {
-                if report.policy_published.domain.to_lowercase() != *df {
-                    continue;
-                }
+            if let Some(df) = &domain_filter
+                && report.policy_published.domain.to_lowercase() != *df
+            {
+                continue;
             }
             let domain = report.policy_published.domain.to_lowercase();
             if let Some(entry) = dmarc.domains.get_mut(&domain) {
@@ -262,19 +262,18 @@ impl Summary {
             }
         }
         for TlsReportWithMailId { report, .. } in reports.tls.values() {
-            if let Some(threshold_datetime) = threshold_datetime {
-                if report.date_range.end_datetime < threshold_datetime {
-                    continue;
-                }
+            if let Some(threshold_datetime) = threshold_datetime
+                && report.date_range.end_datetime < threshold_datetime
+            {
+                continue;
             }
-            if let Some(df) = &domain_filter {
-                if report
+            if let Some(df) = &domain_filter
+                && report
                     .policies
                     .iter()
                     .all(|p| p.policy.policy_domain.to_lowercase() != *df)
-                {
-                    continue;
-                }
+            {
+                continue;
             }
             let org = report.organization_name.clone();
             if let Some(entry) = tls.orgs.get_mut(&org) {
