@@ -5,6 +5,7 @@ mod cache_map;
 mod config;
 mod dmarc;
 mod dns_client;
+mod dns_client_cached;
 mod geolocate;
 mod hasher;
 mod http;

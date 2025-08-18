@@ -14,44 +14,23 @@ pub async fn to_dns_handler(
     State(state): State<Arc<Mutex<AppState>>>,
     Path(ip): Path<IpAddr>,
 ) -> impl IntoResponse {
-    // Check cache
-    let cached = {
+    // First get DNS client from state and then send a new query...
+    let dns_client = {
         let locked = state.lock().await;
-        locked.ip_dns_cache.get(&ip).map(|dns| dns.to_string())
+        locked.dns_client.clone()
+    };
+    let result = dns_client.host_from_ip(ip).await;
+
+    // Check for any DNS request errors
+    let Ok(response) = result else {
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            [(header::CONTENT_TYPE, "text/plain")],
+            String::from("DNS lookup failed"),
+        );
     };
 
-    let result = if let Some(host_name) = cached {
-        // Found result in cache!
-        Some(host_name)
-    } else {
-        // Nothing in cache, we need a new DNS request.
-        // First get DNS client from state and then send a new query...
-        let dns_client = {
-            let locked = state.lock().await;
-            locked.dns_client.clone()
-        };
-        let result = dns_client.host_from_ip(ip).await;
-
-        // Join async task
-        let Ok(response) = result else {
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                [(header::CONTENT_TYPE, "text/plain")],
-                String::from("DNS lookup failed"),
-            );
-        };
-
-        // Cache any positive result
-        if let Some(host_name) = response {
-            let mut locked = state.lock().await;
-            locked.ip_dns_cache.insert(ip, host_name.clone());
-            Some(host_name)
-        } else {
-            None
-        }
-    };
-
-    if let Some(host_name) = result {
+    if let Some(host_name) = response {
         (
             StatusCode::OK,
             [(header::CONTENT_TYPE, "text/plain")],

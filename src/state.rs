@@ -1,4 +1,5 @@
 use crate::dns_client::DnsClient;
+use crate::dns_client_cached::DnsClientCached;
 use crate::geolocate::Location;
 use crate::{cache_map::CacheMap, mail::Mail};
 use crate::{dmarc, tls};
@@ -67,18 +68,16 @@ pub struct AppState {
     /// XML DMARC and JSON SMTP TLS parsing errors keyed by mail ID
     pub parsing_errors: HashMap<String, Vec<ReportParsingError>>,
 
-    /// IP to DNS cache
-    pub ip_dns_cache: CacheMap<IpAddr, String>,
-
     /// IP to location cache
     pub ip_location_cache: CacheMap<IpAddr, Location>,
 
-    /// DNS client
-    pub dns_client: Arc<DnsClient>,
+    /// DNS client with cache
+    pub dns_client: Arc<DnsClientCached>,
 }
 
 impl AppState {
     pub fn new(dns_client: DnsClient) -> Self {
+        let dns_client = Arc::new(DnsClientCached::new(dns_client, CACHE_SIZE));
         Self {
             first_update: true,
             mails: HashMap::new(),
@@ -88,9 +87,8 @@ impl AppState {
             xml_files: 0,
             json_files: 0,
             parsing_errors: HashMap::new(),
-            ip_dns_cache: CacheMap::new(CACHE_SIZE).expect("Failed to create DNS cache"),
             ip_location_cache: CacheMap::new(CACHE_SIZE).expect("Failed to create location cache"),
-            dns_client: Arc::new(dns_client),
+            dns_client,
         }
     }
 }
