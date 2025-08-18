@@ -9,6 +9,10 @@ repository = "https://github.com/cry-inc/dmarc-report-viewer"
 version = "2.1.0"
 edition = "2024"
 
+[patch.crates-io]
+# Override IMAP protocol library for unreleased bugfix
+imap-proto = { git = "https://github.com/djc/tokio-imap/" }
+
 [dependencies]
 axum = "0.8"
 anyhow = "1"
