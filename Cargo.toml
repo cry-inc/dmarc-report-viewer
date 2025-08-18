@@ -39,4 +39,4 @@ quick-xml = { version = "0.38", features = ["serialize"] }
 tower-http = { version = "0.6", features = ["compression-gzip"] }
 zip = { version = "4", default-features = false, features = ["deflate"] }
 tokio = { version = "1.36", features = ["macros", "rt-multi-thread", "signal"] }
-async-imap = {version = "0.11", default-features = false, features = ["runtime-tokio"] }
+async-imap = { version = "0.11", default-features = false, features = ["runtime-tokio"] }
