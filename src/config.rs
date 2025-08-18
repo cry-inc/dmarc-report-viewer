@@ -1,5 +1,6 @@
 use clap::{Parser, ValueEnum};
 use cron::Schedule;
+use std::net::SocketAddr;
 use std::path::PathBuf;
 use tracing::{Level, info};
 
@@ -175,6 +176,16 @@ pub struct Configuration {
     /// `[tls_reports]` Number of SMTP TLS Reports in the mail
     #[arg(long, env)]
     pub mail_web_hook_body: Option<String>,
+
+    /// DNS server address for resolving IPs to hostnames.
+    /// Default is 1.1.1.1:53, which is the public Cloudflare DNS server.
+    /// Do not forget to add the suffix with the port using a colon.
+    #[arg(long, env, default_value = "1.1.1.1:53")]
+    pub dns_server: SocketAddr,
+
+    /// Timeout value for DNS queries in milliseconds.
+    #[arg(long, env, default_value_t = 5000)]
+    pub dns_timeout: u64,
 }
 
 impl Configuration {

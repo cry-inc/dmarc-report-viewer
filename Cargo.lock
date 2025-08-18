@@ -753,7 +753,7 @@ dependencies = [
  "chrono",
  "clap",
  "cron",
- "dns-lookup",
+ "dns-protocol",
  "flate2",
  "futures",
  "http-body-util",
@@ -778,15 +778,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "dns-lookup"
-version = "2.1.0"
+name = "dns-protocol"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "91adf1f5ae09290d87cca8f4f0a8e49bcc30672993eb8aa11a5c9d8872d16a98"
+checksum = "96e95919581371ae96cbf05b0aeec65cdc20bd3a2dca282ab6af808fbddaddb4"
 dependencies = [
- "cfg-if",
- "libc",
- "socket2",
- "windows-sys 0.60.2",
+ "memchr",
 ]
 
 [[package]]

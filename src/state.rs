@@ -1,9 +1,11 @@
+use crate::dns_client::DnsClient;
 use crate::geolocate::Location;
 use crate::{cache_map::CacheMap, mail::Mail};
 use crate::{dmarc, tls};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::net::IpAddr;
+use std::sync::Arc;
 
 const CACHE_SIZE: usize = 10000;
 
@@ -70,10 +72,13 @@ pub struct AppState {
 
     /// IP to location cache
     pub ip_location_cache: CacheMap<IpAddr, Location>,
+
+    /// DNS client
+    pub dns_client: Arc<DnsClient>,
 }
 
 impl AppState {
-    pub fn new() -> Self {
+    pub fn new(dns_client: DnsClient) -> Self {
         Self {
             first_update: true,
             mails: HashMap::new(),
@@ -85,6 +90,7 @@ impl AppState {
             parsing_errors: HashMap::new(),
             ip_dns_cache: CacheMap::new(CACHE_SIZE).expect("Failed to create DNS cache"),
             ip_location_cache: CacheMap::new(CACHE_SIZE).expect("Failed to create location cache"),
+            dns_client: Arc::new(dns_client),
         }
     }
 }

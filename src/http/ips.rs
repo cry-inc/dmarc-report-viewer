@@ -6,11 +6,9 @@ use axum::extract::State;
 use axum::http::StatusCode;
 use axum::http::header;
 use axum::response::IntoResponse;
-use dns_lookup::lookup_addr;
 use std::net::IpAddr;
 use std::sync::Arc;
 use tokio::sync::Mutex;
-use tokio::task::spawn_blocking;
 
 pub async fn to_dns_handler(
     State(state): State<Arc<Mutex<AppState>>>,
@@ -18,21 +16,24 @@ pub async fn to_dns_handler(
 ) -> impl IntoResponse {
     // Check cache
     let cached = {
-        let app = state.lock().await;
-        app.ip_dns_cache.get(&ip).map(|dns| dns.to_string())
+        let locked = state.lock().await;
+        locked.ip_dns_cache.get(&ip).map(|dns| dns.to_string())
     };
 
     let result = if let Some(host_name) = cached {
         // Found result in cache!
         Some(host_name)
     } else {
-        // Nothing in cache, send new DNS request!
-        // Do not block here and use a special async task
-        // where blocking calls are acceptable
-        let handle = spawn_blocking(move || lookup_addr(&ip));
+        // Nothing in cache, we need a new DNS request.
+        // First get DNS client from state and then send a new query...
+        let dns_client = {
+            let locked = state.lock().await;
+            locked.dns_client.clone()
+        };
+        let result = dns_client.host_from_ip(ip).await;
 
         // Join async task
-        let Ok(result) = handle.await else {
+        let Ok(response) = result else {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 [(header::CONTENT_TYPE, "text/plain")],
@@ -41,9 +42,9 @@ pub async fn to_dns_handler(
         };
 
         // Cache any positive result
-        if let Ok(host_name) = result {
-            let mut app = state.lock().await;
-            app.ip_dns_cache.insert(ip, host_name.clone());
+        if let Some(host_name) = response {
+            let mut locked = state.lock().await;
+            locked.ip_dns_cache.insert(ip, host_name.clone());
             Some(host_name)
         } else {
             None

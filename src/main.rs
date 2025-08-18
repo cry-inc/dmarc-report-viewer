@@ -4,6 +4,7 @@ mod background;
 mod cache_map;
 mod config;
 mod dmarc;
+mod dns_client;
 mod geolocate;
 mod hasher;
 mod http;
@@ -16,11 +17,13 @@ mod web_hook;
 mod whois;
 
 use crate::background::start_bg_task;
+use crate::dns_client::DnsClient;
 use crate::http::run_http_server;
 use crate::state::AppState;
 use anyhow::{Context, Result};
 use config::Configuration;
 use std::sync::Arc;
+use std::time::Duration;
 use tokio::sync::{Mutex, mpsc::channel};
 use tracing::info;
 
@@ -53,8 +56,12 @@ async fn main() -> Result<()> {
     // Make configuration visible in logs
     config.log();
 
+    // Create DNS client
+    let timeout = Duration::from_millis(config.dns_timeout);
+    let dns_client = DnsClient::new(config.dns_server, timeout);
+
     // Prepare shared application state
-    let state = Arc::new(Mutex::new(AppState::new()));
+    let state = Arc::new(Mutex::new(AppState::new(dns_client)));
 
     // Start background task
     let (stop_sender, stop_receiver) = channel(1);
