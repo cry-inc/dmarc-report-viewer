@@ -25,7 +25,8 @@ use anyhow::{Context, Result};
 use config::Configuration;
 use std::sync::Arc;
 use std::time::Duration;
-use tokio::sync::{Mutex, mpsc::channel};
+use tokio::sync::Mutex;
+use tokio::sync::mpsc::channel;
 use tracing::info;
 
 #[tokio::main]
