@@ -1,6 +1,7 @@
 use crate::geolocate::Location;
 use crate::state::AppState;
 use crate::whois::WhoIsIp;
+use axum::Json;
 use axum::extract::Path;
 use axum::extract::State;
 use axum::http::StatusCode;
@@ -10,7 +11,7 @@ use std::net::IpAddr;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
-pub async fn to_dns_handler(
+pub async fn dns_single_handler(
     State(state): State<Arc<Mutex<AppState>>>,
     Path(ip): Path<IpAddr>,
 ) -> impl IntoResponse {
@@ -41,6 +42,66 @@ pub async fn to_dns_handler(
             StatusCode::NOT_FOUND,
             [(header::CONTENT_TYPE, "text/plain")],
             String::from("n/a"),
+        )
+    }
+}
+
+pub async fn dns_batch_handler(
+    State(state): State<Arc<Mutex<AppState>>>,
+    Json(ips): Json<Vec<IpAddr>>,
+) -> impl IntoResponse {
+    // Check number of IPs
+    const MAX_IP_COUNT: usize = 100;
+    if ips.len() > MAX_IP_COUNT {
+        return (
+            StatusCode::BAD_REQUEST,
+            [(header::CONTENT_TYPE, "text/plain")],
+            format!("Requests can only contain up to {MAX_IP_COUNT} IPs"),
+        );
+    }
+
+    // Get DNS client from state
+    let dns_client = {
+        let locked = state.lock().await;
+        locked.dns_client.clone()
+    };
+
+    // Spawn tasks for all requests
+    let mut handles = Vec::with_capacity(ips.len());
+    for ip in ips {
+        let dns_client = dns_client.clone();
+        let handle = tokio::spawn(async move { dns_client.host_from_ip(ip).await });
+        handles.push(handle);
+    }
+
+    // Join the tasks with the results again
+    let mut results = Vec::with_capacity(handles.len());
+    for handle in handles {
+        if let Ok(result) = handle.await {
+            // Errors will be also mapped to None
+            let flat_result = result.ok().flatten();
+            results.push(flat_result);
+        } else {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                [(header::CONTENT_TYPE, "text/plain")],
+                String::from("Failed to join DNS query task"),
+            );
+        }
+    }
+
+    // Serialize results to JSON
+    if let Ok(json) = serde_json::to_string_pretty(&results) {
+        (
+            StatusCode::OK,
+            [(header::CONTENT_TYPE, "application/json")],
+            json,
+        )
+    } else {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            [(header::CONTENT_TYPE, "text/plain")],
+            String::from("Unable to serialize result"),
         )
     }
 }

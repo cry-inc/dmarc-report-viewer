@@ -16,8 +16,8 @@ use axum::http::StatusCode;
 use axum::http::header::{AUTHORIZATION, WWW_AUTHENTICATE};
 use axum::middleware::{self, Next};
 use axum::response::{IntoResponse, Response};
-use axum::routing::IntoMakeService;
-use axum::{Router, extract::State, routing::get};
+use axum::routing::{IntoMakeService, get, post};
+use axum::{Router, extract::State};
 use axum_server::Handle;
 use base64::{Engine, engine::general_purpose::STANDARD};
 use futures::StreamExt;
@@ -47,7 +47,8 @@ pub async fn run_http_server(config: &Configuration, state: Arc<Mutex<AppState>>
         .route("/tls-reports/{id}", get(tls_reports::single_handler))
         .route("/tls-reports/{id}/json", get(tls_reports::json_handler))
         .route("/sources", get(sources::handler))
-        .route("/ips/{ip}/dns", get(ips::to_dns_handler))
+        .route("/ips/{ip}/dns", get(ips::dns_single_handler))
+        .route("/ips/dns/batch", post(ips::dns_batch_handler))
         .route("/ips/{ip}/location", get(ips::to_location_handler))
         .route("/ips/{ip}/whois", get(ips::to_whois_handler))
         .route("/build", get(build))
