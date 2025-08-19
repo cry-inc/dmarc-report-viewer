@@ -6,7 +6,7 @@ use tokio::sync::Mutex;
 
 pub struct DnsClientCached {
     dns_client: DnsClient,
-    cache: Arc<Mutex<CacheMap<IpAddr, String>>>,
+    cache: Arc<Mutex<CacheMap<IpAddr, Option<String>>>>,
 }
 
 impl DnsClientCached {
@@ -24,19 +24,17 @@ impl DnsClientCached {
         {
             let locked = self.cache.lock().await;
             if let Some(cached) = locked.get(&ip) {
-                return Ok(Some(cached.clone()));
+                return Ok(cached.clone());
             }
         }
 
         // Otherwise send real query over network
         let result = self.dns_client.host_from_ip(ip).await;
 
-        // Cache any positive result
-        if let Ok(response) = &result
-            && let Some(host) = response
-        {
+        // Cache any result that is not an error
+        if let Ok(response) = &result {
             let mut locked = self.cache.lock().await;
-            locked.insert(ip, host.clone());
+            locked.insert(ip, response.clone());
         }
 
         result
