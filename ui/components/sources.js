@@ -39,6 +39,27 @@ export class Sources extends LitElement {
             this.sources = this.sources.filter(s => s.types.includes(this.params.type));
             this.filtered = true;
         }
+
+        const chunkSize = 100;
+        let startOffset = 0;
+        let chunk = [];
+        for (let i = 0; i < this.sources.length; i++) {
+            chunk.push(this.sources[i].ip);
+            if (chunk.length >= chunkSize || i === this.sources.length - 1) {
+                const batchResponse = await fetch("ips/dns/batch", {
+                    method: "POST",
+                    headers: { "content-type": "application/json" },
+                    body: JSON.stringify(chunk)
+                });
+                const batchResult = await batchResponse.json();
+                for (let i = 0; i < chunk.length; i++) {
+                    this.sources[startOffset + i].dns = batchResult[i];
+                }
+                startOffset += chunk.length;
+                chunk = [];
+                this.requestUpdate();
+            }
+        }
     }
 
     prepareIssueBadges(issues) {
@@ -97,6 +118,16 @@ export class Sources extends LitElement {
         })
     }
 
+    prepareDnsName(dnsName) {
+        if (dnsName === undefined) {
+            return html`<span class="faded">loading...</span>`;
+        } else if (dnsName === null) {
+            return html`<span class="faded">n/a</span>`;
+        } else {
+            return dnsName;
+        }
+    }
+
     render() {
         return html`
             <h1>DMARC Mail Sources</h1>
@@ -111,6 +142,7 @@ export class Sources extends LitElement {
             <table>
                 <tr>
                     <th>IP Address</th>
+                    <th class="md-hidden">DNS Name</th>
                     <th class="help" title="Number of records from reports for this IP">Count</th>
                     <th class="sm-hidden">Domain</th>
                     <th class="sm-hidden help" title="Report Types">Types</th>
@@ -119,6 +151,7 @@ export class Sources extends LitElement {
                 ${this.sources.length !== 0 ? this.sources.map((source) =>
                     html`<tr> 
                         <td>${source.ip}</a></td>
+                        <td class="md-hidden">${this.prepareDnsName(source.dns)}</td>
                         <td>${source.count}</td>
                         <td class="sm-hidden"><a href="#/sources?domain=${encodeURIComponent(source.domain)}">${source.domain}</a></td>
                         <td class="sm-hidden">${this.prepareTypesBadges(source)}</td>
