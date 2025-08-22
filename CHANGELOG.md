@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.2.0] - 2025-08-22
+* Added DNS hostnames to IPs in sources list
+* Added new precompiled Windows binary for 64bit ARM
+* Speed up DNS queries by improving caching and switching to a new minimal async DNS client
+* Fixed issue #51 with surgemail IMAP server by adding a client workaround
+* Fixed issue #54 with duplicates for case-sensitive domains and mail addresses
+* Fixed issue #53 by grouping smaller domains and organizations in pie charts on dashboard
+* Updated Cargo dependencies
+
 ## [2.1.0] - 2025-07-28
 * Implemented new ranked list that shows all sources and IPs for the different report types and domains
 * Implemented optional customizable HTTP web hook that is called for every new mail (see `--help` for more details)
