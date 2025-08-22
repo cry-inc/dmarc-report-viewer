@@ -29,29 +29,29 @@ jobs:
         path: target/x86_64-unknown-linux-musl/release/dmarc-report-viewer
   linux_aarch64:
     name: Linux (aarch64)
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-24.04-arm
     steps:
     - name: Checkout
       uses: actions/checkout@v4
     - name: Update Rust
       run: rustup toolchain install stable --profile minimal --no-self-update
-    - name: Install Cargo Binary Install
-      run: curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
-    - name: Install Cargo Cross
-      run: cargo binstall cross --no-confirm
+    - name: Install MUSL Toolchain
+      run: rustup target add aarch64-unknown-linux-musl
+    - name: Install MUSL dependencies
+      run: sudo apt-get install musl-tools
     - name: Enable Rust Caching
       uses: Swatinem/rust-cache@v2
     - name: Release Build
-      run: cross build --release --all --target aarch64-unknown-linux-musl
+      run: cargo build --release --all --target aarch64-unknown-linux-musl
     - name: Execute Tests
-      run: cross test --release --all --target aarch64-unknown-linux-musl
+      run: cargo test --release --all --target aarch64-unknown-linux-musl
     - uses: actions/upload-artifact@v4
       with:
         name: linux-aarch64
         path: target/aarch64-unknown-linux-musl/release/dmarc-report-viewer
   windows_x86_64:
     name: Windows (x86-64)
-    runs-on: windows-latest
+    runs-on: windows-2025
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -69,9 +69,29 @@ jobs:
       with:
         name: windows-x86_64
         path: target/release/dmarc-report-viewer.exe
+  windows_aarch64:
+    name: Windows (aarch64)
+    runs-on: windows-11-arm
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    # - name: Install NASM
+    #   uses: ilammy/setup-nasm@v1
+    - name: Update Rust
+      run: rustup toolchain install stable --profile minimal --no-self-update
+    - name: Enable Rust Caching
+      uses: Swatinem/rust-cache@v2
+    - name: Release Build
+      run: cargo build --release --all
+    - name: Execute Tests
+      run: cargo test --release --all
+    - uses: actions/upload-artifact@v4
+      with:
+        name: windows-aarch64
+        path: target/release/dmarc-report-viewer.exe
   mac_x86_64:
     name: Mac (x86-64)
-    runs-on: macos-latest
+    runs-on: macos-15
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -91,7 +111,7 @@ jobs:
         path: target/x86_64-apple-darwin/release/dmarc-report-viewer
   mac_aarch64:
     name: Mac (aarch64)
-    runs-on: macos-latest
+    runs-on: macos-15
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -147,7 +167,7 @@ jobs:
   release:
     name: Release
     if: startsWith(github.ref, 'refs/tags/')
-    needs: [linux_x86_64, linux_aarch64, windows_x86_64, mac_x86_64, mac_aarch64, docker_linux]
+    needs: [linux_x86_64, linux_aarch64, windows_x86_64, windows_aarch64, mac_x86_64, mac_aarch64, docker_linux]
     runs-on: ubuntu-24.04
     permissions:
       contents: write
@@ -159,6 +179,7 @@ jobs:
     - name: Pack Artifacts for Release
       run: |
         zip -r windows-x86_64.zip windows-x86_64
+        zip -r windows-aarch64.zip windows-aarch64
         zip -r linux-x86_64.zip linux-x86_64
         zip -r linux-aarch64.zip linux-aarch64
         zip -r mac-x86_64.zip mac-x86_64
@@ -171,6 +192,7 @@ jobs:
           CHANGELOG.md
           LICENSE
           windows-x86_64.zip
+          windows-aarch64.zip
           linux-x86_64.zip
           linux-aarch64.zip
           mac-x86_64.zip
