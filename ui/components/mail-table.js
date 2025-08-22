@@ -1,4 +1,4 @@
-import { LitElement, html, css } from "lit";
+import { LitElement, html } from "lit";
 import { globalStyle } from "../style.js";
 
 export class MailTable extends LitElement {
