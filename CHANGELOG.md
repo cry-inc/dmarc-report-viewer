@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.2.1] - 2025-09-02
+* Updated Cargo dependencies to fix CVE-2025-58160 / GHSA-xwfj-jgwm-7wp5
+
 ## [2.2.0] - 2025-08-22
 * Added DNS hostnames to IPs in sources list
 * Added new precompiled Windows binary for 64bit ARM
