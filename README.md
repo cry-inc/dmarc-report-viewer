@@ -15,7 +15,7 @@ You can run the precompiled executable directly on any Linux, Windows or MacOS s
 Alternatively, you can use the tiny 10 MB Docker image to deploy the application.
 It is also easy to [build the application](#build-from-source) directly from source.
 
-![Screenshot of Dashboard](screenshots/dashboard.png "Screenshot of Dashboard")
+![Screenshot of Dashboard with DMARC Summary](screenshots/dashboard_cropped.png "Screenshot of Dashboard with DMARC Summary")
 You can find more screenshots [here](screenshots/screenshots.md).
 
 ## Features
