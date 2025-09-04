@@ -358,11 +358,11 @@ export class Dashboard extends LitElement {
             <h1>Dashboard</h1>
 
             <div class="module stats">
+                <span>DMARC Reports: <b>${this.dmarcReports}</b></span>
+                <span>SMTP TLS Reports: <b>${this.tlsReports}</b></span>
                 <span>Mails: <b>${this.mails}</b></span>
                 <span>XML Files: <b>${this.xmlFiles}</b></span>
-                <span>DMARC Reports: <b>${this.dmarcReports}</b></span>
                 <span>JSON Files: <b>${this.jsonFiles}</b></span>
-                <span>SMTP TLS Reports: <b>${this.tlsReports}</b></span>
                 <span>Last Update: <b>${new Date(this.lastUpdate * 1000).toLocaleString()}</b></span>
             </div>
 
