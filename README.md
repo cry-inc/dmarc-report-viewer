@@ -144,7 +144,7 @@ The Dockerfile works for `amd64` and `arm64` architectures.
 4. You should now be able to see the new Docker image using the command `sudo docker images`
 
 ## Acknowledgments
-- All the Rust dependencies in [Cargo.toml](Cargo.toml) that make this application possible!
-- [Charts.js](https://github.com/chartjs/Chart.js) and [Lit](https://lit.dev/) as embedded as JavaScript libraries for the UI.
-- [@bbustin](https://github.com/bbustin) for his [dmarc_aggregate_parser](https://github.com/bbustin/dmarc_aggregate_parser) that was used as starting point for the DMARC report parser.
-- [@marvinruder](https://github.com/marvinruder) implemented support for SMTP TLS reports!
+- Thanks to all the Rust dependencies in [Cargo.toml](Cargo.toml) that make this application possible!
+- Thanks to the JavaScript libraries [Charts.js](https://github.com/chartjs/Chart.js) and [Lit](https://lit.dev/) which are used for the UI.
+- Thanks to [@bbustin](https://github.com/bbustin) for his [dmarc_aggregate_parser](https://github.com/bbustin/dmarc_aggregate_parser) that was used as starting point for the DMARC report parser.
+- Thanks to [@marvinruder](https://github.com/marvinruder) for implementing SMTP TLS support!
