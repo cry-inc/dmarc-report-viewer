@@ -51,7 +51,7 @@ pub enum DispositionType {
 }
 
 // Custom Deserialize to allow the empty string value that
-// some reports contain. For some reason the serde alias marco
+// some reports contain. For some reason the serde alias macro
 // does not work in that case.
 impl<'de> Deserialize<'de> for DispositionType {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
@@ -64,6 +64,7 @@ impl<'de> Deserialize<'de> for DispositionType {
             "reject" => Ok(Self::Reject),
             "none" => Ok(Self::None),
             "" => Ok(Self::None), // Some reports have an empty `sp` field
+            "pass" => Ok(Self::None), // not allowed in the spec but some reports contain it for some reason
             _ => Err(de::Error::custom(format!(
                 "'{s}' is not a known disposition type"
             ))),
