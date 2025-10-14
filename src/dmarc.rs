@@ -63,7 +63,7 @@ impl<'de> Deserialize<'de> for DispositionType {
             "quarantine" => Ok(Self::Quarantine),
             "reject" => Ok(Self::Reject),
             "none" => Ok(Self::None),
-            "" => Ok(Self::None), // Some reports have an empty `sp` field
+            "" => Ok(Self::None),     // Some reports have an empty `sp` field
             "pass" => Ok(Self::None), // not allowed in the spec but some reports contain it for some reason
             _ => Err(de::Error::custom(format!(
                 "'{s}' is not a known disposition type"
