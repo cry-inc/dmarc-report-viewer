@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.2.2] - 2025-10-18
+* Reduced default IMAP chunk size to make the configuration work out of the box with the Stalwart IMAP server (see issue #61).
+  This means for inboxes with many mails (>1000) it might be now a little bit slower while updating.
+  You can manually override the new default value with the command line argument `--imap-chunk-size`
+  or the ENV variable `IMAP_CHUNK_SIZE` and set it back to 2000 or a even higher value.
+* Improved IMAP fetching error messages to hint at incomptible IMAP chunk size that might need to be lowered in some cases
+* Allow non-standard disposition value `pass` in some DMARC reports (implemented by @SuperSandro2000 in PR #59, thank you!)
+* Updated Cargo dependencies
+
 ## [2.2.1] - 2025-09-02
 * Updated Cargo dependencies to fix CVE-2025-58160 / GHSA-xwfj-jgwm-7wp5
 
