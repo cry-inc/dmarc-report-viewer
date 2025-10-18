@@ -1,7 +1,7 @@
 use crate::config::Configuration;
 use crate::hasher::create_hash;
 use crate::mail::{Mail, decode_subject};
-use anyhow::{Context, Result, anyhow};
+use anyhow::{Context, Result, anyhow, ensure};
 use async_imap::Client;
 use async_imap::imap_proto::Address;
 use async_imap::types::Fetch;
@@ -92,7 +92,11 @@ pub async fn get_mails(
         .collect();
     if !ids.is_empty() {
         // We need to get the mails in chunks.
-        // It will fail silently if the requested sequences become too big!
+        // This might fail silently if the requested sequences become too big!
+        ensure!(
+            config.imap_chunk_size > 0,
+            "IMAP Chunk size must be non-zero"
+        );
         for chunk in ids.chunks(config.imap_chunk_size) {
             debug!("Downloading chunk with {} mails...", chunk.len());
             let mut uid_id_map = HashMap::new();
@@ -150,8 +154,13 @@ pub async fn get_mails(
             }
             if fetched_mails != chunk.len() {
                 warn!(
-                    "Unable to fetch some mails from chunk, expected {} mails but got {fetched_mails}",
-                    chunk.len()
+                    "Unable to fetch some mails from chunk, expected {} mails but got {fetched_mails}. \
+                    This often happens when the IMAP server does not support the configured chunk size. \
+                    Its currently configured to {} mails per chunk. \
+                    Try setting lower chunk sizes using the command line argument --imap-chunk-size or \
+                    by setting the environment variable IMAP_CHUNK_SIZE.",
+                    chunk.len(),
+                    config.imap_chunk_size
                 );
             }
         }

@@ -67,7 +67,7 @@ pub struct Configuration {
     /// Number of mails downloaded in one chunk, must be bigger than 0.
     /// The default value should work for most IMAP servers.
     /// Try lower values in case of warnings like "Unable to fetch some mails from chunk"!
-    #[arg(long, env, default_value_t = 2000)]
+    #[arg(long, env, default_value_t = 1000)]
     pub imap_chunk_size: usize,
 
     /// Interval between checking for new reports in IMAP inbox in seconds
