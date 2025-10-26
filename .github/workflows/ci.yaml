@@ -156,8 +156,9 @@ jobs:
       if: ${{github.ref == 'refs/heads/master'}}
       run: |
         cd .github/docker/
+        echo ${{secrets.DOCKER_PASS}} | docker login -u ${{secrets.DOCKER_USER}} --password-stdin
         echo ${{secrets.GITHUB_TOKEN}} | docker login ghcr.io -u ${{github.actor}} --password-stdin
-        docker buildx build --builder builder --platform=linux/amd64,linux/arm64 --pull --push --tag ghcr.io/${{github.actor}}/dmarc-report-viewer:develop .
+        docker buildx build --builder builder --platform=linux/amd64,linux/arm64 --pull --push --tag cryinc/dmarc-report-viewer:develop --tag ghcr.io/${{github.actor}}/dmarc-report-viewer:develop .
         docker run --rm ghcr.io/${{github.actor}}/dmarc-report-viewer:develop ./dmarc-report-viewer --version
     - name: Build Release Docker Images
       if: startsWith(github.ref, 'refs/tags/')
