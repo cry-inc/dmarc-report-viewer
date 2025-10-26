@@ -152,21 +152,27 @@ jobs:
         cd .github/docker/
         docker builder create --name builder
         docker buildx build --builder builder --platform=linux/amd64,linux/arm64 --pull .
-    - name: Build Develop Docker Images
+    - name: Build & Push Develop Docker Images
       if: ${{github.ref == 'refs/heads/master'}}
       run: |
         cd .github/docker/
         echo ${{secrets.DOCKER_PASS}} | docker login -u ${{secrets.DOCKER_USER}} --password-stdin
         echo ${{secrets.GITHUB_TOKEN}} | docker login ghcr.io -u ${{github.actor}} --password-stdin
-        docker buildx build --builder builder --platform=linux/amd64,linux/arm64 --pull --push --tag cryinc/dmarc-report-viewer:develop --tag ghcr.io/${{github.actor}}/dmarc-report-viewer:develop .
+        docker buildx build --builder builder --platform=linux/amd64,linux/arm64 --pull --push \
+          --tag ${{secrets.DOCKER_USER}}/dmarc-report-viewer:develop \
+          --tag ghcr.io/${{github.actor}}/dmarc-report-viewer:develop .
         docker run --rm ghcr.io/${{github.actor}}/dmarc-report-viewer:develop ./dmarc-report-viewer --version
-    - name: Build Release Docker Images
+    - name: Build & Push Release Docker Images
       if: startsWith(github.ref, 'refs/tags/')
       run: |
         cd .github/docker/
         echo ${{secrets.DOCKER_PASS}} | docker login -u ${{secrets.DOCKER_USER}} --password-stdin
         echo ${{secrets.GITHUB_TOKEN}} | docker login ghcr.io -u ${{github.actor}} --password-stdin
-        docker buildx build --builder builder --platform=linux/amd64,linux/arm64 --pull --push --tag cryinc/dmarc-report-viewer:latest --tag cryinc/dmarc-report-viewer:${{github.ref_name}} --tag ghcr.io/${{github.actor}}/dmarc-report-viewer:latest --tag ghcr.io/${{github.actor}}/dmarc-report-viewer:${{github.ref_name}} .
+        docker buildx build --builder builder --platform=linux/amd64,linux/arm64 --pull --push \
+          --tag ${{secrets.DOCKER_USER}}/dmarc-report-viewer:latest \
+          --tag ${{secrets.DOCKER_USER}}/dmarc-report-viewer:${{github.ref_name}} \
+          --tag ghcr.io/${{github.actor}}/dmarc-report-viewer:latest \
+          --tag ghcr.io/${{github.actor}}/dmarc-report-viewer:${{github.ref_name}} .
         docker run --rm ghcr.io/${{github.actor}}/dmarc-report-viewer:latest ./dmarc-report-viewer --version
   release:
     name: Release
