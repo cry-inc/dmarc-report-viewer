@@ -1,6 +1,7 @@
 mod dmarc_reports;
 mod ips;
 mod mails;
+mod metrics;
 mod sources;
 mod static_files;
 mod summary;
@@ -52,6 +53,7 @@ pub async fn run_http_server(config: &Configuration, state: Arc<Mutex<AppState>>
         .route("/ips/{ip}/location", get(ips::to_location_handler))
         .route("/ips/{ip}/whois", get(ips::to_whois_handler))
         .route("/build", get(build))
+        .route("/metrics", get(metrics::handler))
         .route("/", get(static_files::handler)) // index.html
         .route("/{*filepath}", get(static_files::handler)) // all other files
         .route_layer(middleware::from_fn_with_state(
