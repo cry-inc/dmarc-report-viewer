@@ -170,8 +170,12 @@ jobs:
         echo ${{secrets.GITHUB_TOKEN}} | docker login ghcr.io -u ${{github.actor}} --password-stdin
         docker buildx build --builder builder --platform=linux/amd64,linux/arm64 --pull --push \
           --tag ${{secrets.DOCKER_USER}}/dmarc-report-viewer:latest \
+          --tag ${{secrets.DOCKER_USER}}/dmarc-report-viewer:$(cut -d '.' -f 1 <<< "${{github.ref_name}}") \
+          --tag ${{secrets.DOCKER_USER}}/dmarc-report-viewer:$(cut -d '.' -f 1,2 <<< "${{github.ref_name}}") \
           --tag ${{secrets.DOCKER_USER}}/dmarc-report-viewer:${{github.ref_name}} \
           --tag ghcr.io/${{github.actor}}/dmarc-report-viewer:latest \
+          --tag ghcr.io/${{github.actor}}/dmarc-report-viewer:$(cut -d '.' -f 1 <<< "${{github.ref_name}}") \
+          --tag ghcr.io/${{github.actor}}/dmarc-report-viewer:$(cut -d '.' -f 1,2 <<< "${{github.ref_name}}") \
           --tag ghcr.io/${{github.actor}}/dmarc-report-viewer:${{github.ref_name}} .
         docker run --rm ghcr.io/${{github.actor}}/dmarc-report-viewer:latest ./dmarc-report-viewer --version
   release:
