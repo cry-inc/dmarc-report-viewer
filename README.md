@@ -51,6 +51,7 @@ Read the [CHANGELOG.md](CHANGELOG.md) file for a list of all released versions a
 ## Run with Docker
 The latest versions are automatically published as Docker images in the GitHub container registry.
 You can download the latest release using the command `sudo docker pull ghcr.io/cry-inc/dmarc-report-viewer`.
+Alternatively, you can also pull from Docker Hub: `sudo docker pull cryinc/dmarc-report-viewer`.
 
 ### Available Docker Tags
 The following tags are available (aside from the versioned tag for all individual releases):
