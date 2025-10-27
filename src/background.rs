@@ -30,7 +30,7 @@ pub fn start_bg_task(
         loop {
             let start = Instant::now();
             info!("Starting background update...");
-            match bg_update(&config, &state).await {
+            match bg_update(&config, &state, &start).await {
                 Ok(new_mails) => {
                     info!("Detected {} new mails", new_mails.len());
                     info!(
@@ -74,7 +74,11 @@ pub fn start_bg_task(
 }
 
 /// Executes a background update and returns the IDs of all new mails
-async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Result<Vec<String>> {
+async fn bg_update(
+    config: &Configuration,
+    state: &Arc<Mutex<AppState>>,
+    start: &Instant,
+) -> Result<Vec<String>> {
     let mut mails = HashMap::new();
     if let Some(dmarc_folder) = config.imap_folder_dmarc.as_ref() {
         mails.extend(
@@ -241,6 +245,7 @@ async fn bg_update(config: &Configuration, state: &Arc<Mutex<AppState>>) -> Resu
         locked_state.json_files = json_files.len();
         locked_state.parsing_errors = parsing_errors;
         locked_state.mails = mails;
+        locked_state.last_update_duration = start.elapsed().as_secs_f64();
 
         // Detect which of the mails are new
         let new_mails: Vec<String> = locked_state.mails.keys().cloned().collect();

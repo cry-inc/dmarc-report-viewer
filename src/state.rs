@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::net::IpAddr;
 use std::sync::Arc;
+use std::time::SystemTime;
 
 const CACHE_SIZE: usize = 10000;
 
@@ -44,6 +45,9 @@ pub struct ReportParsingError {
 /// parses them, analyzes DMARC reports and makes them available for
 /// the web frontend running on to the embedded HTTP server.
 pub struct AppState {
+    /// Start time of application as Unix timestamp
+    pub start_time: u64,
+
     /// True until the first update after the application start finished
     pub first_update: bool,
 
@@ -65,6 +69,9 @@ pub struct AppState {
     /// Time of last update from IMAP inbox as Unix timestamp
     pub last_update: u64,
 
+    /// Time the last update took in seconds
+    pub last_update_duration: f64,
+
     /// XML DMARC and JSON SMTP TLS parsing errors keyed by mail ID
     pub parsing_errors: HashMap<String, Vec<ReportParsingError>>,
 
@@ -78,6 +85,10 @@ pub struct AppState {
 impl AppState {
     pub fn new(dns_client: DnsClient) -> Self {
         let dns_client = Arc::new(DnsClientCached::new(dns_client, CACHE_SIZE));
+        let start_time = SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .expect("Failed to get Unix time stamp")
+            .as_secs();
         Self {
             first_update: true,
             mails: HashMap::new(),
@@ -89,6 +100,8 @@ impl AppState {
             parsing_errors: HashMap::new(),
             ip_location_cache: CacheMap::new(CACHE_SIZE).expect("Failed to create location cache"),
             dns_client,
+            start_time,
+            last_update_duration: 0.0,
         }
     }
 }
