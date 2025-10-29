@@ -13,8 +13,8 @@ use anyhow::{Context, Result};
 use axum::Json;
 use axum::body::Body;
 use axum::extract::Request;
-use axum::http::StatusCode;
-use axum::http::header::{AUTHORIZATION, WWW_AUTHENTICATE};
+use axum::http::header::{AUTHORIZATION, CACHE_CONTROL, WWW_AUTHENTICATE};
+use axum::http::{HeaderMap, HeaderValue, StatusCode};
 use axum::middleware::{self, Next};
 use axum::response::{IntoResponse, Response};
 use axum::routing::{IntoMakeService, get, post};
@@ -60,6 +60,7 @@ pub async fn run_http_server(config: &Configuration, state: Arc<Mutex<AppState>>
             config.clone(),
             basic_auth_middleware,
         ))
+        .route("/health", get(health)) // After auth middleware so its unprotected!
         .with_state(state.clone())
         .into_make_service();
 
@@ -236,4 +237,11 @@ async fn build() -> impl IntoResponse {
         "hash": option_env!("GITHUB_SHA").unwrap_or("n/a"),
         "ref": option_env!("GITHUB_REF_NAME").unwrap_or("n/a"),
     }))
+}
+
+// 200 OK empty response
+async fn health() -> HeaderMap {
+    let mut headers = HeaderMap::new();
+    headers.insert(CACHE_CONTROL, HeaderValue::from_static("no-cache"));
+    headers
 }
