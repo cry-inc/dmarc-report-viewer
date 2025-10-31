@@ -33,6 +33,9 @@ export class DmarcReports extends LitElement {
         if (this.params.flagged_spf === "true" || this.params.flagged_spf === "false") {
             urlParams.push("flagged_spf=" + this.params.flagged_spf);
         }
+        if (this.params.flagged_dmarc === "true" || this.params.flagged_dmarc === "false") {
+            urlParams.push("flagged_dmarc=" + this.params.flagged_dmarc);
+        }
         if (this.params.domain) {
             urlParams.push("domain=" + encodeURIComponent(this.params.domain));
         }
@@ -62,6 +65,7 @@ export class DmarcReports extends LitElement {
                         <a class="ml button mr-5" href="#/dmarc-reports?flagged=true">Reports with Problems</a>
                         <a class="button mr-5" href="#/dmarc-reports?flagged_dkim=true">Reports with DKIM Problems</a>
                         <a class="button mr-5" href="#/dmarc-reports?flagged_spf=true">Reports with SPF Problems</a>
+                        <a class="button" href="#/dmarc-reports?flagged_dmarc=true">Reports with DMARC Problems</a>
                     `
                 }
             </div>
