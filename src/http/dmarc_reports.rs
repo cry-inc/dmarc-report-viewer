@@ -28,12 +28,13 @@ struct ReportHeader {
     records: usize,
     flagged_dkim: bool,
     flagged_spf: bool,
+    flagged_dmarc: bool,
     flagged: bool,
 }
 
 impl ReportHeader {
     pub fn from_report(hash: &str, report: &Report) -> Self {
-        let (flagged_dkim, flagged_spf) = Self::flags(report);
+        let (flagged_dkim, flagged_spf, flagged_dmarc) = Self::flags(report);
         Self {
             hash: hash.to_string(),
             id: report.report_metadata.report_id.clone(),
@@ -42,16 +43,18 @@ impl ReportHeader {
             date_begin: report.report_metadata.date_range.begin,
             date_end: report.report_metadata.date_range.end,
             records: report.record.len(),
-            flagged: flagged_dkim | flagged_spf,
+            flagged: flagged_dkim | flagged_spf | flagged_dmarc,
             flagged_dkim,
             flagged_spf,
+            flagged_dmarc,
         }
     }
 
     /// Returns if the report has DKIM or SPF issues
-    fn flags(report: &Report) -> (bool, bool) {
+    fn flags(report: &Report) -> (bool, bool, bool) {
         let mut dkim_flagged = false;
         let mut spf_flagged = false;
+        let mut dmarc_flagged = false;
         for record in &report.record {
             if let Some(dkim) = &record.row.policy_evaluated.dkim
                 && *dkim != DmarcResultType::Pass
@@ -62,6 +65,11 @@ impl ReportHeader {
                 && *spf != DmarcResultType::Pass
             {
                 spf_flagged = true;
+            }
+	        if !matches!(record.row.policy_evaluated.dkim, Some(DmarcResultType::Pass))
+    		&& !matches!(record.row.policy_evaluated.spf,  Some(DmarcResultType::Pass))
+	        {
+                dmarc_flagged = true;
             }
             if let Some(dkim) = &record.auth_results.dkim
                 && dkim.iter().any(|x| x.result != DkimResultType::Pass)
@@ -77,7 +85,7 @@ impl ReportHeader {
                 spf_flagged = true;
             }
         }
-        (dkim_flagged, spf_flagged)
+        (dkim_flagged, spf_flagged, dmarc_flagged)
     }
 }
 
@@ -87,6 +95,7 @@ pub struct ReportFilters {
     flagged: Option<bool>,
     flagged_dkim: Option<bool>,
     flagged_spf: Option<bool>,
+    flagged_dmarc: Option<bool>,
     domain: Option<String>,
     org: Option<String>,
     ip: Option<String>,
@@ -173,6 +182,13 @@ pub async fn list_handler(
         .filter(|rh| {
             if let Some(spf) = &filters.flagged_spf {
                 rh.flagged_spf == *spf
+            } else {
+                true
+            }
+        })
+        .filter(|rh| {
+            if let Some(dm) = &filters.flagged_dmarc {
+                rh.flagged_dmarc == *dm
             } else {
                 true
             }
