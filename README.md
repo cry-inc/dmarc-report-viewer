@@ -144,6 +144,26 @@ The Dockerfile works for `amd64` and `arm64` architectures.
 3. Run the command `sudo docker build . --pull --tag dmarc-report-viewer` in the folder with this README file
 4. You should now be able to see the new Docker image using the command `sudo docker images`
 
+## Development Setup
+You only need git and the Rust toolchain to work on this project.
+No JavaScript tooling like Node, NPM or a bundler is required for the UI.
+The UI code has all dependencies included and does not need any build steps.
+
+When running debug builds, the UI files can be reloaded from your checkout.
+This means you can iterate on the UI without rebuilding the Rust backend every time!
+This does not work for release builds where the UI load the files directly from the binary.
+
+## Contributing
+Please create an issue before creating a PR for a bigger feature, so we can discuss your idea.
+I might decline some contributions because I want to keep the scope as small as possible.
+
+Once you are ready to create a PR, please do the following:
+* Format the code (run `cargo fmt`).
+* Run Clippy for linting (run `cargo clippy --all --all-targets --all-features`).
+* Execute the included test suite (run `cargo test`).
+
+The PR validation pipeline will also run the commands and fails if there are any issues.
+
 ## Acknowledgments
 - Thanks to all the Rust dependencies in [Cargo.toml](Cargo.toml) that make this application possible!
 - Thanks to the JavaScript libraries [Charts.js](https://github.com/chartjs/Chart.js) and [Lit](https://lit.dev/) which are used for the UI.
