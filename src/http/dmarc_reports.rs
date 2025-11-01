@@ -50,7 +50,7 @@ impl ReportHeader {
         }
     }
 
-    /// Returns if the report has DKIM or SPF issues
+    /// Returns if the report has DKIM, SPF or DMARC issues
     fn flags(report: &Report) -> (bool, bool, bool) {
         let mut dkim_flagged = false;
         let mut spf_flagged = false;
@@ -66,11 +66,6 @@ impl ReportHeader {
             {
                 spf_flagged = true;
             }
-	        if !matches!(record.row.policy_evaluated.dkim, Some(DmarcResultType::Pass))
-    		&& !matches!(record.row.policy_evaluated.spf,  Some(DmarcResultType::Pass))
-	        {
-                dmarc_flagged = true;
-            }
             if let Some(dkim) = &record.auth_results.dkim
                 && dkim.iter().any(|x| x.result != DkimResultType::Pass)
             {
@@ -83,6 +78,15 @@ impl ReportHeader {
                 .any(|x| x.result != SpfResultType::Pass)
             {
                 spf_flagged = true;
+            }
+            let dkim_eval_pass = matches!(
+                record.row.policy_evaluated.dkim,
+                Some(DmarcResultType::Pass)
+            );
+            let spf_eval_pass =
+                matches!(record.row.policy_evaluated.spf, Some(DmarcResultType::Pass));
+            if !dkim_eval_pass && !spf_eval_pass {
+                dmarc_flagged = true;
             }
         }
         (dkim_flagged, spf_flagged, dmarc_flagged)
