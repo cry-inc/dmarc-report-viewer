@@ -9,6 +9,7 @@ mod dns_client_cached;
 mod geolocate;
 mod hasher;
 mod http;
+mod http_client;
 mod imap;
 mod mail;
 mod state;
