@@ -8,6 +8,7 @@ mod dns_client;
 mod dns_client_cached;
 mod geolocate;
 mod hasher;
+mod health_check;
 mod http;
 mod http_client;
 mod imap;
@@ -20,6 +21,7 @@ mod whois;
 
 use crate::background::start_bg_task;
 use crate::dns_client::DnsClient;
+use crate::health_check::run_health_check_if_requested;
 use crate::http::run_http_server;
 use crate::state::AppState;
 use anyhow::{Context, Result};
@@ -32,6 +34,10 @@ use tracing::info;
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    // Check for special health check argument that activates the health check mode.
+    // If the flag is found, this method will never return!
+    run_health_check_if_requested().await;
+
     // Create config from args and ENV variables.
     // Will exit early in case of error or help and version command.
     let config = Configuration::new();
