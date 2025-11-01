@@ -4,6 +4,9 @@ use std::net::SocketAddr;
 use std::path::PathBuf;
 use tracing::{Level, info};
 
+pub const HTTP_DEFAULT_PORT: u16 = 8080;
+pub const HTTP_DEFAULT_BINDING: &str = "0.0.0.0";
+
 #[derive(Parser, Clone)]
 #[command(version, about, long_about = None)]
 pub struct Configuration {
@@ -87,7 +90,7 @@ pub struct Configuration {
 
     /// Embedded HTTP server port for web UI.
     /// Needs to be bigger than 0 because for 0 a random port will be used!
-    #[arg(long, env, default_value_t = 8080)]
+    #[arg(long, env, default_value_t = HTTP_DEFAULT_PORT)]
     pub http_server_port: u16,
 
     /// Embedded HTTP server binding for web UI.
@@ -95,7 +98,7 @@ pub struct Configuration {
     /// The default will bind to all IPv4 IPs of the host.
     /// Use `[::]` to bind to all IPV6 IPs of the host.
     /// Use `127.0.0.1` (IPv4) or `[::1]` (IPv6) to make the server only available on localhost!
-    #[arg(long, env, default_value = "0.0.0.0")]
+    #[arg(long, env, default_value = HTTP_DEFAULT_BINDING)]
     pub http_server_binding: String,
 
     /// Username for the HTTP server basic auth login
