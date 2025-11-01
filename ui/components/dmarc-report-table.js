@@ -25,13 +25,13 @@ export class DmarcReportTable extends LitElement {
     renderProblemBadges(dkim, spf, dmarc) {
         const badges = [];
         if (dkim) {
-            badges.push(html`<span class="badge badge-negative mr-5">DKIM</span>`);
+            badges.push(html`<span class="help badge badge-negative mr-5" title="This report failed the DKIM policy evaluation or the DKIM authentication did not pass">DKIM</span>`);
         }
         if (spf) {
-            badges.push(html` <span class="badge badge-negative">SPF</span>`);
+            badges.push(html` <span class="help badge badge-negative" title="This report failed the SPF policy evaluation or the SPF authentication did not pass">SPF</span>`);
         }
         if (dmarc) {
-            badges.push(html` <span class="badge badge-negative">DMARC</span>`);
+            badges.push(html` <span class="help badge badge-negative" title="This report failed the SPF and DKIM policy evaluation">DMARC</span>`);
         }
         return badges;
     }
