@@ -44,6 +44,7 @@ You can find more screenshots [here](screenshots/screenshots.md).
 - [x] Show parsing errors for reports
 - [x] Lookup of DNS, location, whois and other source IP properties
 - [x] Web Hook to notify external services about new mails
+- [x] HTTP Health Check Endpoint and Docker Health Check integration
 
 ## Changelog
 Read the [CHANGELOG.md](CHANGELOG.md) file for a list of all released versions and their corresponding changes.
@@ -129,6 +130,14 @@ Note that on Linux this will bind to both, IPv4 and IPv6 by default.
 By default the application requires you to set an password to secure access via basic HTTP authentication.
 If you want to use other access controls (e.g. via reverse proxy),
 you can disable basic authentication by setting an empty string as password.
+
+### Health Checks
+The service provides an health check endpoint at `/health` that always returns an empty HTTP 200 OK response.
+The Docker image also contains a HEALTHCHECK statement and allows containers to check themselves.
+The health check works by executing the binary in a special mode by providing the `--health-check` argument.
+It will then try to get the HTTP/HTTPS configuration from the ENV vars to build an URL to query the health check endpoint.
+If you have an exotic network setup this might fail and you need to override or disable the health check.
+Feel free to create an issue in this case!
 
 ## Build from Source
 1. Install Rust toolchain (see https://rustup.rs/)
