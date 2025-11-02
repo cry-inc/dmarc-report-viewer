@@ -25,4 +25,5 @@ RUN strip /usr/src/target/release/dmarc-report-viewer
 FROM scratch
 COPY --from=builder /usr/src/target/release/dmarc-report-viewer /
 EXPOSE 8080
+HEALTHCHECK --start-period=30s CMD ["./dmarc-report-viewer", "--health-check"]
 CMD ["./dmarc-report-viewer"]
