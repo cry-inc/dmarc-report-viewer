@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.3.0] - 2025-11-13
+* Push new Docker images also to Docker Hub (see https://hub.docker.com/r/cryinc/dmarc-report-viewer)
+* Publish {major} and {major}.{minor} Docker tags for releases in addition to {major}.{minor}.{patch}
+* New filtering flag for DMARC reports when DKIM and SPF policies failed (implemented by @manufant)
+* Added new HTTP health check endpoint `/health`
+* Added health check Docker integration
+* Updated Cargo dependencies
+
 ## [2.2.2] - 2025-10-18
 * Reduced default IMAP chunk size to make the configuration work out of the box with the Stalwart IMAP server (see issue #61).
   This means for inboxes with many mails (>1000) it might be now a little bit slower while updating.
