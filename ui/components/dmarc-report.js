@@ -8,6 +8,7 @@ export class DmarcReport extends LitElement {
         return {
             id: { type: String },
             mailId: { type: String, attribute: false },
+recordFilter: { type: String, attribute: false },
         };
     }
 
@@ -19,6 +20,7 @@ export class DmarcReport extends LitElement {
         this.ip2dns = {};
         this.ip2location = {};
         this.ipDetails = {};
+this.recordFilter = "all";
     }
 
     async updated(changedProperties) {
@@ -112,8 +114,75 @@ export class DmarcReport extends LitElement {
             return html`<span class="faded">n/a</span>`;
         }
     }
+onRecordFilterChange(event) {
+    this.recordFilter = event.target.value;
+}
 
+getFilteredRecords() {
+    if (!this.report || !this.report.record) {
+        return [];
+    }
+
+    if (!this.recordFilter || this.recordFilter === "all") {
+        return this.report.record;
+    }
+
+    return this.report.record.filter((record) => {
+        const policy = record && record.row && record.row.policy_evaluated
+            ? record.row.policy_evaluated
+            : {};
+        const spf = policy.spf;
+        const dkim = policy.dkim;
+
+        switch (this.recordFilter) {
+        case "spf-fail":
+            return spf === "fail";
+        case "dkim-fail":
+            return dkim === "fail";
+        case "dmarc-fail":
+            return spf === "fail" && dkim === "fail";
+        default:
+            return true;
+        }
+    });
+}
+getRecordFilterStats() {
+    const stats = {
+        all: 0,
+        spfFail: 0,
+        dkimFail: 0,
+        dmarcFail: 0,
+    };
+
+    if (!this.report || !this.report.record) {
+        return stats;
+    }
+
+    const records = this.report.record;
+    stats.all = records.length;
+
+    records.forEach((record) => {
+        const policy = record && record.row && record.row.policy_evaluated
+            ? record.row.policy_evaluated
+            : {};
+        const spf = policy.spf;
+        const dkim = policy.dkim;
+
+        if (spf === "fail") {
+            stats.spfFail++;
+        }
+        if (dkim === "fail") {
+            stats.dkimFail++;
+        }
+        if (spf === "fail" && dkim === "fail") {
+            stats.dmarcFail++;
+        }
+    });
+
+    return stats;
+}
     render() {
+ const stats = this.getRecordFilterStats();
         if (!this.report) {
             return html`No report loaded`;
         }
@@ -129,6 +198,32 @@ export class DmarcReport extends LitElement {
                 <a class="button" href="#/mails/${this.mailId}">Show Mail</a>
                 <a class="button" href="/dmarc-reports/${this.id}/xml" target="_blank">Open XML</a>
                 <a class="button" href="/dmarc-reports/${this.id}/json" target="_blank">Open JSON</a>
+       <span>
+                Filter:
+                <select @change="${this.onRecordFilterChange}">
+                    <option value="all" ?selected=${this.recordFilter === "all"}>
+                        All (${stats.all})
+                    </option>
+
+                    ${stats.spfFail > 0 ? html`
+                        <option value="spf-fail" ?selected=${this.recordFilter === "spf-fail"}>
+                            SPF Policy Fail (${stats.spfFail})
+                        </option>
+                    ` : ""}
+
+                    ${stats.dkimFail > 0 ? html`
+                        <option value="dkim-fail" ?selected=${this.recordFilter === "dkim-fail"}>
+                            DKIM Policy Fail (${stats.dkimFail})
+                        </option>
+                    ` : ""}
+
+                    ${stats.dmarcFail > 0 ? html`
+                        <option value="dmarc-fail" ?selected=${this.recordFilter === "dmarc-fail"}>
+                            DMARC Policy Fail (${stats.dmarcFail})
+                        </option>
+                    ` : ""}
+                </select>
+            </span>
             </p>
             <table>
                 <tr>
@@ -202,7 +297,7 @@ export class DmarcReport extends LitElement {
                     <td>${this.renderOptional(this.report.policy_published.fo)}</td>
                 </tr>
             </table>
-            ${this.report.record.map((record) => html`
+            ${this.getFilteredRecords().map((record) => html`
                 <h2>Record</h2>
                 <table>
                     <tr>
