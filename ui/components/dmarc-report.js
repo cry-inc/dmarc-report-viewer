@@ -8,7 +8,7 @@ export class DmarcReport extends LitElement {
         return {
             id: { type: String },
             mailId: { type: String, attribute: false },
-recordFilter: { type: String, attribute: false },
+            recordFilter: { type: String, attribute: false },
         };
     }
 
@@ -20,7 +20,7 @@ recordFilter: { type: String, attribute: false },
         this.ip2dns = {};
         this.ip2location = {};
         this.ipDetails = {};
-this.recordFilter = "all";
+        this.recordFilter = "all";
     }
 
     async updated(changedProperties) {
@@ -114,75 +114,78 @@ this.recordFilter = "all";
             return html`<span class="faded">n/a</span>`;
         }
     }
-onRecordFilterChange(event) {
-    this.recordFilter = event.target.value;
-}
 
-getFilteredRecords() {
-    if (!this.report || !this.report.record) {
-        return [];
+    onRecordFilterChange(event) {
+        this.recordFilter = event.target.value;
     }
 
-    if (!this.recordFilter || this.recordFilter === "all") {
-        return this.report.record;
-    }
-
-    return this.report.record.filter((record) => {
-        const policy = record && record.row && record.row.policy_evaluated
-            ? record.row.policy_evaluated
-            : {};
-        const spf = policy.spf;
-        const dkim = policy.dkim;
-
-        switch (this.recordFilter) {
-        case "spf-fail":
-            return spf === "fail";
-        case "dkim-fail":
-            return dkim === "fail";
-        case "dmarc-fail":
-            return spf === "fail" && dkim === "fail";
-        default:
-            return true;
+    getFilteredRecords() {
+        if (!this.report || !this.report.record) {
+            return [];
         }
-    });
-}
-getRecordFilterStats() {
-    const stats = {
-        all: 0,
-        spfFail: 0,
-        dkimFail: 0,
-        dmarcFail: 0,
-    };
 
-    if (!this.report || !this.report.record) {
+        if (!this.recordFilter || this.recordFilter === "all") {
+            return this.report.record;
+        }
+
+        return this.report.record.filter((record) => {
+            const policy = record && record.row && record.row.policy_evaluated
+                ? record.row.policy_evaluated
+                : {};
+            const spf = policy.spf;
+            const dkim = policy.dkim;
+
+            switch (this.recordFilter) {
+                case "spf-fail":
+                    return spf === "fail";
+                case "dkim-fail":
+                    return dkim === "fail";
+                case "dmarc-fail":
+                    return spf === "fail" && dkim === "fail";
+                default:
+                    return true;
+            }
+        });
+    }
+
+    getRecordFilterStats() {
+        const stats = {
+            all: 0,
+            spfFail: 0,
+            dkimFail: 0,
+            dmarcFail: 0,
+        };
+
+        if (!this.report || !this.report.record) {
+            return stats;
+        }
+
+        const records = this.report.record;
+        stats.all = records.length;
+
+        records.forEach((record) => {
+            const policy = record && record.row && record.row.policy_evaluated
+                ? record.row.policy_evaluated
+                : {};
+            const spf = policy.spf;
+            const dkim = policy.dkim;
+
+            if (spf === "fail") {
+                stats.spfFail++;
+            }
+            if (dkim === "fail") {
+                stats.dkimFail++;
+            }
+            if (spf === "fail" && dkim === "fail") {
+                stats.dmarcFail++;
+            }
+        });
+
         return stats;
     }
 
-    const records = this.report.record;
-    stats.all = records.length;
-
-    records.forEach((record) => {
-        const policy = record && record.row && record.row.policy_evaluated
-            ? record.row.policy_evaluated
-            : {};
-        const spf = policy.spf;
-        const dkim = policy.dkim;
-
-        if (spf === "fail") {
-            stats.spfFail++;
-        }
-        if (dkim === "fail") {
-            stats.dkimFail++;
-        }
-        if (spf === "fail" && dkim === "fail") {
-            stats.dmarcFail++;
-        }
-    });
-
-    return stats;
-}
     render() {
- const stats = this.getRecordFilterStats();
+        const stats = this.getRecordFilterStats();
         if (!this.report) {
             return html`No report loaded`;
         }
@@ -198,32 +201,32 @@ getRecordFilterStats() {
                 <a class="button" href="#/mails/${this.mailId}">Show Mail</a>
                 <a class="button" href="/dmarc-reports/${this.id}/xml" target="_blank">Open XML</a>
                 <a class="button" href="/dmarc-reports/${this.id}/json" target="_blank">Open JSON</a>
-       <span>
-                Filter:
-                <select @change="${this.onRecordFilterChange}">
-                    <option value="all" ?selected=${this.recordFilter === "all"}>
-                        All (${stats.all})
-                    </option>
-
-                    ${stats.spfFail > 0 ? html`
-                        <option value="spf-fail" ?selected=${this.recordFilter === "spf-fail"}>
-                            SPF Policy Fail (${stats.spfFail})
+                <span>
+                    Records Filter:
+                    <select @change="${this.onRecordFilterChange}">
+                        <option value="all" ?selected="${this.recordFilter === "all"}" title="Show all records">
+                            All (${stats.all})
                         </option>
-                    ` : ""}
 
-                    ${stats.dkimFail > 0 ? html`
-                        <option value="dkim-fail" ?selected=${this.recordFilter === "dkim-fail"}>
-                            DKIM Policy Fail (${stats.dkimFail})
-                        </option>
-                    ` : ""}
+                        ${stats.spfFail > 0 ? html`
+                            <option value="spf-fail" ?selected="${this.recordFilter === "spf-fail"}" title="Show only records with failed SPF Policy Evaluation">
+                                SPF Policy Fail (${stats.spfFail})
+                            </option>
+                        ` : ""}
 
-                    ${stats.dmarcFail > 0 ? html`
-                        <option value="dmarc-fail" ?selected=${this.recordFilter === "dmarc-fail"}>
-                            DMARC Policy Fail (${stats.dmarcFail})
-                        </option>
-                    ` : ""}
-                </select>
-            </span>
+                        ${stats.dkimFail > 0 ? html`
+                            <option value="dkim-fail" ?selected="${this.recordFilter === "dkim-fail"}" title="Show only records with failed DKIM Policy Evaluation">
+                                DKIM Policy Fail (${stats.dkimFail})
+                            </option>
+                        ` : ""}
+
+                        ${stats.dmarcFail > 0 ? html`
+                            <option value="dmarc-fail" ?selected="${this.recordFilter === "dmarc-fail"}" title="Show only records with failed SPF and DKIM Policy Evaluation">
+                                DMARC Policy Fail (${stats.dmarcFail})
+                            </option>
+                        ` : ""}
+                    </select>
+                </span>
             </p>
             <table>
                 <tr>
@@ -311,7 +314,7 @@ getRecordFilterStats() {
                             <a class="button sm help" title="Look up WHOIS record for IP and show in new tab" target="blank" href="ips/${record.row.source_ip}/whois">WHOIS</a>
                         </td>
                     </tr>
-                    <tbody class="sourceip" style="${this.ipDetails[record.row.source_ip] ? "": "display:none"}">
+                    <tbody class="sourceip" style="${this.ipDetails[record.row.source_ip] ? "" : "display:none"}">
                         <tr>
                             <td class="name">Source IP DNS</td>
                             <td>${this.renderIfDefined(this.ip2dns[record.row.source_ip])}
