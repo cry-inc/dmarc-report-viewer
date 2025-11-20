@@ -94,7 +94,7 @@ You might have to setup some forwarding if you are receiving them on separate ac
 
 ### IMAP with STARTTLS
 By default the IMAP client will attempt to use a TLS encrypted connection using port 993.
-For STARTTLS set the ENV variables `IMAP_STARTTLS=TRUE` and `IMAP_PORT=143`.
+For STARTTLS set the ENV variables `IMAP_STARTTLS=true` and `IMAP_PORT=143`.
 
 ### HTTPS for UI
 By default, the application will start an unencrypted and unsecure HTTP server.
