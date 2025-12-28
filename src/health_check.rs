@@ -5,7 +5,7 @@ use hyper::{Method, StatusCode};
 use std::collections::HashMap;
 
 #[derive(Parser)]
-#[command(ignore_errors = true)]
+#[command(ignore_errors = true, disable_help_flag = true)]
 struct HealthCheckArgs {
     /// Set to enable health check
     #[arg(long)]
