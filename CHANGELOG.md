@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.3.1] - 2025-12-28
+* Fixed issue #70 with incomplete command line help caused by new Docker health check feature
+* Added failure filters to DMARC report details (implemented by @manufant)
+* Updated Cargo dependencies
+
 ## [2.3.0] - 2025-11-13
 * Push new Docker images also to Docker Hub (see https://hub.docker.com/r/cryinc/dmarc-report-viewer)
 * Publish {major} and {major}.{minor} Docker tags for releases in addition to {major}.{minor}.{patch}
