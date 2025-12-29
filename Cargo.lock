@@ -992,7 +992,7 @@ dependencies = [
 [[package]]
 name = "imap-proto"
 version = "0.16.6"
-source = "git+https://github.com/djc/tokio-imap/#01263670ded8771d3c8f919caf43e00c83f57ac7"
+source = "git+https://github.com/djc/tokio-imap/#82c6967ad529e5f9cfa6b0c59aecb2f0b5f6bd8c"
 dependencies = [
  "nom",
 ]
@@ -2284,9 +2284,9 @@ checksum = "40990edd51aae2c2b6907af74ffb635029d5788228222c4bb811e9351c0caad3"
 
 [[package]]
 name = "zmij"
-version = "1.0.0"
+version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e6d6085d62852e35540689d1f97ad663e3971fc19cf5eceab364d62c646ea167"
+checksum = "0f4a4e8e9dc5c62d159f04fcdbe07f4c3fb710415aab4754bf11505501e3251d"
 
 [[package]]
 name = "zopfli"
