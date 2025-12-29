@@ -7,6 +7,7 @@ mod static_files;
 mod summary;
 mod tls_reports;
 
+use crate::acme_listener::AcmeListener;
 use crate::config::Configuration;
 use crate::state::AppState;
 use anyhow::{Context, Result};
@@ -19,17 +20,14 @@ use axum::middleware::{self, Next};
 use axum::response::{IntoResponse, Response};
 use axum::routing::{IntoMakeService, get, post};
 use axum::{Router, extract::State};
-use axum_server::Handle;
 use base64::{Engine, engine::general_purpose::STANDARD};
-use futures::StreamExt;
-use rustls_acme::AcmeConfig;
-use rustls_acme::caches::DirCache;
 use serde_json::json;
 use std::net::SocketAddr;
 use std::sync::Arc;
+use tokio::net::TcpListener;
 use tokio::signal;
 use tokio::sync::Mutex;
-use tracing::{error, info, warn};
+use tracing::{info, warn};
 
 pub async fn run_http_server(config: &Configuration, state: Arc<Mutex<AppState>>) -> Result<()> {
     if config.http_server_password.is_empty() {
@@ -67,52 +65,41 @@ pub async fn run_http_server(config: &Configuration, state: Arc<Mutex<AppState>>
     let binding = format!("{}:{}", config.http_server_binding, config.http_server_port);
     let addr: SocketAddr = binding.parse().context("Failed to parse binding address")?;
     info!("Binding HTTP server to {addr}...");
+    let tcp_listener = TcpListener::bind(addr)
+        .await
+        .context("Failed to bind TCP listener to address")?;
 
     if config.https_auto_cert {
-        start_https_server(config, addr, make_service)
+        start_https_server(config, tcp_listener, make_service)
             .await
             .context("Failed to start HTTPS server")
     } else {
-        start_http_server(addr, make_service)
+        start_http_server(tcp_listener, make_service)
             .await
             .context("Failed to start HTTP server")
     }
 }
 
 async fn start_http_server(
-    addr: SocketAddr,
+    tcp_listener: TcpListener,
     make_service: IntoMakeService<Router>,
 ) -> anyhow::Result<()> {
-    let handle = Handle::new();
-    let handle_clone = handle.clone();
-    tokio::spawn(async move {
-        shutdown_signal().await;
-        handle_clone.shutdown();
-    });
-
-    axum_server::bind(addr)
-        .handle(handle)
-        .serve(make_service)
+    axum::serve(tcp_listener, make_service)
+        .with_graceful_shutdown(shutdown_signal())
         .await
-        .context("Failed to create axum HTTP server")
+        .context("Failed to serve with axum")
 }
 
 async fn start_https_server(
     config: &Configuration,
-    addr: SocketAddr,
+    tcp_listener: TcpListener,
     make_service: IntoMakeService<Router>,
 ) -> anyhow::Result<()> {
-    let handle = Handle::new();
-    let handle_clone = handle.clone();
-    tokio::spawn(async move {
-        shutdown_signal().await;
-        handle_clone.shutdown();
-    });
-
     let acme_domain = config
         .https_auto_cert_domain
         .as_deref()
-        .context("HTTPS automatic certificate domain is missing in configuration")?;
+        .context("HTTPS automatic certificate domain is missing in configuration")?
+        .to_owned();
 
     let acme_contact = format!(
         "mailto:{}",
@@ -122,41 +109,19 @@ async fn start_https_server(
             .context("HTTPS automatic certificate mail is missing in configuration")?
     );
 
-    let acme_cache = DirCache::new(
-        config
-            .https_auto_cert_cache
-            .as_deref()
-            .context("HTTPS automatic certificate cache directory is missing in configuration")?
-            .to_owned(),
-    );
+    let acme_cache = config
+        .https_auto_cert_cache
+        .as_deref()
+        .context("HTTPS automatic certificate cache directory is missing in configuration")?
+        .to_owned();
 
-    let mut acme_state = AcmeConfig::new([acme_domain])
-        .contact([acme_contact])
-        .cache_option(Some(acme_cache))
-        .directory_lets_encrypt(true)
-        .state();
-    let rustls_config = acme_state.default_rustls_config();
-    let acceptor = acme_state.axum_acceptor(rustls_config);
+    let listener = AcmeListener::new(tcp_listener, acme_domain, acme_contact, acme_cache)
+        .context("Failed to create ACME listener")?;
 
-    tokio::spawn(async move {
-        loop {
-            match acme_state
-                .next()
-                .await
-                .expect("Failed to get next ACME event")
-            {
-                Ok(ok) => info!("ACME Event: {:?}", ok),
-                Err(err) => error!("ACME Error: {:?}", err),
-            }
-        }
-    });
-
-    axum_server::bind(addr)
-        .handle(handle)
-        .acceptor(acceptor)
-        .serve(make_service)
+    axum::serve(listener, make_service)
+        .with_graceful_shutdown(shutdown_signal())
         .await
-        .context("Failed to create axum HTTPS server")
+        .context("Failed to serve with axum")
 }
 
 /// Promise will be fulfilled when a shutdown signal is received
