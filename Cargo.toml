@@ -32,14 +32,13 @@ dns-protocol = "0.1"
 tokio-rustls = "0.26"
 http-body-util = "0.1"
 tracing-subscriber = "0.3.20"
-hyper = { version = "1", features = ["full"] }
+rustls-acme = { version = "0.14" }
 serde = { version = "1", features = ["derive"] }
-rustls-acme = { version = "0.14", features = [] }
-hyper-util = { version = "0.1", features = ["full"] }
-chrono = { version = "0.4.20", features = ["serde"] }
-clap = { version = "4", features = ["derive", "env"] }
+hyper = { version = "1", features = ["client"] }
+hyper-util = { version = "0.1", default-features = false }
 quick-xml = { version = "0.38", features = ["serialize"] }
-tower-http = { version = "0.6", features = ["compression-gzip"] }
 zip = { version = "7", default-features = false, features = ["deflate"] }
 tokio = { version = "1.36", features = ["macros", "rt-multi-thread", "signal", "fs"] }
 async-imap = { version = "0.11", default-features = false, features = ["runtime-tokio"] }
+chrono = { version = "0.4.20", default-features = false, features = ["std", "clock", "serde"] }
+clap = { version = "4", default-features = false, features = ["std", "derive", "help", "env", "usage", "suggestions"] }
