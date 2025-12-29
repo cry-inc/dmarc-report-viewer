@@ -11,7 +11,7 @@ use tokio::net::{TcpListener, TcpStream};
 use tokio_rustls::LazyConfigAcceptor;
 use tokio_rustls::rustls::ServerConfig;
 use tokio_rustls::server::TlsStream;
-use tracing::{error, info, warn};
+use tracing::{debug, error, info, warn};
 
 pub struct AcmeListener {
     tcp_listener: TcpListener,
@@ -74,7 +74,7 @@ impl Listener for AcmeListener {
             let (stream, addr) = match result {
                 Ok(tuple) => tuple,
                 Err(err) => {
-                    warn!("Failed to accept TCP stream: {err}");
+                    debug!("Failed to accept TCP stream: {err}");
                     continue;
                 }
             };
@@ -84,25 +84,25 @@ impl Listener for AcmeListener {
             let handshake = match result {
                 Ok(hs) => hs,
                 Err(err) => {
-                    warn!("Failed to initiate TLS handshake: {err}");
+                    debug!("Failed to initiate TLS handshake: {err}");
                     continue;
                 }
             };
 
             if is_tls_alpn_challenge(&handshake.client_hello()) {
                 // Handle ACME challenges
-                info!("Received TLS-ALPN-01 validation request");
+                info!("Received TLS-ALPN-01 challenge request");
                 let config = self.challenge_config.clone();
                 let result = handshake.into_stream(config).await;
                 let mut tls = match result {
                     Ok(tls) => tls,
                     Err(err) => {
-                        warn!("Failed to handle TLS-ALPN-01 validation request: {err}");
+                        warn!("Failed to handle TLS-ALPN-01 challenge request: {err}");
                         continue;
                     }
                 };
                 if let Err(err) = tls.shutdown().await {
-                    warn!("Failed to shut down TLS connection for validation request: {err}");
+                    warn!("Failed to shut down TLS connection for challenge request: {err}");
                 }
             } else {
                 // Handle normal incoming connection
@@ -110,7 +110,7 @@ impl Listener for AcmeListener {
                 let result = handshake.into_stream(config).await;
                 match result {
                     Ok(tls) => return (tls, addr),
-                    Err(err) => warn!("Failed to create TLS stream: {err}"),
+                    Err(err) => debug!("Failed to create TLS stream: {err}"),
                 };
             }
         }
