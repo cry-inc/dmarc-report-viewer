@@ -1,6 +1,5 @@
 #![forbid(unsafe_code)]
 
-mod acme_listener;
 mod background;
 mod cache_map;
 mod config;
