@@ -183,7 +183,7 @@ export class TlsReport extends LitElement {
                 </tr>
                 <tr>
                     <td class="name">Contact Info</td>
-                    <td>${this.report["contact-info"]}</td>
+                    <td>${this.renderIfDefined(this.report["contact-info"])}</td>
                 </tr>
             </table>
 

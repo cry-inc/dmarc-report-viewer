@@ -1,0 +1,31 @@
+{
+    "organization-name": "server.com",
+    "date-range": {
+        "start-datetime": "2026-01-11T00:00:00Z",
+        "end-datetime": "2026-01-12T00:00:00Z"
+    },
+    "contact-info": null,
+    "report-id": "123_456",
+    "policies": [
+        {
+            "policy": {
+                "policy-type": "sts",
+                "policy-string": [
+                    "version: STSv1",
+                    "mode: enforce",
+                    "max_age: 86400",
+                    "mx: mx.server.com"
+                ],
+                "policy-domain": "server.com",
+                "mx-host": [
+                    "mx: mx.server.com"
+                ]
+            },
+            "summary": {
+                "total-successful-session-count": 1,
+                "total-failure-session-count": 0
+            },
+            "failure-details": []
+        }
+    ]
+}

@@ -154,7 +154,8 @@ pub struct Report {
     /// The date-time indicating the start and end times for the report range.
     pub date_range: DateRange,
     /// The contact information for the party responsible for the report.
-    pub contact_info: String,
+    /// This is normally required, but many servers seem to set the value to null :(
+    pub contact_info: Option<String>,
     /// A unique identifier for the report.
     pub report_id: String,
     /// The policies evaluated by the reporting organization.
@@ -203,7 +204,10 @@ mod tests {
             report.date_range.end_datetime.to_rfc3339(),
             "2016-04-01T23:59:59+00:00"
         );
-        assert_eq!(report.contact_info, "sts-reporting@company-x.example");
+        assert_eq!(
+            report.contact_info.as_deref(),
+            Some("sts-reporting@company-x.example")
+        );
         assert_eq!(report.report_id, "5065427c-23d3-47ca-b6e0-946ea0e8c4be");
 
         // Check policy results
@@ -316,7 +320,10 @@ mod tests {
             report.date_range.end_datetime.to_rfc3339(),
             "2025-05-23T23:59:59+00:00"
         );
-        assert_eq!(report.contact_info, "tlsrpt-noreply@microsoft.com");
+        assert_eq!(
+            report.contact_info.as_deref(),
+            Some("tlsrpt-noreply@microsoft.com")
+        );
         assert_eq!(report.report_id, "133925885310113267+random.net");
 
         // Check policy results
@@ -376,7 +383,10 @@ mod tests {
             report.date_range.end_datetime.to_rfc3339(),
             "2025-05-22T23:59:59+00:00"
         );
-        assert_eq!(report.contact_info, "smtp-tls-reporting@google.com");
+        assert_eq!(
+            report.contact_info.as_deref(),
+            Some("smtp-tls-reporting@google.com")
+        );
         assert_eq!(report.report_id, "2025-05-22T00:00:00Z_foo-bar.io");
 
         // Check policy results
@@ -423,7 +433,10 @@ mod tests {
             report.date_range.end_datetime.to_rfc3339(),
             "2025-03-27T23:59:59+00:00"
         );
-        assert_eq!(report.contact_info, "smtp-tls-reporting@google.com");
+        assert_eq!(
+            report.contact_info.as_deref(),
+            Some("smtp-tls-reporting@google.com")
+        );
         assert_eq!(report.report_id, "2025-03-27T00:00:00Z_foo-bar.io");
 
         // Check policy results
@@ -439,5 +452,12 @@ mod tests {
         // Check policy result – summary
         assert_eq!(policy_result.summary.total_successful_session_count, 1);
         assert_eq!(policy_result.summary.total_failure_session_count, 0);
+    }
+
+    #[test]
+    fn no_contact_report() {
+        let data = std::fs::read("testdata/smtp-tls-reports/no-contact.json").unwrap();
+        let report: Report = serde_json::from_slice(&data).unwrap();
+        assert_eq!(report.contact_info, None);
     }
 }
