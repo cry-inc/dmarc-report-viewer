@@ -106,12 +106,13 @@ pub enum FailureResultType {
 pub struct FailureDetails {
     /// The type of the failure.
     pub result_type: FailureResultType,
-    /// The IP address of the Sending MTA that attempted the STARTTLS
-    /// connection.
-    pub sending_mta_ip: IpAddr,
+    /// The IP address of the Sending MTA that attempted the STARTTLS connection.
+    /// Normally this field is required but some reports omit it.
+    pub sending_mta_ip: Option<IpAddr>,
     /// The hostname of the receiving MTA MX record with which the Sending MTA
     /// attempted to negotiate a STARTTLS connection.
-    pub receiving_mx_hostname: String,
+    /// Normally this field is required but some reports omit it.
+    pub receiving_mx_hostname: Option<String>,
     /// The HELLO (HELO) or Extended HELLO (EHLO) string from the banner
     /// announced during the reported session.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -247,11 +248,11 @@ mod tests {
         );
         assert_eq!(
             cert_expired_details.sending_mta_ip,
-            IpAddr::from_str("2001:db8:abcd:0012::1").unwrap()
+            Some(IpAddr::from_str("2001:db8:abcd:0012::1").unwrap())
         );
         assert_eq!(
-            cert_expired_details.receiving_mx_hostname,
-            "mx1.mail.company-y.example"
+            cert_expired_details.receiving_mx_hostname.as_deref(),
+            Some("mx1.mail.company-y.example")
         );
         assert!(cert_expired_details.receiving_mx_helo.is_none());
         assert!(cert_expired_details.receiving_ip.is_none());
@@ -265,11 +266,11 @@ mod tests {
         );
         assert_eq!(
             no_starttls_details.sending_mta_ip,
-            IpAddr::from_str("2001:db8:abcd:0013::1").unwrap()
+            Some(IpAddr::from_str("2001:db8:abcd:0013::1").unwrap())
         );
         assert_eq!(
-            no_starttls_details.receiving_mx_hostname,
-            "mx2.mail.company-y.example"
+            no_starttls_details.receiving_mx_hostname.as_deref(),
+            Some("mx2.mail.company-y.example")
         );
         assert!(no_starttls_details.receiving_mx_helo.is_none());
         assert_eq!(
@@ -286,11 +287,11 @@ mod tests {
         );
         assert_eq!(
             validation_failure_details.sending_mta_ip,
-            IpAddr::from_str("198.51.100.62").unwrap()
+            Some(IpAddr::from_str("198.51.100.62").unwrap())
         );
         assert_eq!(
-            validation_failure_details.receiving_mx_hostname,
-            "mx-backup.mail.company-y.example"
+            validation_failure_details.receiving_mx_hostname.as_deref(),
+            Some("mx-backup.mail.company-y.example")
         );
         assert!(validation_failure_details.receiving_mx_helo.is_none());
         assert_eq!(
@@ -456,8 +457,21 @@ mod tests {
 
     #[test]
     fn no_contact_report() {
+        // Report with missing contact field that violates the spec
         let data = std::fs::read("testdata/smtp-tls-reports/no-contact.json").unwrap();
         let report: Report = serde_json::from_slice(&data).unwrap();
         assert_eq!(report.contact_info, None);
+    }
+
+    #[test]
+    fn no_ip_and_mx_report() {
+        // Report with missing MTA IP and MX host that violates the spec
+        let data = std::fs::read("testdata/smtp-tls-reports/no_ip_and_mx.json").unwrap();
+        let report: Report = serde_json::from_slice(&data).unwrap();
+        let policy = report.policies.first().unwrap();
+        let failure_details = policy.failure_details.as_deref().unwrap();
+        let details = failure_details.first().unwrap();
+        assert_eq!(details.sending_mta_ip, None);
+        assert_eq!(details.receiving_mx_hostname, None);
     }
 }

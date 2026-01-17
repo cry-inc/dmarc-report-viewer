@@ -241,9 +241,11 @@ export class TlsReport extends LitElement {
                             <tr>
                                 <td class="name">Sending MTA IP</td>
                                 <td>
-                                    ${failureDetails["sending-mta-ip"]}
-                                    <button @click="${() => this.lookupIp(failureDetails["sending-mta-ip"])}" class="button sm help" title="Search DNS hostname for IP and geolocate it">DNS and Location</button>
-                                    <a class="button sm help" title="Look up WHOIS record for IP and show in new tab" target="blank" href="ips/${failureDetails["sending-mta-ip"]}/whois">WHOIS</a>
+                                    ${this.renderIfDefined(failureDetails["sending-mta-ip"])}
+                                    ${failureDetails["sending-mta-ip"] ? html`
+                                        <button @click="${() => this.lookupIp(failureDetails["sending-mta-ip"])}" class="button sm help" title="Search DNS hostname for IP and geolocate it">DNS and Location</button>
+                                        <a class="button sm help" title="Look up WHOIS record for IP and show in new tab" target="blank" href="ips/${failureDetails["sending-mta-ip"]}/whois">WHOIS</a>
+                                    ` : nothing}
                                 </td>
                             </tr>
                         </tbody>
@@ -289,7 +291,7 @@ export class TlsReport extends LitElement {
                         <tbody>
                             <tr>
                                 <td class="name">Receiving MX Host</td>
-                                <td>${failureDetails["receiving-mx-hostname"]}</td>
+                                <td>${this.renderIfDefined(failureDetails["receiving-mx-hostname"])}</td>
                             </tr>
                             ${"receiving-mx-helo" in failureDetails ? html`
                                 <tr>

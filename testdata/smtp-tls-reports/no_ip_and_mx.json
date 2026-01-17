@@ -1,0 +1,27 @@
+{
+    "organization-name": "Microsoft Corporation",
+    "date-range": {
+        "start-datetime": "2025-06-14T00:00:00Z",
+        "end-datetime": "2025-06-14T23:59:59Z"
+    },
+    "contact-info": "tlsrpt-noreply@microsoft.com",
+    "report-id": "1234567890+",
+    "policies": [
+        {
+            "policy": {
+                "policy-type": "sts",
+                "policy-domain": "xxxxxxxx.xx"
+            },
+            "summary": {
+                "total-successful-session-count": 0,
+                "total-failure-session-count": 3
+            },
+            "failure-details": [
+                {
+                    "result-type": "sts-policy-fetch-error",
+                    "failed-session-count": 3
+                }
+            ]
+        }
+    ]
+}

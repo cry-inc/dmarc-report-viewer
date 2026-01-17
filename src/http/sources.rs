@@ -93,15 +93,18 @@ pub async fn handler(State(state): State<Arc<Mutex<AppState>>>) -> impl IntoResp
                 };
 
                 for failure in failures {
+                    // Skip failures without IP that violate the spec
+                    let Some(ip) = failure.sending_mta_ip else {
+                        continue;
+                    };
+
                     // Get or create details for IP
-                    let details = ip_map
-                        .entry(failure.sending_mta_ip)
-                        .or_insert(SourceDetails {
-                            count: 0,
-                            domain: policy.policy.policy_domain.clone(),
-                            issues: HashSet::new(),
-                            types: HashSet::new(),
-                        });
+                    let details = ip_map.entry(ip).or_insert(SourceDetails {
+                        count: 0,
+                        domain: policy.policy.policy_domain.clone(),
+                        issues: HashSet::new(),
+                        types: HashSet::new(),
+                    });
 
                     // Update count
                     details.count += failure.failed_session_count;

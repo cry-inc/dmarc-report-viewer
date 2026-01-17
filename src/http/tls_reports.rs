@@ -148,7 +148,7 @@ pub async fn list_handler(
             if let Some(ip) = &ip_filter {
                 rwi.report.policies.iter().any(|p| {
                     if let Some(failures) = &p.failure_details {
-                        failures.iter().any(|f| f.sending_mta_ip == *ip)
+                        failures.iter().any(|f| f.sending_mta_ip == Some(*ip))
                     } else {
                         false
                     }
