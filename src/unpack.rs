@@ -146,9 +146,9 @@ pub fn extract_report_files(mail: &mut Mail, config: &Configuration) -> Result<V
         // For example AWS uses such values:
         // Content-Type: application/octet-stream;name=amazonses.com!example.com!1722384000!1722470400.xml.gz
         if content_type.contains("application/zip")
-            || content_type.contains("application/octet-stream") && content_type.contains(".zip")
+            || content_type.contains("application/zip-compressed")
             || content_type.contains("application/x-zip-compressed")
-                && content_type.contains(".zip")
+            || content_type.contains("application/octet-stream") && content_type.contains(".zip")
         {
             trace!("Detected ZIP attachment for mail with UID {uid} in part {index}");
             let body = part
@@ -175,6 +175,7 @@ pub fn extract_report_files(mail: &mut Mail, config: &Configuration) -> Result<V
             }
         } else if expect_dmarc_report
             && (content_type.contains("application/gzip")
+                || content_type.contains("application/x-gzip")
                 || (content_type.contains("application/octet-stream")
                     && content_type.contains(".xml.gz")))
         {
