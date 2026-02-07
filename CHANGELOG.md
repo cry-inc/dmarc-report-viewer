@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.3.3] - 2026-02-07
+* Fixed bug with compressed attachment detection and extraction (see issue #73)
+* Updated Cargo dependencies
+
 ## [2.3.2] - 2026-01-19
 * Made sending-mta-ip and receiving-mx-hostname in SMTP TLS reports optional since some reports omit it (see issue #57)
 * Made contact information in SMTP TLS reports optional since some reports set it to null (see issue #71)
