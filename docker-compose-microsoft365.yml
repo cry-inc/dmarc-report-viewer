@@ -19,6 +19,6 @@ services:
     image: ${IMAGE_NAME:-ghcr.io/mguessan/davmail:unstable}
     container_name: "davmail"
     volumes:
-      - /<replace>/davmail.properties:/etc/davmail.properties
+      - /<replaceme>/davmail.properties:/etc/davmail.properties
     ports:
       - 1993:1993
