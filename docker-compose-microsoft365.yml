@@ -1,0 +1,24 @@
+services:
+
+  dmarc:
+    image: ghcr.io/cry-inc/dmarc-report-viewer
+    restart: unless-stopped
+    environment: 
+      IMAP_HOST: "davmail"
+      IMAP_DISABLE_TLS: "true"
+      IMAP_PORT: "1993"
+      IMAP_USER: "<replaceme>"
+      IMAP_PASSWORD: "<replaceme>"
+      HTTP_SERVER_PASSWORD: "<replaceme>" # leave empty for disabled password for report-webserver, not recommended.
+      LOG_LEVEL: WARNING
+    ports: 
+      - "8080:8080"
+
+
+  davmail:
+    image: ${IMAGE_NAME:-ghcr.io/mguessan/davmail:unstable}
+    container_name: "davmail"
+    volumes:
+      - /<replace>/davmail.properties:/etc/davmail.properties
+    ports:
+      - 1993:1993
