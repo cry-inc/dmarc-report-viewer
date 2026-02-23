@@ -145,16 +145,30 @@ async fn bg_update(
 
     let mut parsing_errors: HashMap<String, Vec<ReportParsingError>> = HashMap::new();
     let mut dmarc_reports = HashMap::new();
+    let mut dmarc_ids = HashSet::new();
+    let mut dmarc_duplicates = 0;
     let mut tls_reports = HashMap::new();
+    let mut tls_ids = HashSet::new();
+    let mut tls_duplicates = 0;
     for xml_file in xml_files.values() {
         match dmarc::Report::from_slice(&xml_file.data) {
             Ok(report) => {
-                let rwi = DmarcReportWithMailId {
-                    report,
-                    mail_id: xml_file.mail_id.clone(),
-                };
-                let hash = create_hash(&[&xml_file.data, xml_file.mail_id.as_bytes()]);
-                dmarc_reports.insert(hash, rwi);
+                if config.disable_duplicate_filter
+                    || dmarc_ids.insert(report.report_metadata.report_id.clone())
+                {
+                    let rwi = DmarcReportWithMailId {
+                        report,
+                        mail_id: xml_file.mail_id.clone(),
+                    };
+                    let hash = create_hash(&[&xml_file.data, xml_file.mail_id.as_bytes()]);
+                    dmarc_reports.insert(hash, rwi);
+                } else {
+                    trace!(
+                        "Found duplicated DMARC report with ID {} in mail {}",
+                        report.report_metadata.report_id, xml_file.mail_id
+                    );
+                    dmarc_duplicates += 1;
+                }
             }
             Err(err) => {
                 // Prepare error information
@@ -179,16 +193,27 @@ async fn bg_update(
             }
         }
     }
+    if dmarc_duplicates > 0 {
+        warn!("Found and filtered {dmarc_duplicates} duplicated DMARC reports!");
+    }
 
     for json_file in json_files.values() {
         match tls::Report::from_slice(&json_file.data) {
             Ok(report) => {
-                let rwi = TlsReportWithMailId {
-                    report,
-                    mail_id: json_file.mail_id.clone(),
-                };
-                let hash = create_hash(&[&json_file.data, json_file.mail_id.as_bytes()]);
-                tls_reports.insert(hash, rwi);
+                if config.disable_duplicate_filter || tls_ids.insert(report.report_id.clone()) {
+                    let rwi = TlsReportWithMailId {
+                        report,
+                        mail_id: json_file.mail_id.clone(),
+                    };
+                    let hash = create_hash(&[&json_file.data, json_file.mail_id.as_bytes()]);
+                    tls_reports.insert(hash, rwi);
+                } else {
+                    trace!(
+                        "Found duplicated SMTP TLS report with ID {} in mail {}",
+                        report.report_id, json_file.mail_id
+                    );
+                    tls_duplicates += 1;
+                }
             }
             Err(err) => {
                 // Prepare error information
@@ -213,6 +238,10 @@ async fn bg_update(
             }
         }
     }
+    if tls_duplicates > 0 {
+        warn!("Found and filtered {tls_duplicates} duplicated SMTP TLS reports!");
+    }
+
     if !parsing_errors.is_empty() {
         warn!(
             "Failed to parse {} XML or JSON file(s) as DMARC or SMTP TLS report(s)",

@@ -139,6 +139,12 @@ pub struct Configuration {
     #[arg(long, env, default_value_t = Level::INFO)]
     pub log_level: Level,
 
+    /// Disable duplicate report filtering.
+    /// By default all DMARC and SMTP TLS reports are filtered for duplicates by report ID.
+    /// This flag can be used to turn off the duplicate filter.
+    #[arg(long, env)]
+    pub disable_duplicate_filter: bool,
+
     /// Maximum mail size in bytes, anything bigger will be ignored and not parsed
     #[arg(long, env, default_value_t = 1024 * 1024 * 1)]
     pub max_mail_size: u32,
@@ -228,6 +234,11 @@ impl Configuration {
         info!("HTTPS Domain: {:?}", self.https_auto_cert_domain);
         info!("HTTPS Mail: {:?}", self.https_auto_cert_mail);
         info!("HTTPS Cache Dir: {:?}", self.https_auto_cert_cache);
+
+        info!(
+            "Disable Duplicate Filter: {}",
+            self.disable_duplicate_filter
+        );
 
         info!("Maximum Mail Body Size: {} bytes", self.max_mail_size);
 
