@@ -105,7 +105,7 @@ export class Mail extends LitElement {
                 </tr>
             </table>
 
-            ${this.reportsDmarc.length === 0 && this.reportsTls.length === 0 ?
+            ${this.reportsDmarc.length === 0 && this.reportsTls.length === 0 && this.mail.dmarc_duplicates.length === 0 && this.mail.tls_duplicates.length === 0 ?
                 html`<p>No reports found!</p>` : nothing
             }
 
@@ -120,6 +120,22 @@ export class Mail extends LitElement {
                 html`
                     <h2>SMTP TLS Reports</h2>
                     <drv-tls-report-table .reports="${this.reportsTls}"></drv-tls-report-table>`
+                : nothing
+            }
+
+            ${this.mail.dmarc_duplicates.length > 0 ?
+                html`
+                    <h2>Duplicated DMARC Reports</h2>
+                    This mail contained duplicates of the following reports:
+                    ${this.mail.dmarc_duplicates.map((d) => html`<a href="#/dmarc-reports/${d}">${d}</a>`)}`
+                : nothing
+            }
+
+            ${this.mail.tls_duplicates.length > 0 ?
+                html`
+                    <h2>Duplicated SMTP TLS Reports</h2>
+                    This mail contained duplicates of the following reports:
+                    ${this.mail.tls_duplicates.map((d) => html`<a href="#/tls-reports/${d}">${d}</a>`)}`
                 : nothing
             }
 
