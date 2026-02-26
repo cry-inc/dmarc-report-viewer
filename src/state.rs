@@ -4,7 +4,7 @@ use crate::geolocate::Location;
 use crate::{cache_map::CacheMap, mail::Mail};
 use crate::{dmarc, tls};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::net::IpAddr;
 use std::sync::Arc;
 use std::time::SystemTime;
@@ -52,13 +52,13 @@ pub struct AppState {
     pub first_update: bool,
 
     /// Mails from IMAP inbox with mail ID as key
-    pub mails: HashMap<String, Mail>,
+    pub mails: BTreeMap<String, Mail>,
 
     /// Parsed DMARC reports with mail UID and corresponding hash as key
-    pub dmarc_reports: HashMap<String, DmarcReportWithMailId>,
+    pub dmarc_reports: BTreeMap<String, DmarcReportWithMailId>,
 
     /// Parsed SMTP TLS reports with mail UID and corresponding hash as key
-    pub tls_reports: HashMap<String, TlsReportWithMailId>,
+    pub tls_reports: BTreeMap<String, TlsReportWithMailId>,
 
     /// Number of XML files extracted from mails
     pub xml_files: usize,
@@ -91,9 +91,9 @@ impl AppState {
             .as_secs();
         Self {
             first_update: true,
-            mails: HashMap::new(),
-            dmarc_reports: HashMap::new(),
-            tls_reports: HashMap::new(),
+            mails: BTreeMap::new(),
+            dmarc_reports: BTreeMap::new(),
+            tls_reports: BTreeMap::new(),
             last_update: 0,
             xml_files: 0,
             json_files: 0,

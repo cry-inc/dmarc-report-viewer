@@ -6,7 +6,7 @@ use axum::extract::{Query, State};
 use axum::response::IntoResponse;
 use chrono::{Duration, Utc};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
@@ -128,10 +128,10 @@ pub struct Files {
 
 pub struct Reports<'a> {
     /// Parsed DMARC reports with mail UID and corresponding hash as key
-    pub dmarc: &'a HashMap<String, DmarcReportWithMailId>,
+    pub dmarc: &'a BTreeMap<String, DmarcReportWithMailId>,
 
     /// Parsed SMTP TLS reports with mail UID and corresponding hash as key
-    pub tls: &'a HashMap<String, TlsReportWithMailId>,
+    pub tls: &'a BTreeMap<String, TlsReportWithMailId>,
 }
 
 #[derive(Serialize, Default, Clone)]

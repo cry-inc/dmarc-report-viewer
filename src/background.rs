@@ -9,7 +9,7 @@ use crate::web_hook::mail_web_hook;
 use crate::{dmarc, tls};
 use anyhow::{Context, Result};
 use chrono::Local;
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::sync::Arc;
 use std::time::{Duration, Instant, SystemTime};
 use tokio::sync::Mutex;
@@ -79,7 +79,7 @@ async fn bg_update(
     state: &Arc<Mutex<AppState>>,
     start: &Instant,
 ) -> Result<Vec<String>> {
-    let mut mails = HashMap::new();
+    let mut mails = BTreeMap::new();
     if let Some(dmarc_folder) = config.imap_folder_dmarc.as_ref() {
         mails.extend(
             get_mails(config, dmarc_folder)
@@ -102,8 +102,8 @@ async fn bg_update(
         );
     }
 
-    let mut xml_files = HashMap::new();
-    let mut json_files = HashMap::new();
+    let mut xml_files = BTreeMap::new();
+    let mut json_files = BTreeMap::new();
     let mut mails_without_reports = 0;
     for mail in &mut mails.values_mut() {
         if mail.body.is_none() {
@@ -145,7 +145,7 @@ async fn bg_update(
 
     let mut parsing_errors: HashMap<String, Vec<ReportParsingError>> = HashMap::new();
 
-    let mut dmarc_reports = HashMap::new();
+    let mut dmarc_reports = BTreeMap::new();
     let mut dmarc_duplication_map: HashMap<String, String> = HashMap::new();
     let mut dmarc_duplicates = 0;
     for xml_file in xml_files.values() {
@@ -188,7 +188,7 @@ async fn bg_update(
                     kind: FileType::Xml,
                 };
 
-                // Store in error hashmap for fast lookup
+                // Store in error hash map for fast lookup
                 parsing_errors
                     .entry(xml_file.mail_id.clone())
                     .or_default()
@@ -206,7 +206,7 @@ async fn bg_update(
         warn!("Found and filtered {dmarc_duplicates} duplicated DMARC reports!");
     }
 
-    let mut tls_reports = HashMap::new();
+    let mut tls_reports = BTreeMap::new();
     let mut tls_duplication_map: HashMap<String, String> = HashMap::new();
     let mut tls_duplicates = 0;
     for json_file in json_files.values() {
@@ -244,7 +244,7 @@ async fn bg_update(
                     kind: FileType::Json,
                 };
 
-                // Store in error hashmap for fast lookup
+                // Store in error hash map for fast lookup
                 parsing_errors
                     .entry(json_file.mail_id.clone())
                     .or_default()
