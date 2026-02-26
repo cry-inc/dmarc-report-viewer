@@ -58,6 +58,16 @@ export class MailTable extends LitElement {
         }
     }
 
+    prepareDuplicates(mail) {
+        if (mail.oversized) {
+            return html`<span class="faded">n/a</span>`;
+        } else if (mail.dmarc_duplicates.length > 0 || mail.tls_duplicates.length) {
+            return html`<span class="badge badge-warning">Yes</span>`;
+        } else {
+            return html`<span class="faded">No</span>`;
+        }
+    }
+
     render() {
         return html`
             <table>
@@ -67,6 +77,7 @@ export class MailTable extends LitElement {
                     <th class="md-hidden">Date</th>
                     <th class="xs-hidden help" title="Size of E-Mail in Bytes">Size</th>
                     <th class="md-hidden help" title="Type of reports in the Mail">Type</th>
+                    <th class="lg-hidden help" title="Duplicates found in Mail?">Duplicates</th>
                     <th class="xs-hidden help" title="Did the mail cause parsing errors?">Errors</th>
                 </tr>
                 ${this.mails.length !== 0 ? this.mails.map((mail) =>
@@ -76,6 +87,7 @@ export class MailTable extends LitElement {
                         <td class="md-hidden">${new Date(mail.date * 1000).toLocaleString()}</td>
                         <td class="xs-hidden">${this.prepareSize(mail)}</td>
                         <td class="md-hidden">${this.prepareReportType(mail)}</td>
+                        <td class="lg-hidden">${this.prepareDuplicates(mail)}</td>
                         <td class="xs-hidden">${this.prepareParsingError(mail)}</td>
                     </tr>`
                 ) : html`<tr>

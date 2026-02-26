@@ -26,6 +26,10 @@ export const globalStyle = css`
         background-color: rgb(25, 135, 84);
     }
 
+    .badge-warning {
+        background-color: rgb(255, 213, 0);
+    }
+
     .faded {
         color: #ccc;
     }
@@ -121,6 +125,12 @@ export const globalStyle = css`
 
     .mr-5 {
         margin-right: 5px;
+    }
+
+    @media only screen and (max-width: 1500px) {
+        .lg-hidden {
+            display: none;
+        }
     }
 
     @media only screen and (max-width: 1100px) {
