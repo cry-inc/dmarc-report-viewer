@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.4.0] - 2026-02-26
+* The application does now detect and filter duplicated reports (see issue #75).
+  Duplicates are detected if the orgnaization name and report ID are the same.
+  This is checked for DMARC and SMTP TLS report.
+  There are also several smaller UI additions related to mails for making this transparent.
+  The filtering can be disabled to restore the old behaviour using the flag `--disable-duplicate-filter`.
+* Updated Cargo dependencies
+
 ## [2.3.3] - 2026-02-07
 * Fixed bug with compressed attachment detection and extraction (see issue #73)
 * Updated Cargo dependencies
