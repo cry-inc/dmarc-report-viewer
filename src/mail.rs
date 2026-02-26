@@ -32,6 +32,12 @@ pub struct Mail {
 
     // Set at later stage during parsing
     pub json_parsing_errors: usize,
+
+    // Hashed IDs of a duplicated DMARC reports found in this mail
+    pub dmarc_duplicates: Vec<String>,
+
+    // Hashed IDs of a duplicated SMTP TLS reports found in this mail
+    pub tls_duplicates: Vec<String>,
 }
 
 /// Decoding of Q-encoded data as described in RFC2047

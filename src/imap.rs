@@ -327,6 +327,8 @@ fn extract_metadata(mail: &Fetch, max_size: usize, account: &str, folder: &str) 
         json_files: 0,
         xml_parsing_errors: 0,
         json_parsing_errors: 0,
+        dmarc_duplicates: Vec::new(),
+        tls_duplicates: Vec::new(),
     })
 }
 

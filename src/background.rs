@@ -144,31 +144,40 @@ async fn bg_update(
     );
 
     let mut parsing_errors: HashMap<String, Vec<ReportParsingError>> = HashMap::new();
+
     let mut dmarc_reports = HashMap::new();
-    let mut dmarc_ids = HashSet::new();
+    let mut dmarc_duplication_map: HashMap<String, String> = HashMap::new();
     let mut dmarc_duplicates = 0;
-    let mut tls_reports = HashMap::new();
-    let mut tls_ids = HashSet::new();
-    let mut tls_duplicates = 0;
     for xml_file in xml_files.values() {
         match dmarc::Report::from_slice(&xml_file.data) {
             Ok(report) => {
-                if config.disable_duplicate_filter
-                    || dmarc_ids.insert(report.report_metadata.report_id.clone())
-                {
-                    let rwi = DmarcReportWithMailId {
-                        report,
-                        mail_id: xml_file.mail_id.clone(),
-                    };
-                    let hash = create_hash(&[&xml_file.data, xml_file.mail_id.as_bytes()]);
-                    dmarc_reports.insert(hash, rwi);
-                } else {
-                    trace!(
-                        "Found duplicated DMARC report with ID {} in mail {}",
-                        report.report_metadata.report_id, xml_file.mail_id
-                    );
-                    dmarc_duplicates += 1;
+                let dupl_key = format!(
+                    "{}{}",
+                    report.report_metadata.org_name, report.report_metadata.report_id
+                );
+                let rwi = DmarcReportWithMailId {
+                    report,
+                    mail_id: xml_file.mail_id.clone(),
+                };
+                let hash = create_hash(&[&xml_file.data, xml_file.mail_id.as_bytes()]);
+                if !config.disable_duplicate_filter {
+                    if let Some(found_hash) = dmarc_duplication_map.get(&dupl_key) {
+                        trace!(
+                            "Found duplicated DMARC report with ID {} by organization {} in mail {}",
+                            rwi.report.report_metadata.report_id,
+                            rwi.report.report_metadata.org_name,
+                            xml_file.mail_id
+                        );
+                        if let Some(mail) = mails.get_mut(&xml_file.mail_id) {
+                            mail.dmarc_duplicates.push(found_hash.clone());
+                        }
+                        dmarc_duplicates += 1;
+                        continue; // Skip insertion in dmarc_reports!
+                    } else {
+                        dmarc_duplication_map.insert(dupl_key, hash.clone());
+                    }
                 }
+                dmarc_reports.insert(hash, rwi);
             }
             Err(err) => {
                 // Prepare error information
@@ -197,23 +206,34 @@ async fn bg_update(
         warn!("Found and filtered {dmarc_duplicates} duplicated DMARC reports!");
     }
 
+    let mut tls_reports = HashMap::new();
+    let mut tls_duplication_map: HashMap<String, String> = HashMap::new();
+    let mut tls_duplicates = 0;
     for json_file in json_files.values() {
         match tls::Report::from_slice(&json_file.data) {
             Ok(report) => {
-                if config.disable_duplicate_filter || tls_ids.insert(report.report_id.clone()) {
-                    let rwi = TlsReportWithMailId {
-                        report,
-                        mail_id: json_file.mail_id.clone(),
-                    };
-                    let hash = create_hash(&[&json_file.data, json_file.mail_id.as_bytes()]);
-                    tls_reports.insert(hash, rwi);
-                } else {
-                    trace!(
-                        "Found duplicated SMTP TLS report with ID {} in mail {}",
-                        report.report_id, json_file.mail_id
-                    );
-                    tls_duplicates += 1;
+                let dupl_key = format!("{}{}", report.organization_name, report.report_id);
+                let rwi = TlsReportWithMailId {
+                    report,
+                    mail_id: json_file.mail_id.clone(),
+                };
+                let hash = create_hash(&[&json_file.data, json_file.mail_id.as_bytes()]);
+                if !config.disable_duplicate_filter {
+                    if let Some(found_hash) = tls_duplication_map.get(&dupl_key) {
+                        trace!(
+                            "Found duplicated SMTP TLS report with ID {} by organization {} in mail {}",
+                            rwi.report.report_id, rwi.report.organization_name, json_file.mail_id
+                        );
+                        if let Some(mail) = mails.get_mut(&json_file.mail_id) {
+                            mail.tls_duplicates.push(found_hash.clone());
+                        }
+                        tls_duplicates += 1;
+                        continue; // Skip insertion in tls_reports!
+                    } else {
+                        tls_duplication_map.insert(dupl_key, hash.clone());
+                    }
                 }
+                tls_reports.insert(hash, rwi);
             }
             Err(err) => {
                 // Prepare error information
