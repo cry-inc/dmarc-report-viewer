@@ -66,6 +66,7 @@ pub struct MailFilters {
     attachment: Option<Attachment>,
     oversized: Option<bool>,
     errors: Option<bool>,
+    duplicates: Option<bool>,
 }
 
 impl MailFilters {
@@ -117,6 +118,13 @@ pub async fn list_handler(
         .filter(|m| {
             if let Some(queried_errors) = &filters.errors {
                 (m.xml_parsing_errors > 0 || m.json_parsing_errors > 0) == *queried_errors
+            } else {
+                true
+            }
+        })
+        .filter(|m| {
+            if let Some(duplicates) = &filters.duplicates {
+                (!m.dmarc_duplicates.is_empty() || !m.tls_duplicates.is_empty()) == *duplicates
             } else {
                 true
             }

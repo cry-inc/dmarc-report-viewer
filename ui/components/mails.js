@@ -36,6 +36,9 @@ export class Mails extends LitElement {
         if (this.params.errors === "true" || this.params.errors === "false") {
             queryParams.push("errors=" + this.params.errors);
         }
+        if (this.params.duplicates === "true" || this.params.duplicates === "false") {
+            queryParams.push("duplicates=" + this.params.duplicates);
+        }
         let url = "mails";
         if (queryParams.length > 0) {
             url += "?" + queryParams.join("&");
@@ -43,7 +46,7 @@ export class Mails extends LitElement {
         const mailsResponse = await fetch(url);
         this.mails = await mailsResponse.json();
         this.mails.sort((a, b) => b.date - a.date);
-        this.filtered = this.filtered = queryParams.length > 0;
+        this.filtered = queryParams.length > 0;
     }
 
     render() {
@@ -56,6 +59,7 @@ export class Mails extends LitElement {
                          <a class="button" href="#/mails?attachment=dmarc&oversized=false">With DMARC</a>
                          <a class="button" href="#/mails?attachment=tls&oversized=false">With TLS</a>
                          <a class="button" href="#/mails?attachment=none&oversized=false">Without Files</a>
+                         <a class="button" href="#/mails?duplicates=true">With Duplicates</a>
                          <a class="button" href="#/mails?errors=true">Parsing Errors</a>`
             }
             </div>
