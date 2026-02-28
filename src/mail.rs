@@ -6,37 +6,44 @@ use serde::Serialize;
 
 #[derive(Serialize)]
 pub struct Mail {
+    /// Unique ID as hash of UID + account + folder
     pub id: String,
+    /// IMAP account that was used to get this mail
     pub account: String,
+    /// IMAP Folder of that contained this mail
     pub folder: String,
+    /// UID of the mail provided by the IMAP server
     pub uid: u32,
+    /// Size of the mail in bytes
     pub size: usize,
+    /// Flag that is true when the mail was classified as oversized
     pub oversized: bool,
+    /// Receive date of the mail as UNIX timestamp in seconds
     pub date: i64,
+    /// Subject of the mail
     pub subject: String,
+    /// Sender of the mail
     pub sender: String,
+    /// Recipient of the mail
     pub to: String,
-
-    // Body is removed after parsing to save memory
+    /// Body of the mail, removed after parsing to save memory
     #[serde(skip)]
     pub body: Option<Vec<u8>>,
-
-    // Set at later stage when extracting the XML files from the body
+    /// Number of (DMARC) XML files found in this mail.
+    /// Set only after extracting the XML files from the body.
     pub xml_files: usize,
-
-    // Set at later stage when extracting the JSON files from the body
+    /// Number of (SMTP TLS) JSON files found in this mail.
+    /// Set only after extracting the JSON files from the body.
     pub json_files: usize,
-
-    // Set at later stage during parsing
+    /// XML DMARC report parsing errors,
+    /// set after parsong the XML files.
     pub xml_parsing_errors: usize,
-
-    // Set at later stage during parsing
+    /// SMTP TLS report parsing errors,
+    /// set after parsong the JSON files.
     pub json_parsing_errors: usize,
-
-    // Hashed IDs of a duplicated DMARC reports found in this mail
+    /// IDs of duplicated DMARC reports found in this mail
     pub dmarc_duplicates: Vec<String>,
-
-    // Hashed IDs of a duplicated SMTP TLS reports found in this mail
+    /// IDs of duplicated SMTP TLS reports found in this mail
     pub tls_duplicates: Vec<String>,
 }
 
