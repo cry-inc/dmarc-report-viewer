@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.4.1] - 2026-03-03
+* Fixed issue with some absolute links that stop working behind some reverse proxy configurations (see issue #76).
+* Updated Cargo dependencies
+
 ## [2.4.0] - 2026-02-26
 * The application does now detect and filter duplicated reports (see issue #75).
   Duplicates are detected if the orgnaization name and report ID are the same.
