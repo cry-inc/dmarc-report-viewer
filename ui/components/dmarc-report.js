@@ -199,8 +199,8 @@ export class DmarcReport extends LitElement {
             <h1>Report Details</h1>
             <p>
                 <a class="button" href="#/mails/${this.mailId}">Show Mail</a>
-                <a class="button" href="/dmarc-reports/${this.id}/xml" target="_blank">Open XML</a>
-                <a class="button" href="/dmarc-reports/${this.id}/json" target="_blank">Open JSON</a>
+                <a class="button" href="dmarc-reports/${this.id}/xml" target="_blank">Open XML</a>
+                <a class="button" href="dmarc-reports/${this.id}/json" target="_blank">Open JSON</a>
                 <span>
                     Records Filter:
                     <select @change="${this.onRecordFilterChange}">
