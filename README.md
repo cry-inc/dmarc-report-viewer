@@ -25,6 +25,7 @@ You can find more screenshots [here](screenshots/screenshots.md).
 - [x] Secure IMAP client (TLS & STARTTLS)
 - [x] Robust parsing of XML DMARC reports
 - [x] Robust parsing of JSON SMTP TLS reports
+- [x] Filters all report types for duplicates
 - [x] Embedded HTTP server for Web UI
 - [x] Responsive Web UI that works also on small screens
 - [x] Automatic fetching of reports from IMAP inbox
@@ -101,8 +102,9 @@ By default, the application will start an unencrypted and unsecure HTTP server.
 It is *strongly* recommended use the automatic HTTPS feature that will automatically fetch and renew a certificate from Let's Encrypt.
 This feature uses the TLS-ALPN-01 challenge, which uses the HTTPS port 443 also for the challenge. No port 80 required!
 Alternatively, you can use an separate HTTPS reverse proxy like [Caddy](https://caddyserver.com/) to secure the application.
+The application works also when being served via reverse-proxy on a non-root folder!
 
-To use the automatic HTTPS feature you need to make sure that the public port exposed to the internet is 443.
+To use the included HTTPS feature you need to make sure that the public port exposed to the internet is 443.
 You should also persist the certificate caching directory on your host file system:
 
     sudo docker run --rm \
