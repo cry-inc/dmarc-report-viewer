@@ -39,14 +39,17 @@ pub enum AlignmentType {
 
 /// The policy actions specified by `p` and `sp` in the DMARC record.
 #[derive(Debug, Serialize, PartialEq)]
-#[serde(rename_all = "snake_case")]
+#[serde(rename_all = "lowercase")]
 pub enum DispositionType {
     /// There is no preference on how a failed DMARC should be handled.
+    #[serde(alias = "None", alias = "NONE")]
     None,
     /// The message should be quarantined.
     /// This usually means it will be placed in the spam folder of the user.
+    #[serde(alias = "Quarantine", alias = "QUARANTINE")]
     Quarantine,
     /// The message should be rejected.
+    #[serde(alias = "Reject", alias = "REJECT")]
     Reject,
 }
 
@@ -59,7 +62,7 @@ impl<'de> Deserialize<'de> for DispositionType {
         D: Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        match s.as_str() {
+        match s.to_lowercase().as_str() {
             "quarantine" => Ok(Self::Quarantine),
             "reject" => Ok(Self::Reject),
             "none" => Ok(Self::None),
@@ -98,9 +101,11 @@ pub struct PolicyPublishedType {
 
 /// The DMARC-aligned authentication result.
 #[derive(Debug, Clone, Serialize, Deserialize, Hash, PartialEq, Eq)]
-#[serde(rename_all = "snake_case")]
+#[serde(rename_all = "lowercase")]
 pub enum DmarcResultType {
+    #[serde(alias = "Pass", alias = "PASS")]
     Pass,
+    #[serde(alias = "Fail", alias = "FAIL")]
     Fail,
 }
 
@@ -179,16 +184,21 @@ pub struct IdentifierType {
 
 /// DKIM verification result, according to RFC 7001 Section 2.6.1.
 #[derive(Debug, Clone, Serialize, Deserialize, Hash, PartialEq, Eq)]
-#[serde(rename_all = "snake_case")]
+#[serde(rename_all = "lowercase")]
 pub enum DkimResultType {
+    #[serde(alias = "None", alias = "NONE")]
     None,
+    #[serde(alias = "Pass", alias = "PASS")]
     Pass,
+    #[serde(alias = "Fail", alias = "FAIL")]
     Fail,
+    #[serde(alias = "Policy", alias = "POLICY")]
     Policy,
+    #[serde(alias = "Neutral", alias = "NEUTRAL")]
     Neutral,
-    #[serde(rename = "temperror")]
+    #[serde(rename = "temperror", alias = "TempError", alias = "TEMPERROR")]
     TemporaryError,
-    #[serde(rename = "permerror")]
+    #[serde(rename = "permerror", alias = "PermError", alias = "PERMERROR")]
     PermanentError,
 }
 
@@ -207,10 +217,11 @@ pub struct DkimAuthResultType {
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
-#[serde(rename_all = "snake_case")]
+#[serde(rename_all = "lowercase")]
 pub enum SpfDomainScope {
+    #[serde(alias = "Helo", alias = "HELO")]
     Helo,
-    #[serde(rename = "mfrom")]
+    #[serde(rename = "mfrom", alias = "MFrom", alias = "MFROM")]
     MailForm,
 }
 
@@ -218,27 +229,23 @@ pub enum SpfDomainScope {
 // so we also allow PascalCase by specifying manual aliases.
 // See also issue #79.
 #[derive(Debug, Clone, Serialize, Deserialize, Hash, PartialEq, Eq)]
-#[serde(rename_all = "snake_case")]
+#[serde(rename_all = "lowercase")]
 pub enum SpfResultType {
-    #[serde(alias = "None")]
+    #[serde(alias = "None", alias = "NONE")]
     None,
-    #[serde(alias = "Neutral")]
+    #[serde(alias = "Neutral", alias = "NEUTRAL")]
     Neutral,
-    #[serde(alias = "Pass")]
+    #[serde(alias = "Pass", alias = "PASS")]
     Pass,
     // Some reports use this value that is not really official, see issue #21
-    #[serde(alias = "hardfail")]
-    #[serde(alias = "HardFail")]
-    #[serde(alias = "Fail")]
+    #[serde(alias = "hardfail", alias = "HardFail", alias = "HARDFAIL")]
+    #[serde(alias = "Fail", alias = "FAIL")]
     Fail,
-    #[serde(alias = "SoftFail")]
-    #[serde(rename = "softfail")]
+    #[serde(alias = "SoftFail", alias = "SOFTFAIL")]
     SoftFail,
-    #[serde(alias = "TempError")]
-    #[serde(rename = "temperror")]
+    #[serde(rename = "temperror", alias = "TempError", alias = "TEMPERROR")]
     TemporaryError,
-    #[serde(alias = "PermError")]
-    #[serde(rename = "permerror")]
+    #[serde(rename = "permerror", alias = "PermError", alias = "PERMERROR")]
     PermanentError,
 }
 
@@ -926,26 +933,38 @@ mod tests {
     }
 
     #[test]
-    fn invalid_casing() {
-        // Some reports use invalid casing like "SoftFail" as SPF auth result, see issue #79.
-        // We allow it anyway and fix it on the fly.
-        let reader =
-            BufReader::new(File::open("testdata/dmarc-reports/invalid_casing.xml").unwrap());
-        let report: Report = quick_xml::de::from_reader(reader).unwrap();
-        let record = report.record.first().unwrap();
-        assert_eq!(record.auth_results.spf[0].result, SpfResultType::None);
-        assert_eq!(record.auth_results.spf[1].result, SpfResultType::Neutral);
-        assert_eq!(record.auth_results.spf[2].result, SpfResultType::Pass);
-        assert_eq!(record.auth_results.spf[3].result, SpfResultType::Fail);
-        assert_eq!(record.auth_results.spf[4].result, SpfResultType::Fail);
-        assert_eq!(record.auth_results.spf[5].result, SpfResultType::SoftFail);
-        assert_eq!(
-            record.auth_results.spf[6].result,
-            SpfResultType::TemporaryError
-        );
-        assert_eq!(
-            record.auth_results.spf[7].result,
-            SpfResultType::PermanentError
-        );
+    fn spf_result_casing() {
+        let check = |str: &str, expected: SpfResultType| {
+            let json = format!("\"{str}\"");
+            let parsed = serde_json::from_str::<SpfResultType>(&json).unwrap();
+            assert_eq!(expected, parsed);
+        };
+
+        check("none", SpfResultType::None);
+        check("None", SpfResultType::None);
+        check("NONE", SpfResultType::None);
+
+        check("neutral", SpfResultType::Neutral);
+        check("Neutral", SpfResultType::Neutral);
+        check("NEUTRAL", SpfResultType::Neutral);
+
+        check("softfail", SpfResultType::SoftFail);
+        check("SoftFail", SpfResultType::SoftFail);
+        check("SOFTFAIL", SpfResultType::SoftFail);
+
+        check("fail", SpfResultType::Fail);
+        check("Fail", SpfResultType::Fail);
+        check("FAIL", SpfResultType::Fail);
+        check("hardfail", SpfResultType::Fail);
+        check("HardFail", SpfResultType::Fail);
+        check("HARDFAIL", SpfResultType::Fail);
+
+        check("temperror", SpfResultType::TemporaryError);
+        check("TempError", SpfResultType::TemporaryError);
+        check("TEMPERROR", SpfResultType::TemporaryError);
+
+        check("permerror", SpfResultType::PermanentError);
+        check("PermError", SpfResultType::PermanentError);
+        check("PERMERROR", SpfResultType::PermanentError);
     }
 }
