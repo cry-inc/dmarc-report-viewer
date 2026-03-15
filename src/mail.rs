@@ -1,7 +1,7 @@
 use anyhow::{Context, Result, bail};
 use base64::Engine;
 use base64::engine::general_purpose::STANDARD;
-use encoding_rs::ISO_2022_JP;
+use encoding_rs::Encoding;
 use regex::Regex;
 use serde::Serialize;
 
@@ -77,8 +77,7 @@ fn q_decode(mut data: &str) -> Result<Vec<u8>> {
     Ok(result)
 }
 
-/// Decoding of MIME encoded words as described in RFC2047
-/// This implementation currently only supports UTF-8!
+/// Decoding of MIME encoded words as described in RFC2047.
 fn decode_word(charset: &str, encoding: &str, data: &str) -> Result<String> {
     let charset = charset.to_lowercase();
     let encoding = encoding.to_lowercase();
@@ -91,10 +90,9 @@ fn decode_word(charset: &str, encoding: &str, data: &str) -> Result<String> {
     } else {
         bail!("Unsupported encoding: {encoding}")
     };
-    if charset == "utf-8" {
-        String::from_utf8(decoded).context("Failed to parse UTF-8 string")
-    } else if charset == "iso-2022-jp" {
-        let (decoded, _, _) = ISO_2022_JP.decode(&decoded);
+    let encoding = Encoding::for_label(charset.as_bytes());
+    if let Some(encoding) = encoding {
+        let (decoded, _, _) = encoding.decode(&decoded);
         Ok(decoded.to_string())
     } else {
         // Unsupported charset
@@ -103,7 +101,7 @@ fn decode_word(charset: &str, encoding: &str, data: &str) -> Result<String> {
 }
 
 /// Basic decoder for subjects containing MIME encoded words.
-/// Supported charsets: Only UTF-8
+/// Supported charsets: All encodings of the encoding_rs crate
 /// Supported encodings: Base64 and Q
 pub fn decode_subject(value: &str) -> String {
     let re = Regex::new(r"=\?(.+?)\?(.)\?(.+?)\?=").expect("Failed to parse Regex");
@@ -169,12 +167,13 @@ mod tests {
             decode_subject(" =?UTF-8?B?YWJj?= =?UTF-8?Q?=C3=A4?= "),
             " abc ä "
         );
-    }
 
-    #[test]
-    fn japanese_encoding() {
-        let raw = "=?iso-2022-jp?b?GyRCPThMcyVsJV0hPCVIN2syTBsoQiAyMDI2LzEvMyAoMRskQjdvGyhCKQ==?=";
-        let decoded = decode_subject(raw);
-        assert_eq!(decoded, "集約レポート結果 2026/1/3 (1件)");
+        // Non UTF-8 Japanese encoding
+        assert_eq!(
+            decode_subject(
+                "=?iso-2022-jp?b?GyRCPThMcyVsJV0hPCVIN2syTBsoQiAyMDI2LzEvMyAoMRskQjdvGyhCKQ==?="
+            ),
+            "集約レポート結果 2026/1/3 (1件)"
+        );
     }
 }
