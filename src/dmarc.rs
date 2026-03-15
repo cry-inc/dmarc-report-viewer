@@ -214,19 +214,30 @@ pub enum SpfDomainScope {
     MailForm,
 }
 
+// Some reports do not respect the lower casing of the values,
+// so we also allow PascalCase by specifying manual aliases.
+// See also issue #79.
 #[derive(Debug, Clone, Serialize, Deserialize, Hash, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum SpfResultType {
+    #[serde(alias = "None")]
     None,
+    #[serde(alias = "Neutral")]
     Neutral,
+    #[serde(alias = "Pass")]
     Pass,
     // Some reports use this value that is not really official, see issue #21
     #[serde(alias = "hardfail")]
+    #[serde(alias = "HardFail")]
+    #[serde(alias = "Fail")]
     Fail,
+    #[serde(alias = "SoftFail")]
     #[serde(rename = "softfail")]
     SoftFail,
+    #[serde(alias = "TempError")]
     #[serde(rename = "temperror")]
     TemporaryError,
+    #[serde(alias = "PermError")]
     #[serde(rename = "permerror")]
     PermanentError,
 }
@@ -912,5 +923,29 @@ mod tests {
         let record = report.record.first().unwrap();
         let spf_auth_res = record.auth_results.spf.first().unwrap();
         assert_eq!(spf_auth_res.result, SpfResultType::Fail);
+    }
+
+    #[test]
+    fn invalid_casing() {
+        // Some reports use invalid casing like "SoftFail" as SPF auth result, see issue #79.
+        // We allow it anyway and fix it on the fly.
+        let reader =
+            BufReader::new(File::open("testdata/dmarc-reports/invalid_casing.xml").unwrap());
+        let report: Report = quick_xml::de::from_reader(reader).unwrap();
+        let record = report.record.first().unwrap();
+        assert_eq!(record.auth_results.spf[0].result, SpfResultType::None);
+        assert_eq!(record.auth_results.spf[1].result, SpfResultType::Neutral);
+        assert_eq!(record.auth_results.spf[2].result, SpfResultType::Pass);
+        assert_eq!(record.auth_results.spf[3].result, SpfResultType::Fail);
+        assert_eq!(record.auth_results.spf[4].result, SpfResultType::Fail);
+        assert_eq!(record.auth_results.spf[5].result, SpfResultType::SoftFail);
+        assert_eq!(
+            record.auth_results.spf[6].result,
+            SpfResultType::TemporaryError
+        );
+        assert_eq!(
+            record.auth_results.spf[7].result,
+            SpfResultType::PermanentError
+        );
     }
 }
