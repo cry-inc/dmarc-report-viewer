@@ -1,6 +1,7 @@
 use anyhow::{Context, Result, bail};
 use base64::Engine;
 use base64::engine::general_purpose::STANDARD;
+use encoding_rs::ISO_2022_JP;
 use regex::Regex;
 use serde::Serialize;
 
@@ -92,6 +93,9 @@ fn decode_word(charset: &str, encoding: &str, data: &str) -> Result<String> {
     };
     if charset == "utf-8" {
         String::from_utf8(decoded).context("Failed to parse UTF-8 string")
+    } else if charset == "iso-2022-jp" {
+        let (decoded, _, _) = ISO_2022_JP.decode(&decoded);
+        Ok(decoded.to_string())
     } else {
         // Unsupported charset
         bail!("Unsupported charset: {charset}")
@@ -165,5 +169,12 @@ mod tests {
             decode_subject(" =?UTF-8?B?YWJj?= =?UTF-8?Q?=C3=A4?= "),
             " abc ä "
         );
+    }
+
+    #[test]
+    fn japanese_encoding() {
+        let raw = "=?iso-2022-jp?b?GyRCPThMcyVsJV0hPCVIN2syTBsoQiAyMDI2LzEvMyAoMRskQjdvGyhCKQ==?=";
+        let decoded = decode_subject(raw);
+        assert_eq!(decoded, "集約レポート結果 2026/1/3 (1件)");
     }
 }

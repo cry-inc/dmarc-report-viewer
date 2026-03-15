@@ -602,6 +602,7 @@ dependencies = [
  "clap",
  "cron",
  "dns-protocol",
+ "encoding_rs",
  "flate2",
  "futures",
  "http-body-util",
