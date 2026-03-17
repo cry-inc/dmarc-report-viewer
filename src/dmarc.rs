@@ -243,9 +243,13 @@ pub enum SpfResultType {
     Fail,
     #[serde(alias = "SoftFail", alias = "SOFTFAIL")]
     SoftFail,
+    // "unknown" is not an official value but still an alias mentioned in the spec
     #[serde(rename = "temperror", alias = "TempError", alias = "TEMPERROR")]
+    #[serde(alias = "unknown", alias = "Unknown", alias = "UNKNOWN")]
     TemporaryError,
+    // "error" is not an official value but still an alias mentioned in the spec
     #[serde(rename = "permerror", alias = "PermError", alias = "PERMERROR")]
+    #[serde(alias = "error", alias = "Error", alias = "ERROR")]
     PermanentError,
 }
 
@@ -962,9 +966,15 @@ mod tests {
         check("temperror", SpfResultType::TemporaryError);
         check("TempError", SpfResultType::TemporaryError);
         check("TEMPERROR", SpfResultType::TemporaryError);
+        check("unknown", SpfResultType::TemporaryError);
+        check("Unknown", SpfResultType::TemporaryError);
+        check("UNKNOWN", SpfResultType::TemporaryError);
 
         check("permerror", SpfResultType::PermanentError);
         check("PermError", SpfResultType::PermanentError);
         check("PERMERROR", SpfResultType::PermanentError);
+        check("error", SpfResultType::PermanentError);
+        check("Error", SpfResultType::PermanentError);
+        check("ERROR", SpfResultType::PermanentError);
     }
 }
