@@ -141,6 +141,15 @@ It will then try to get the HTTP/HTTPS configuration from the ENV vars to build 
 If you have an exotic network setup this might fail and you need to override or disable the health check.
 Feel free to create an issue in this case!
 
+### Microsoft 365 / Entra ID / Exchange
+Microsoft does not allow simple password-based authentication.
+If you receive your DMARC or SMTP TLS reports via MS mail address,
+you will not be able to use this tool directly, since it only supports password-based authentication.
+
+But you can use other software like [DavMail](https://davmail.sourceforge.net/) to create
+an local IMAP proxy that takes care of the authentication and provides an IMAP with password-based access.
+You can find more information and an example configuration [here](ms-365/README.md).
+
 ## Build from Source
 1. Install Rust toolchain (see https://rustup.rs/)
 2. Check out this repository (or download and extract the ZIP file)
