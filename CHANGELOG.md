@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.5.0] - 2026-04-01
+* Added metrics for SMTP TLS and DMARC reports labeled by domain (see issue #60).
+* Removed no longer needed override for `imap-proto` crate.
+* Added MS 365 example configuration using DavMail to README file.
+* Increased DMARC parser robustness by allowing more case variants for enum values (see also issue #79).
+* Extended SpfResultType with more aliases mentioned in the spec (unknown and error, see issue #80).
+* Extended mail subject decoding to work for many more charsets (all supported by crate `encoding_rs`, see also issue #78).
+* Updated Cargo dependencies, including security fixes for GHSA-394x-vwmw-crm3 and GHSA-9f94-5g5w-gf6r.
+
 ## [2.4.1] - 2026-03-03
 * Fixed issue with some absolute links that stop working behind some reverse proxy configurations (see issue #76).
 * Updated Cargo dependencies
