@@ -139,7 +139,7 @@ pub async fn handler(State(state): State<Arc<Mutex<AppState>>>) -> impl IntoResp
         .collect();
 
     // Sort descending by count
-    sources.sort_by(|a, b| b.details.count.cmp(&a.details.count));
+    sources.sort_by_key(|s| std::cmp::Reverse(s.details.count));
 
     let json = serde_json::to_string(&sources).expect("Failed to serialize sources as JSON");
     (
