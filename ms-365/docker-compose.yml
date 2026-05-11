@@ -10,7 +10,7 @@ services:
       IMAP_USER: "<replaceme>"
       IMAP_PASSWORD: "<replaceme>"
       HTTP_SERVER_PASSWORD: "<replaceme>"
-      LOG_LEVEL: "WARNING"
+      LOG_LEVEL: "warn"
     ports:
       - 8080:8080
 
