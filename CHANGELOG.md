@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+* Added recursive IMAP folder scanning via the new CLI flag `--imap-folder-recursive`
+  (ENV `IMAP_FOLDER_RECURSIVE`). When enabled, the configured IMAP folder is treated
+  as a baseline prefix and every sub-folder below it (up to a configurable depth) is
+  scanned for reports. By default the depth is `2` so setups like
+  `INBOX/DMARC/<provider>` are scanned automatically.
+* Added the CLI argument `--imap-folder-max-depth <N>` (ENV `IMAP_FOLDER_MAX_DEPTH`,
+  default `2`) to bound how deep recursive folder scanning descends. The existing
+  literal-folder behavior is preserved when recursive scanning is disabled.
+* A single IMAP session is now reused across every folder of one update. Previously
+  each folder triggered its own login/logout, which slowed down updates with many
+  folders and produced extra noise in the IMAP server logs.
+* Added debugging summary log lines (`debug` level) measuring the duration of every
+  IMAP folder fetch during a background update.
+
 ## [2.5.1] - 2026-05-01
 * Updated Cargo dependencies, including security fixes for GHSA-82j2-j2ch-gfr8, GHSA-cq8v-f236-94qc, GHSA-xgp8-3hg3-c2mh and GHSA-965h-392x-2mh5.
 

@@ -46,6 +46,7 @@ You can find more screenshots [here](screenshots/screenshots.md).
 - [x] Lookup of DNS, location, whois and other source IP properties
 - [x] Web Hook to notify external services about new mails
 - [x] HTTP Health Check Endpoint and Docker Health Check integration
+- [x] Recursive scanning of IMAP sub-folders via an opt-in flag
 
 ## Changelog
 Read the [CHANGELOG.md](CHANGELOG.md) file for a list of all released versions and their corresponding changes.
@@ -92,6 +93,55 @@ By default one single `INBOX` is used to look for both kind of reports.
 If you specify at least one of the dedicated folders, the default folder will be disabled.
 Please note that fetching reports from different IMAP accounts is currently not supported.
 You might have to setup some forwarding if you are receiving them on separate accounts.
+
+#### Recursive Folder Scanning
+By default the configured IMAP folders are used as literal names, so `INBOX`
+means exactly that single folder. If your mail provider puts DMARC and SMTP TLS
+reports into nested folders (for example `INBOX/Reports/DMARC` and
+`INBOX/Reports/TLS`), you can enable recursive folder scanning to walk the
+hierarchy automatically.
+
+Recursive scanning uses the IMAP `LIST` command (RFC 3501 §6.3.8) with the IMAP
+single-level wildcard `%`. For each depth step up to `--imap-folder-max-depth`
+a separate LIST request is sent, all results are deduplicated and the
+configured baseline folder is always scanned as well:
+
+* `INBOX` with `--imap-folder-max-depth 2` → scans `INBOX`, `INBOX/DMARC`,
+  `INBOX/DMARC/projekt29.de`, `INBOX/Reports`, etc.
+* `Reports` with `--imap-folder-max-depth 3` → scans `Reports` and every folder
+  up to 3 levels below it.
+* The configured folder itself is always included, even if it has no children.
+* A single trailing `/` on the folder name is tolerated.
+* Mailboxes flagged with the IMAP `\NoSelect` attribute are filtered out.
+* Empty results from LIST are tolerated — the literal folder is always scanned
+  as a safety net.
+
+Recursive scanning is disabled by default to preserve the existing behaviour.
+Enable it via CLI flag or the corresponding ENV variable:
+
+    sudo docker run --rm \
+      -e IMAP_HOST=imap.mymailserver.com \
+      -e IMAP_USER=dmarc@mymailserver.com \
+      -e IMAP_PASSWORD=mysecurepassword \
+      -e IMAP_FOLDER=INBOX/DMARC \
+      -e IMAP_FOLDER_RECURSIVE=true \
+      -e IMAP_FOLDER_MAX_DEPTH=2 \
+      -e HTTP_SERVER_USER=webui-user \
+      -e HTTP_SERVER_PASSWORD=webui-password \
+      -p 8080:8080 \
+      ghcr.io/cry-inc/dmarc-report-viewer
+
+The same flag applies independently to the dedicated DMARC and TLS folder
+arguments (`--imap-folder-dmarc`, `--imap-folder-tls`) when they are configured.
+
+#### Folder Depth Limit
+`--imap-folder-max-depth <N>` (default `2`) controls how many hierarchy levels
+below the configured folder are scanned. The IMAP `*` wildcard is known to be
+inconsistent across servers (single-level on some, deep-recursive on others);
+this application uses the unambiguous `%` single-level wildcard and issues one
+LIST request per depth level. Each additional step adds exactly one round-trip
+to the IMAP server, so only raise the value when your reports really are nested
+that deep.
 
 ### IMAP with STARTTLS
 By default the IMAP client will attempt to use a TLS encrypted connection using port 993.

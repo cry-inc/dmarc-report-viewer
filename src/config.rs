@@ -44,18 +44,43 @@ pub struct Configuration {
 
     /// IMAP folder, will be used to look for all kinds of reports (DMARC and SMTP TLS).
     /// Will be only used if the dedicated folders for TLS and DMARC are not set!
+    /// When recursive folder scanning is enabled (see `--imap-folder-recursive`),
+    /// this folder is used as a baseline prefix and the program also scans every
+    /// sub-folder below it (e.g. with `INBOX` it would scan `INBOX/Reports`).
+    /// When recursive scanning is disabled, the value is used as a literal folder name.
     #[arg(long, env, default_value = "INBOX")]
     pub imap_folder: String,
 
     /// Optional IMAP folder (will be only checked for DMARC reports).
     /// Will disable the normal default folder when set.
+    /// Honors the recursive folder scanning flag the same way `--imap-folder` does.
     #[arg(long, env)]
     pub imap_folder_dmarc: Option<String>,
 
     /// Optional IMAP folder (will be only checked for SMTP TLS reports)
     /// Will disable the normal default folder when set.
+    /// Honors the recursive folder scanning flag the same way `--imap-folder` does.
     #[arg(long, env)]
     pub imap_folder_tls: Option<String>,
+
+    /// When enabled, the configured IMAP folder values are used as a baseline prefix
+    /// and scanned recursively via IMAP LIST (RFC 3501 §6.3.8). For example, with
+    /// `INBOX` configured and this flag enabled, the program will scan `INBOX`
+    /// and every sub-folder like `INBOX/Reports`, `INBOX/Archive/2024`, etc.
+    /// When disabled, the configured folder value is used as a literal folder name.
+    /// This option is disabled by default to preserve existing behavior.
+    #[arg(long, env, default_value_t = false)]
+    pub imap_folder_recursive: bool,
+
+    /// Maximum sub-folder depth to scan when recursive folder scanning is enabled.
+    /// `1` matches immediate children only, `2` also matches grandchildren and so on.
+    /// `0` is not a valid value — the program would not scan any sub-folder then.
+    /// This setting is only honored together with `--imap-folder-recursive`.
+    /// The default of `2` covers the common case where reports are organized like
+    /// `INBOX/Reports/DMARC`, while users with deeper hierarchies (e.g. reports
+    /// grouped by year) can bump this value.
+    #[arg(long, env, default_value_t = 2, value_name = "DEPTH")]
+    pub imap_folder_max_depth: u32,
 
     /// Method of requesting the mail body from the IMAP server.
     /// The default should work for most IMAP servers.
@@ -214,6 +239,8 @@ impl Configuration {
         info!("IMAP Folder: {}", self.imap_folder);
         info!("IMAP DMARC Folder: {:?}", self.imap_folder_dmarc);
         info!("IMAP TLS Folder: {:?}", self.imap_folder_tls);
+        info!("IMAP Folder Recursive: {}", self.imap_folder_recursive);
+        info!("IMAP Folder Max Depth: {}", self.imap_folder_max_depth);
         info!("IMAP Check Interval: {} seconds", self.imap_check_interval);
         info!(
             "IMAP Schedule: {}",

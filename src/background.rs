@@ -80,27 +80,10 @@ async fn bg_update(
     start: &Instant,
 ) -> Result<Vec<String>> {
     let mut mails = BTreeMap::new();
-    if let Some(dmarc_folder) = config.imap_folder_dmarc.as_ref() {
-        mails.extend(
-            get_mails(config, dmarc_folder)
-                .await
-                .context("Failed to get mails from DMARC folder")?,
-        );
-    }
-    if let Some(tls_folder) = config.imap_folder_tls.as_ref() {
-        mails.extend(
-            get_mails(config, tls_folder)
-                .await
-                .context("Failed to get mails from TLS folder")?,
-        );
-    }
-    if config.imap_folder_dmarc.is_none() && config.imap_folder_tls.is_none() {
-        mails.extend(
-            get_mails(config, &config.imap_folder)
-                .await
-                .context("Failed to get mails")?,
-        );
-    }
+    let fetched = get_mails(config)
+        .await
+        .context("Failed to get mails from IMAP server")?;
+    mails.extend(fetched);
 
     let mut xml_files = BTreeMap::new();
     let mut json_files = BTreeMap::new();

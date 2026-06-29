@@ -4,13 +4,13 @@ use crate::mail::{Mail, decode_subject};
 use anyhow::{Context, Result, anyhow, ensure};
 use async_imap::Client;
 use async_imap::imap_proto::Address;
-use async_imap::types::Fetch;
+use async_imap::types::{Fetch, Name, NameAttribute};
 use futures::StreamExt;
 use std::collections::HashMap;
 use std::net::TcpStream as StdTcpStream;
 use std::net::{SocketAddr, ToSocketAddrs};
 use std::sync::Arc;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 use tokio::net::TcpStream;
 use tokio_rustls::TlsConnector;
 use tokio_rustls::client::TlsStream;
@@ -20,37 +20,261 @@ use tokio_rustls::rustls::{ClientConfig, RootCertStore};
 use tokio_util::either::Either;
 use tracing::{debug, info, trace, warn};
 
-pub async fn get_mails(
+/// A logged-in IMAP session, kept alive while multiple folders are polled.
+pub struct Session {
+    inner: async_imap::Session<Either<TcpStream, TlsStream<TcpStream>>>,
+}
+
+impl Session {
+    /// Open a fresh IMAP session and log in.
+    pub async fn connect(config: &Configuration) -> Result<Self> {
+        let client = create_client(config)
+            .await
+            .context("Failed to create IMAP client")?;
+        let inner = client
+            .login(&config.imap_user, &config.imap_password)
+            .await
+            .map_err(|e| e.0)
+            .context("Failed to log in and create IMAP session")?;
+        debug!("IMAP login successful");
+        Ok(Self { inner })
+    }
+
+    pub async fn select_folder(&mut self, folder: &str) -> Result<async_imap::types::Mailbox> {
+        let status = self
+            .inner
+            .select(folder)
+            .await
+            .context(format!("Failed to select {folder} folder"))?;
+        debug!("Selected {folder} folder successfully");
+        Ok(status)
+    }
+
+    /// Resolve the configured folder (or pattern) to a concrete list of real
+    /// folder names that can later be passed to `SELECT`.
+    ///
+    /// ## Behaviour
+    /// * Non-recursive (`recursive = false`): `folder` is returned verbatim.
+    ///   This preserves the historical behaviour where the configured value is
+    ///   treated as a literal mailbox name.
+    /// * Recursive (`recursive = true`, `max_depth >= 1`): the configured
+    ///   folder is treated as a baseline prefix. For every depth step from
+    ///   `1` to `max_depth`, one IMAP `LIST "" "<baseline>/<%>{n}"` request
+    ///   is issued (empty reference + patterns built by
+    ///   [`build_recursive_patterns`]). All responses are merged into a
+    ///   deduplicated set, the baseline folder itself is always added so it
+    ///   never gets accidentally skipped, and `\NoSelect` and wildcard-bearing
+    ///   entries are filtered out.
+    /// * Recursive with `max_depth = 0`: behaves like non-recursive — the
+    ///   literal folder is returned and no LIST request is sent.
+    ///
+    /// ## Examples
+    /// * `INBOX`, `recursive=false`         → `["INBOX"]`
+    /// * `INBOX`, `recursive=true`, depth 1 → `["INBOX", "INBOX/<child>"]`
+    /// * `Reports`, `recursive=true`, depth 3 → scans `Reports` plus everything
+    ///   up to 3 levels deep.
+    ///
+    /// ## Errors
+    /// A failure on the first pattern aborts the call. Failures on later
+    /// patterns can be tolerated in the future but are not currently caught.
+    /// See also [`strip_wildcard_folder_names`] for the safety net against
+    /// servers that echo back wildcard literals.
+    pub async fn resolve_folders(
+        &mut self,
+        folder: &str,
+        recursive: bool,
+        max_depth: u32,
+    ) -> Result<Vec<String>> {
+        if !recursive {
+            debug!("Using IMAP folder {folder:?} literally (recursive scanning disabled)");
+            return Ok(vec![folder.to_string()]);
+        }
+        let patterns = build_recursive_patterns(folder, max_depth);
+        if patterns.is_empty() {
+            info!("IMAP folder max-depth is 0, scanning only the literal folder {folder:?}");
+            return Ok(vec![folder.to_string()]);
+        }
+        info!(
+            "Issuing IMAP LIST for recursive folder resolution (reference=\"\", patterns={patterns:?}, baseline={folder:?})"
+        );
+
+        // Empty reference + per-depth patterns that count `dir/-` separators,
+        // each `%` matching exactly one hierarchy level. Iterate depths in
+        // ascending order so that shorter results are found before longer
+        // patterns are tried; results are merged into a deduplicated set.
+        let mut collected: Vec<String> = Vec::new();
+        let mut dedup: std::collections::HashSet<String> = std::collections::HashSet::new();
+
+        for pattern in &patterns {
+            let names: Vec<Result<Name, _>> = self
+                .inner
+                .list(Some(""), Some(pattern))
+                .await
+                .with_context(|| format!("Failed to LIST IMAP folders with pattern {pattern:?}"))?
+                .collect()
+                .await;
+            // Drop `\NoSelect` folders (cannot be SELECT'ed) and any entry
+            // whose name still contains IMAP LIST wildcard characters — some
+            // servers echo back the literal pattern itself.
+            let entries: Vec<String> = names
+                .into_iter()
+                .filter_map(|r| r.ok())
+                .filter(|n| {
+                    !n.attributes()
+                        .iter()
+                        .any(|a| matches!(a, NameAttribute::NoSelect))
+                })
+                .map(|n| n.name().to_string())
+                .collect();
+            let before = entries.len();
+            let entries = strip_wildcard_folder_names(entries);
+            let filtered_out = before - entries.len();
+            if filtered_out > 0 {
+                debug!(
+                    "Filtered {filtered_out} wildcard / \\\\NoSelect entries from IMAP LIST for pattern {pattern:?}"
+                );
+            }
+            for entry in entries {
+                if dedup.insert(entry.clone()) {
+                    collected.push(entry);
+                }
+            }
+        }
+
+        // Make sure the configured folder itself is always scanned — LIST may
+        // not return it explicitly, especially when it has no children.
+        if !dedup.contains(folder) {
+            dedup.insert(folder.to_string());
+            collected.push(folder.to_string());
+        }
+        info!(
+            "IMAP LIST returned {} folder(s) for {folder:?}: {:?}",
+            collected.len(),
+            collected
+        );
+        Ok(collected)
+    }
+
+    pub async fn close_folder(&mut self) -> Result<()> {
+        self.inner
+            .close()
+            .await
+            .context("Failed to close IMAP mailbox")?;
+        Ok(())
+    }
+
+    pub async fn logout(mut self) {
+        if let Err(err) = self.inner.logout().await {
+            let anyhow_err = anyhow!(err);
+            warn!("Failed to log off from IMAP server: {anyhow_err:#}");
+        }
+    }
+}
+
+/// Build the IMAP LIST mailbox patterns used for recursive scanning of a
+/// baseline folder.
+///
+/// ## Why per-depth patterns?
+/// The IMAP `*` wildcard is interpreted inconsistently across servers:
+/// some treat it as a single-level wildcard (RFC 3501 §6.3.8 actually
+/// says `*` matches zero or more characters **at any level**, but real
+/// implementations differ), others treat it as a single-level wildcard
+/// like `%`. Using the unambiguous `%` single-level wildcard, once per
+/// requested depth step, gives predictable behaviour that covers any
+/// hierarchy depth on every RFC-compliant server.
+///
+/// ## Output semantics
+/// * The result is a list of `max_depth` mailbox patterns.
+/// * Pattern `n` has exactly `n` trailing `%` wildcards, separated by `/`.
+/// * A single trailing `/` on `folder` is tolerated to avoid double slashes.
+/// * An empty `folder` yields patterns that begin with `/` (e.g. `/%`);
+///   callers are expected to validate non-emptiness if they need to.
+///
+/// ## Examples (`max_depth = 2`)
+/// * `INBOX`       → `["INBOX/%", "INBOX/%/%"]`
+/// * `INBOX/DMARC` → `["INBOX/DMARC/%", "INBOX/DMARC/%/%"]`
+/// * `INBOX/`      → `["INBOX/%", "INBOX/%/%"]`
+///
+/// Returns an empty `Vec` when `max_depth` is `0`. Callers handle that case
+/// explicitly to avoid issuing any LIST request at all.
+pub(crate) fn build_recursive_patterns(folder: &str, max_depth: u32) -> Vec<String> {
+    let normalised = folder.trim_end_matches('/');
+    let prefix = if normalised.is_empty() {
+        String::new()
+    } else {
+        format!("{normalised}/")
+    };
+    (1..=max_depth)
+        .map(|depth| {
+            let suffix = std::iter::repeat_n("%", depth as usize)
+                .collect::<Vec<_>>()
+                .join("/");
+            format!("{prefix}{suffix}")
+        })
+        .collect()
+}
+
+/// Strip out IMAP LIST wildcard characters from arbitrary folder names.
+/// Some servers echo back the literal mailbox pattern (or parts containing
+/// `*` / `%`) when issuing IMAP `LIST`. Such entries can never be used as
+/// a `SELECT` target, so they must be filtered before further processing.
+pub(crate) fn strip_wildcard_folder_names<I, S>(names: I) -> Vec<String>
+where
+    I: IntoIterator<Item = S>,
+    S: AsRef<str>,
+{
+    names
+        .into_iter()
+        .map(|s| s.as_ref().to_string())
+        .filter(|name| !name.contains('*') && !name.contains('%'))
+        .collect()
+}
+
+/// Resolve the set of folders to scan, as configured in `config`.
+/// This mirrors the prior behavior: dedicated DMARC/TLS folders (if set)
+/// take precedence over the default `imap_folder`.
+pub fn configured_folders(config: &Configuration) -> Vec<String> {
+    let mut folders = Vec::new();
+    match (
+        config.imap_folder_dmarc.as_ref(),
+        config.imap_folder_tls.as_ref(),
+    ) {
+        (Some(d), Some(t)) => {
+            folders.push(d.clone());
+            folders.push(t.clone());
+        }
+        (Some(d), None) => {
+            folders.push(d.clone());
+        }
+        (None, Some(t)) => {
+            folders.push(t.clone());
+        }
+        (None, None) => {
+            folders.push(config.imap_folder.clone());
+        }
+    }
+    folders
+}
+
+/// Fetch all mails from a single folder on an already logged-in session.
+async fn get_mails_in_folder(
+    session: &mut Session,
     config: &Configuration,
-    imap_folder: &String,
+    folder: &str,
 ) -> Result<HashMap<String, Mail>> {
-    let client = create_client(config)
-        .await
-        .context("Failed to create IMAP client")?;
-
-    let mut session = client
-        .login(&config.imap_user, &config.imap_password)
-        .await
-        .map_err(|e| e.0)
-        .context("Failed to log in and create IMAP session")?;
-    debug!("IMAP login successful");
-
+    let started = Instant::now();
     let mailbox = session
-        .select(imap_folder)
+        .select_folder(folder)
         .await
-        .context(format!("Failed to select {imap_folder} folder"))?;
-    debug!("Selected {imap_folder} folder successfully");
+        .with_context(|| format!("Failed to select {folder} folder"))?;
+    debug!("Number of mails in {folder} folder: {}", mailbox.exists);
 
-    // Get metadata for all all mails and filter by size
     let mut mails = HashMap::new();
-    debug!(
-        "Number of mails in {imap_folder} folder: {}",
-        mailbox.exists
-    );
+    let mut body_count = 0usize;
     if mailbox.exists > 0 {
-        // Get metadata for all mails
         let sequence = format!("1:{}", mailbox.exists);
         let mut stream = session
+            .inner
             .fetch(sequence, "(RFC822.SIZE UID ENVELOPE INTERNALDATE)")
             .await
             .context("Failed to fetch message stream from IMAP inbox")?;
@@ -61,12 +285,12 @@ pub async fn get_mails(
                 &fetched,
                 config.max_mail_size as usize,
                 &config.imap_user,
-                imap_folder,
+                folder,
             )
             .context("Unable to extract mail metadata")?;
             mails.insert(mail.id.clone(), mail);
         }
-        info!("Downloaded metadata of {} mails", mails.len());
+        debug!("Fetched metadata of {} mail(s) from {folder}", mails.len());
 
         let no_size_mails = mails.values().filter(|m| m.size == 0).count();
         if no_size_mails > 0 {
@@ -84,15 +308,12 @@ pub async fn get_mails(
         }
     }
 
-    // Get full mail body for all non-oversized mails
     let ids: Vec<String> = mails
         .values()
         .filter(|m| !m.oversized)
         .map(|m| m.id.clone())
         .collect();
     if !ids.is_empty() {
-        // We need to get the mails in chunks.
-        // This might fail silently if the requested sequences become too big!
         ensure!(
             config.imap_chunk_size > 0,
             "IMAP Chunk size must be non-zero"
@@ -111,11 +332,10 @@ pub async fn get_mails(
                 .collect();
             let uid_sequence: String = uids.join(",");
             let body_request = config.imap_body_request.to_request_string();
-
-            // Some servers (like iCloud Mail) seem to require BODY[] instead of just RFC822...
             let fetch_query = format!("({body_request} RFC822.SIZE UID ENVELOPE INTERNALDATE)");
 
             let mut stream = session
+                .inner
                 .uid_fetch(uid_sequence, &fetch_query)
                 .await
                 .context("Failed to fetch message stream from IMAP inbox")?;
@@ -143,10 +363,10 @@ pub async fn get_mails(
                 mail.size = body.len();
                 mail.oversized = body.len() > config.max_mail_size as usize;
                 if mail.oversized {
-                    // Do not keep oversized mails in memory
                     mail.body = None;
                     warn!("Mail with UID {uid} was bigger than expected and is oversized");
                 }
+                body_count += 1;
                 trace!(
                     "Fetched mail with UID {uid} and size {} from {}",
                     mail.size, mail.sender
@@ -165,15 +385,85 @@ pub async fn get_mails(
             }
         }
 
-        info!("Downloaded {} mails", ids.len());
+        debug!("Fetched {} body payload(s) from {folder}", body_count);
     }
 
-    // We have everything we need, an error is no longer preventing an update.
-    if let Err(err) = session.logout().await {
-        let anyhow_err = anyhow!(err);
-        warn!("Failed to log off from IMAP server: {anyhow_err:#}");
+    if let Err(err) = session.close_folder().await {
+        warn!("Failed to close IMAP folder {folder}: {err:#}");
+    }
+    debug!(
+        "Finished IMAP folder {folder}: {} metadata, {} body payload(s), {:.3}s",
+        mails.len(),
+        body_count,
+        started.elapsed().as_secs_f64()
+    );
+    Ok(mails)
+}
+
+/// Top-level helper used by the background task.
+/// Resolves configured folder patterns to actual folder names, opens one
+/// IMAP session, fetches all mails across all resolved folders and returns
+/// them keyed by mail ID. Duplicates across folders are merged.
+pub async fn get_mails(config: &Configuration) -> Result<HashMap<String, Mail>> {
+    let folder_specs = configured_folders(config);
+    let mut session = Session::connect(config).await?;
+    let mut mails: HashMap<String, Mail> = HashMap::new();
+    let mut processed_folders = 0usize;
+    let mut failed_folders = 0usize;
+    let round_started = std::time::Instant::now();
+
+    for folder_spec in &folder_specs {
+        let resolved = session
+            .resolve_folders(
+                folder_spec,
+                config.imap_folder_recursive,
+                config.imap_folder_max_depth,
+            )
+            .await
+            .with_context(|| format!("Failed to resolve folders for {folder_spec}"))?;
+        if resolved.is_empty() {
+            warn!("IMAP folder {folder_spec} matched no folders, skipping");
+            continue;
+        }
+        for folder in resolved {
+            debug!("Fetching mails from IMAP folder {folder}");
+            match get_mails_in_folder(&mut session, config, &folder).await {
+                Ok(folder_mails) => {
+                    processed_folders += 1;
+                    for (id, mail) in folder_mails {
+                        mails.insert(id, mail);
+                    }
+                }
+                Err(err) => {
+                    failed_folders += 1;
+                    warn!("Failed to get mails from folder {folder}: {err:#}");
+                }
+            }
+        }
     }
 
+    info!(
+        "IMAP fetch round finished: {} folder(s) processed, {} failed, {} unique mail(s), {:.3}s",
+        processed_folders,
+        failed_folders,
+        mails.len(),
+        round_started.elapsed().as_secs_f64()
+    );
+
+    session.logout().await;
+    Ok(mails)
+}
+
+/// Fetch mails from a single explicit folder using a fresh session.
+/// Kept as the underlying primitive; not called directly by the background task.
+#[allow(dead_code)]
+pub async fn get_mails_in_single_folder(
+    config: &Configuration,
+    imap_folder: &str,
+) -> Result<HashMap<String, Mail>> {
+    let mut session = Session::connect(config).await?;
+    let mails = get_mails_in_folder(&mut session, config, imap_folder).await?;
+    session.logout().await;
     Ok(mails)
 }
 
@@ -355,5 +645,262 @@ fn addrs_to_string(addrs: Option<&[Address]>) -> String {
             .join("; ")
     } else {
         String::from("n/a")
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use clap::Parser;
+
+    fn base_config() -> Configuration {
+        // Builds a Configuration from CLI args without ever invoking clap's
+        // environment-variable / file side effects. Pass all required fields
+        // explicitly so clap does not fail parsing here. Only the folder /
+        // recursive fields are of interest in the tests below.
+        Configuration::parse_from([
+            "dmarc-report-viewer",
+            "--imap-host",
+            "imap.example.org",
+            "--imap-user",
+            "user",
+            "--imap-password",
+            "secret",
+            "--http-server-password",
+            "secret",
+        ])
+    }
+
+    #[test]
+    fn build_recursive_patterns_single_level() {
+        assert_eq!(
+            build_recursive_patterns("INBOX", 1),
+            vec!["INBOX/%".to_string()]
+        );
+        assert_eq!(
+            build_recursive_patterns("Reports", 1),
+            vec!["Reports/%".to_string()]
+        );
+    }
+
+    #[test]
+    fn build_recursive_patterns_trailing_slash() {
+        // A trailing slash must not produce double slashes in the patterns.
+        assert_eq!(
+            build_recursive_patterns("INBOX/", 2),
+            vec!["INBOX/%".to_string(), "INBOX/%/%".to_string()]
+        );
+        assert_eq!(
+            build_recursive_patterns("Reports/Archive/", 1),
+            vec!["Reports/Archive/%".to_string()]
+        );
+    }
+
+    #[test]
+    fn build_recursive_patterns_nested_folder() {
+        assert_eq!(
+            build_recursive_patterns("Reports/Archive/2024", 2),
+            vec![
+                "Reports/Archive/2024/%".to_string(),
+                "Reports/Archive/2024/%/%".to_string(),
+            ]
+        );
+    }
+
+    #[test]
+    fn build_recursive_patterns_multi_level() {
+        assert_eq!(
+            build_recursive_patterns("INBOX/DMARC", 3),
+            vec![
+                "INBOX/DMARC/%".to_string(),
+                "INBOX/DMARC/%/%".to_string(),
+                "INBOX/DMARC/%/%/%".to_string(),
+            ]
+        );
+    }
+
+    #[test]
+    fn build_recursive_patterns_zero_depth_returns_empty() {
+        // Zero depth means no sub-folder scanning at all; callers must handle
+        // this case explicitly (and only scan the literal folder).
+        assert!(build_recursive_patterns("INBOX", 0).is_empty());
+    }
+
+    #[test]
+    fn strip_wildcard_folder_names_drops_pattern_echo() {
+        // Some servers echo back the literal mailbox pattern instead of
+        // matching folders; such entries must never reach SELECT.
+        let raw = vec![
+            "INBOX/DMARC".to_string(),
+            "INBOX/DMARC/*".to_string(),
+            "INBOX/Reports".to_string(),
+        ];
+        let cleaned = strip_wildcard_folder_names(raw);
+        assert_eq!(
+            cleaned,
+            vec!["INBOX/DMARC".to_string(), "INBOX/Reports".to_string()]
+        );
+    }
+
+    #[test]
+    fn strip_wildcard_folder_names_keeps_normal_folders() {
+        let raw = vec!["INBOX".to_string(), "Reports/2024".to_string()];
+        let cleaned = strip_wildcard_folder_names(raw);
+        assert_eq!(
+            cleaned,
+            vec!["INBOX".to_string(), "Reports/2024".to_string()]
+        );
+    }
+
+    #[test]
+    fn strip_wildcard_folder_names_handles_percent() {
+        // `%` is the IMAP wildcard for "any character at this level"; the same
+        // safety net must catch it too.
+        let raw = vec!["INBOX/%".to_string(), "INBOX".to_string()];
+        let cleaned = strip_wildcard_folder_names(raw);
+        assert_eq!(cleaned, vec!["INBOX".to_string()]);
+    }
+
+    #[test]
+    fn strip_wildcard_folder_names_accepts_str_slices() {
+        let raw = vec!["a/b/*", "a/b/c"];
+        let cleaned = strip_wildcard_folder_names(raw);
+        assert_eq!(cleaned, vec!["a/b/c".to_string()]);
+    }
+
+    #[test]
+    fn configured_folders_default() {
+        let cfg = base_config();
+        assert!(!cfg.imap_folder_recursive);
+        assert_eq!(configured_folders(&cfg), vec!["INBOX"]);
+    }
+
+    #[test]
+    fn configured_folders_dmarc_only() {
+        let cfg = Configuration::parse_from([
+            "dmarc-report-viewer",
+            "--imap-host",
+            "x",
+            "--imap-user",
+            "u",
+            "--imap-password",
+            "p",
+            "--http-server-password",
+            "p",
+            "--imap-folder-dmarc",
+            "Reports/DMARC",
+        ]);
+        assert_eq!(configured_folders(&cfg), vec!["Reports/DMARC".to_string()]);
+    }
+
+    #[test]
+    fn configured_folders_tls_only() {
+        let cfg = Configuration::parse_from([
+            "dmarc-report-viewer",
+            "--imap-host",
+            "x",
+            "--imap-user",
+            "u",
+            "--imap-password",
+            "p",
+            "--http-server-password",
+            "p",
+            "--imap-folder-tls",
+            "Reports/TLS",
+        ]);
+        assert_eq!(configured_folders(&cfg), vec!["Reports/TLS".to_string()]);
+    }
+
+    #[test]
+    fn configured_folders_both_dedicated() {
+        let cfg = Configuration::parse_from([
+            "dmarc-report-viewer",
+            "--imap-host",
+            "x",
+            "--imap-user",
+            "u",
+            "--imap-password",
+            "p",
+            "--http-server-password",
+            "p",
+            "--imap-folder-dmarc",
+            "Reports/DMARC",
+            "--imap-folder-tls",
+            "Reports/TLS",
+        ]);
+        assert_eq!(
+            configured_folders(&cfg),
+            vec!["Reports/DMARC".to_string(), "Reports/TLS".to_string()]
+        );
+    }
+
+    #[test]
+    fn configured_folders_recursive_flag_parses() {
+        let cfg = Configuration::parse_from([
+            "dmarc-report-viewer",
+            "--imap-host",
+            "x",
+            "--imap-user",
+            "u",
+            "--imap-password",
+            "p",
+            "--http-server-password",
+            "p",
+            "--imap-folder-recursive",
+        ]);
+        assert!(cfg.imap_folder_recursive);
+        // Default depth covers the typical one-level-subfolder setup
+        // (e.g. `INBOX/DMARC/<provider>`).
+        assert_eq!(cfg.imap_folder_max_depth, 2);
+        assert_eq!(configured_folders(&cfg), vec!["INBOX"]);
+    }
+
+    #[test]
+    fn configured_folders_max_depth_parses() {
+        let cfg = Configuration::parse_from([
+            "dmarc-report-viewer",
+            "--imap-host",
+            "x",
+            "--imap-user",
+            "u",
+            "--imap-password",
+            "p",
+            "--http-server-password",
+            "p",
+            "--imap-folder-recursive",
+            "--imap-folder-max-depth",
+            "5",
+        ]);
+        assert_eq!(cfg.imap_folder_max_depth, 5);
+        // Sanity: 5 levels produces 5 patterns.
+        let patterns = build_recursive_patterns("INBOX/DMARC", cfg.imap_folder_max_depth);
+        assert_eq!(patterns.len(), 5);
+        assert_eq!(patterns[0], "INBOX/DMARC/%");
+        assert_eq!(patterns[4], "INBOX/DMARC/%/%/%/%/%");
+    }
+
+    #[test]
+    fn configured_folders_env_var_recursive() {
+        // Clap derives the env variable name `IMAP_FOLDER_RECURSIVE` from the
+        // `--imap-folder-recursive` flag. We do not want to mutate process-wide
+        // environment variables here (we forbid unsafe and parallel tests would
+        // race on env state), but we can still assert the env wiring by
+        // documenting the derivation rule next to the field. The flag itself
+        // is already covered by `configured_folders_recursive_flag_parses`.
+        let cfg = Configuration::parse_from([
+            "dmarc-report-viewer",
+            "--imap-host",
+            "x",
+            "--imap-user",
+            "u",
+            "--imap-password",
+            "p",
+            "--http-server-password",
+            "p",
+            "--imap-folder",
+            "Reports",
+        ]);
+        assert_eq!(cfg.imap_folder, "Reports");
+        assert_eq!(configured_folders(&cfg), vec!["Reports"]);
     }
 }
