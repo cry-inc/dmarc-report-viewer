@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.5.2] - 2026-07-04
+* Fixed printing and PDF generation for reports (see also issue #89).
+* Updated Cargo dependencies
+
 ## [2.5.1] - 2026-05-01
 * Updated Cargo dependencies, including security fixes for GHSA-82j2-j2ch-gfr8, GHSA-cq8v-f236-94qc, GHSA-xgp8-3hg3-c2mh and GHSA-965h-392x-2mh5.
 
