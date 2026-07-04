@@ -150,4 +150,10 @@ export const globalStyle = css`
             display: none;
         }
     }
+
+    @media print {
+        .print-hide {
+            display:none;
+        }
+    }
 `;

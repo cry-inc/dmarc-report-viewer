@@ -28,13 +28,18 @@ export class App extends LitElement {
         }
 
         main {
-            position: fixed;
-            top: 52px;
-            bottom: 0px;
-            left: 0px;
-            right: 0px;
             padding: 15px;
-            overflow-y: auto;
+        }
+
+        @media screen {
+            main {
+                position: fixed;
+                top: 52px;
+                bottom: 0px;
+                left: 0px;
+                right: 0px;
+                overflow-y: auto;
+            }
         }
     `];
 
@@ -122,7 +127,7 @@ export class App extends LitElement {
         }
 
         return html`
-            <nav>
+            <nav class="print-hide">
                 <a class="${this.component === "dashboard" ? "active" : ""}" href="#/dashboard">Dashboard</a>
                 <a class="${this.component === "mails" || this.component === "mail" ? "active" : ""}" href="#/mails">Mails</a>
                 <a class="${this.component === "dmarc-reports" || this.component === "dmarc-report" ? "active" : ""}" href="#/dmarc-reports">DMARC<span class="xs-hidden">&nbsp;Reports</span></a>

@@ -196,8 +196,8 @@ export class DmarcReport extends LitElement {
         }
 
         return html`
-            <h1>Report Details</h1>
-            <p>
+            <h1>DMARC Report Details</h1>
+            <p class="print-hide">
                 <a class="button" href="#/mails/${this.mailId}">Show Mail</a>
                 <a class="button" href="dmarc-reports/${this.id}/xml" target="_blank">Open XML</a>
                 <a class="button" href="dmarc-reports/${this.id}/json" target="_blank">Open JSON</a>
@@ -310,8 +310,8 @@ export class DmarcReport extends LitElement {
                         <td class="name">Source IP</td>
                         <td>
                             ${record.row.source_ip}
-                            <button @click="${() => this.lookupIp(record.row.source_ip)}" class="button sm help" title="Search DNS hostname for IP and geolocate it">DNS and Location</button>
-                            <a class="button sm help" title="Look up WHOIS record for IP and show in new tab" target="blank" href="ips/${record.row.source_ip}/whois">WHOIS</a>
+                            <button @click="${() => this.lookupIp(record.row.source_ip)}" class="button sm help print-hide" title="Search DNS hostname for IP and geolocate it">DNS and Location</button>
+                            <a class="button sm help print-hide" title="Look up WHOIS record for IP and show in new tab" target="blank" href="ips/${record.row.source_ip}/whois">WHOIS</a>
                         </td>
                     </tr>
                     <tbody class="sourceip" style="${this.ipDetails[record.row.source_ip] ? "" : "display:none"}">

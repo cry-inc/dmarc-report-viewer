@@ -152,8 +152,8 @@ export class TlsReport extends LitElement {
         }
 
         return html`
-            <h1>Report Details</h1>
-            <p>
+            <h1>SMTP TLS Report Details</h1>
+            <p class="print-hide">
                 <a class="button" href="#/mails/${this.mailId}">Show Mail</a>
                 <a class="button" href="tls-reports/${this.id}/json" target="_blank">Open JSON</a>
             </p>
@@ -243,8 +243,8 @@ export class TlsReport extends LitElement {
                                 <td>
                                     ${this.renderIfDefined(failureDetails["sending-mta-ip"])}
                                     ${failureDetails["sending-mta-ip"] ? html`
-                                        <button @click="${() => this.lookupIp(failureDetails["sending-mta-ip"])}" class="button sm help" title="Search DNS hostname for IP and geolocate it">DNS and Location</button>
-                                        <a class="button sm help" title="Look up WHOIS record for IP and show in new tab" target="blank" href="ips/${failureDetails["sending-mta-ip"]}/whois">WHOIS</a>
+                                        <button @click="${() => this.lookupIp(failureDetails["sending-mta-ip"])}" class="button sm help print-hide" title="Search DNS hostname for IP and geolocate it">DNS and Location</button>
+                                        <a class="button sm help print-hide" title="Look up WHOIS record for IP and show in new tab" target="blank" href="ips/${failureDetails["sending-mta-ip"]}/whois">WHOIS</a>
                                     ` : nothing}
                                 </td>
                             </tr>
@@ -306,8 +306,8 @@ export class TlsReport extends LitElement {
                                     <td class="name">Receiving IP</td>
                                     <td>
                                         ${failureDetails["receiving-ip"]}
-                                        <button @click="${() => this.lookupIp(failureDetails["receiving-ip"])}" class="button sm help" title="Search DNS hostname for IP and geolocate it">DNS and Location</button>
-                                        <a class="button sm help" title="Look up WHOIS record for IP and show in new tab" target="blank" href="ips/${failureDetails["receiving-ip"]}/whois">WHOIS</a>
+                                        <button @click="${() => this.lookupIp(failureDetails["receiving-ip"])}" class="button sm help print-hide" title="Search DNS hostname for IP and geolocate it">DNS and Location</button>
+                                        <a class="button sm help print-hide" title="Look up WHOIS record for IP and show in new tab" target="blank" href="ips/${failureDetails["receiving-ip"]}/whois">WHOIS</a>
                                     </td>
                                 </tr>
                             </tbody>
