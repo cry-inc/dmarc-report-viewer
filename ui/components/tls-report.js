@@ -156,6 +156,7 @@ export class TlsReport extends LitElement {
             <p class="print-hide">
                 <a class="button" href="#/mails/${this.mailId}">Show Mail</a>
                 <a class="button" href="tls-reports/${this.id}/json" target="_blank">Open JSON</a>
+                <a class="button" href="javascript:window.print()">Print/Save PDF</a>
             </p>
             <table>
                 <tr>
