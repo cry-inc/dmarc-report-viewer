@@ -152,7 +152,7 @@ async fn bg_update(
         match dmarc::Report::from_slice(&xml_file.data) {
             Ok(report) => {
                 let dupl_key = format!(
-                    "{}{}",
+                    "{}:{}",
                     report.report_metadata.org_name, report.report_metadata.report_id
                 );
                 let rwi = DmarcReportWithMailId {
@@ -212,7 +212,7 @@ async fn bg_update(
     for json_file in json_files.values() {
         match tls::Report::from_slice(&json_file.data) {
             Ok(report) => {
-                let dupl_key = format!("{}{}", report.organization_name, report.report_id);
+                let dupl_key = format!("{}:{}", report.organization_name, report.report_id);
                 let rwi = TlsReportWithMailId {
                     report,
                     mail_id: json_file.mail_id.clone(),
