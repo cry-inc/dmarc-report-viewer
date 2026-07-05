@@ -3,7 +3,7 @@
 // Its a heavily modified and simplified version of an existing library.
 // See https://github.com/magiclen/whois-rust for the original code!
 
-use anyhow::{Context, Result, bail};
+use anyhow::{Context, Result, bail, ensure};
 use regex::Regex;
 use std::net::IpAddr;
 use std::time::Duration;
@@ -22,7 +22,7 @@ impl Default for WhoIsIp {
     fn default() -> Self {
         Self {
             server: Server::default(),
-            regex: Regex::new(r"(ReferralServer|Registrar Whois|Whois Server|WHOIS Server|Registrar WHOIS Server):[^\S\n]*(r?whois://)?(.*)").expect("Failed to cosntruct RegEx"),
+            regex: Regex::new(r"(ReferralServer|Registrar Whois|Whois Server|WHOIS Server|Registrar WHOIS Server):[^\S\n]*(r?whois://)?(.*)").expect("Failed to construct RegEx"),
             timeout: Duration::from_secs(10),
             max_follows: 3,
         }
@@ -132,6 +132,10 @@ impl Server {
         } else if parts.len() >= 2 {
             let host = parts[0].to_string();
             let port: u16 = parts[1].parse().context("Failed to parse port")?;
+            ensure!(
+                port == 43,
+                "Non default whois port {port} for server host {host} is not allowed"
+            );
             Ok(Server { host, query, port })
         } else {
             bail!("Cannot parse address, expected host[:port]")
