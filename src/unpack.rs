@@ -2,7 +2,7 @@ use crate::config::Configuration;
 use crate::hasher::create_hash;
 use crate::mail::Mail;
 use crate::state::FileType;
-use anyhow::{Context, Result};
+use anyhow::{Context, Result, ensure};
 use flate2::read::GzDecoder;
 use mailparse::{MailHeaderMap, ParsedMail};
 use std::io::{Cursor, Read};
@@ -31,7 +31,7 @@ pub struct ReportFile {
 }
 
 /// Get zero or more report files from a ZIP archive
-fn get_reports_from_zip(zip_bytes: &[u8]) -> Result<Vec<FileDataWithType>> {
+fn get_reports_from_zip(zip_bytes: &[u8], max_size: usize) -> Result<Vec<FileDataWithType>> {
     let cursor = Cursor::new(zip_bytes);
     let mut archive = ZipArchive::new(cursor).context("Failed to binary data as ZIP")?;
 
@@ -42,21 +42,33 @@ fn get_reports_from_zip(zip_bytes: &[u8]) -> Result<Vec<FileDataWithType>> {
 
     let mut files = Vec::new();
     for i in 0..file_count {
-        let mut file = archive.by_index(i).context("Unable to get file from ZIP")?;
+        let file = archive.by_index(i).context("Unable to get file from ZIP")?;
         let file_name = file.name();
         let lower_file_name = file_name.to_lowercase();
         if lower_file_name.ends_with(".json") {
             let mut json_file = Vec::new();
-            file.read_to_end(&mut json_file)
+            file.take(max_size as u64 + 1)
+                .read_to_end(&mut json_file)
                 .context("Failed to read JSON from ZIP")?;
+            ensure!(
+                json_file.len() <= max_size,
+                "Decompressed JSON file from ZIP archive is bigger than {max_size} bytes. \
+                If this is acceptable, consider to change the MAX_UNCOMPRESSED_SIZE setting."
+            );
             files.push(FileDataWithType {
                 file_type: FileType::Json,
                 data: json_file,
             });
         } else if lower_file_name.ends_with(".xml") {
             let mut xml_file = Vec::new();
-            file.read_to_end(&mut xml_file)
+            file.take(max_size as u64 + 1)
+                .read_to_end(&mut xml_file)
                 .context("Failed to read XML from ZIP")?;
+            ensure!(
+                xml_file.len() <= max_size,
+                "Decompressed XML file from ZIP archive is bigger than {max_size} bytes. \
+                If this is acceptable, consider to change the MAX_UNCOMPRESSED_SIZE setting."
+            );
             files.push(FileDataWithType {
                 file_type: FileType::Xml,
                 data: xml_file,
@@ -104,11 +116,17 @@ fn merge_name_parts(value: &str) -> String {
 }
 
 /// Get a single report file from a GZ archive
-fn get_report_from_gz(gz_bytes: &[u8]) -> Result<Vec<u8>> {
-    let mut gz = GzDecoder::new(gz_bytes);
+fn get_report_from_gz(gz_bytes: &[u8], max_size: usize) -> Result<Vec<u8>> {
+    let gz = GzDecoder::new(gz_bytes);
     let mut report_file = Vec::new();
-    gz.read_to_end(&mut report_file)
+    gz.take(max_size as u64 + 1)
+        .read_to_end(&mut report_file)
         .context("Failed to read file from GZ archive")?;
+    ensure!(
+        report_file.len() <= max_size,
+        "Decompressed file from GZ archive is bigger than {max_size} bytes. \
+        If this is acceptable, consider to change the MAX_UNCOMPRESSED_SIZE setting."
+    );
     Ok(report_file)
 }
 
@@ -154,7 +172,7 @@ pub fn extract_report_files(mail: &mut Mail, config: &Configuration) -> Result<V
             let body = part
                 .get_body_raw()
                 .context("Failed to get raw body of attachment part")?;
-            let report_files_zip = get_reports_from_zip(&body)
+            let report_files_zip = get_reports_from_zip(&body, config.max_uncompressed_size)
                 .context("Failed to extract reports from ZIP attachment")?;
             trace!(
                 "Extracted {} report files from ZIP in part {index} of mail with UID {uid}",
@@ -183,8 +201,8 @@ pub fn extract_report_files(mail: &mut Mail, config: &Configuration) -> Result<V
             let body = part
                 .get_body_raw()
                 .context("Failed to get raw body of attachment part")?;
-            let xml =
-                get_report_from_gz(&body).context("Failed to extract XML from GZ attachment")?;
+            let xml = get_report_from_gz(&body, config.max_uncompressed_size)
+                .context("Failed to extract XML from GZ attachment")?;
             let hash = create_hash(&[&xml, &mail.uid.to_le_bytes()]);
             report_files.push(ReportFile {
                 file_type: FileType::Xml,
@@ -213,8 +231,8 @@ pub fn extract_report_files(mail: &mut Mail, config: &Configuration) -> Result<V
             let body = part
                 .get_body_raw()
                 .context("Failed to get raw body of attachment part")?;
-            let json =
-                get_report_from_gz(&body).context("Failed to extract JSON from GZ attachment")?;
+            let json = get_report_from_gz(&body, config.max_uncompressed_size)
+                .context("Failed to extract JSON from GZ attachment")?;
             let hash = create_hash(&[&json, &mail.uid.to_le_bytes()]);
             report_files.push(ReportFile {
                 file_type: FileType::Json,

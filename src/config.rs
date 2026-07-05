@@ -157,8 +157,14 @@ pub struct Configuration {
     pub disable_duplicate_filter: bool,
 
     /// Maximum mail size in bytes, anything bigger will be ignored and not parsed
-    #[arg(long, env, default_value_t = 1024 * 1024 * 1)]
-    pub max_mail_size: u32,
+    #[arg(long, env, default_value_t = 1000 * 1000 * 1)]
+    pub max_mail_size: usize,
+
+    /// Maximum uncompressed file size for mail attachments.
+    /// The DMARC XML and SMTP TLS JSON report files are often compressed and their
+    /// maximum uncompressed size needs to be limited to avoid compression bomb attacks.
+    #[arg(long, env, default_value_t = 1000 * 1000 * 20)]
+    pub max_uncompressed_size: usize,
 
     /// URL for optional web hook that is called via HTTP when a new mail is detected.
     /// Please note that this app does not have a persistent store for already known mails.

@@ -165,7 +165,7 @@ async fn get_mails_from_folder(
                 fetch_result.context("Failed to get next mail header from IMAP fetch response")?;
             let mail = extract_metadata(
                 &fetched,
-                config.max_mail_size as usize,
+                config.max_mail_size,
                 &config.imap_user,
                 imap_folder,
             )
@@ -247,7 +247,7 @@ async fn get_mails_from_folder(
                 };
                 mail.body = Some(body.to_vec());
                 mail.size = body.len();
-                mail.oversized = body.len() > config.max_mail_size as usize;
+                mail.oversized = body.len() > config.max_mail_size;
                 if mail.oversized {
                     // Do not keep oversized mails in memory
                     mail.body = None;
