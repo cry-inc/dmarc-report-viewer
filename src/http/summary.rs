@@ -158,40 +158,16 @@ impl Summary {
         time_span: Option<Duration>,
         domain_filter: Option<String>,
     ) -> Self {
-        let dmarc_orgs: HashMap<String, usize> = HashMap::new();
-        let dmarc_domains = HashMap::new();
-        let spf_policy_results: HashMap<DmarcResultType, usize> = HashMap::new();
-        let dkim_policy_results: HashMap<DmarcResultType, usize> = HashMap::new();
-        let spf_auth_results: HashMap<SpfResultType, usize> = HashMap::new();
-        let dkim_auth_results: HashMap<DkimResultType, usize> = HashMap::new();
         let mut dmarc = DmarcSummary {
             files: files.xml,
             reports: reports.dmarc.len(),
-            orgs: dmarc_orgs,
-            domains: dmarc_domains,
-            spf_policy_results,
-            dkim_policy_results,
-            spf_auth_results,
-            dkim_auth_results,
+            ..Default::default()
         };
 
-        let tls_orgs: HashMap<String, usize> = HashMap::new();
-        let tls_domains = HashMap::new();
-        let policy_types: HashMap<PolicyType, usize> = HashMap::new();
-        let sts_policy_results: HashMap<TlsResultType, usize> = HashMap::new();
-        let tlsa_policy_results: HashMap<TlsResultType, usize> = HashMap::new();
-        let sts_failure_types: HashMap<FailureResultType, usize> = HashMap::new();
-        let tlsa_failure_types: HashMap<FailureResultType, usize> = HashMap::new();
         let mut tls = TlsSummary {
             files: files.json,
             reports: reports.tls.len(),
-            orgs: tls_orgs,
-            domains: tls_domains,
-            policy_types,
-            sts_policy_results,
-            tlsa_policy_results,
-            sts_failure_types,
-            tlsa_failure_types,
+            ..Default::default()
         };
 
         let threshold = time_span.map(|d| (Utc::now() - d).timestamp() as u64);
