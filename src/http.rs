@@ -8,6 +8,7 @@ mod summary;
 mod tls_reports;
 
 use crate::config::Configuration;
+use crate::hasher::create_hash;
 use crate::state::AppState;
 use anyhow::{Context, Result};
 use axum::Json;
@@ -28,6 +29,7 @@ use rustls_acme::caches::DirCache;
 use serde_json::json;
 use std::net::SocketAddr;
 use std::sync::Arc;
+use subtle::ConstantTimeEq;
 use tokio::signal;
 use tokio::sync::Mutex;
 use tracing::{error, info, warn};
@@ -225,7 +227,17 @@ async fn basic_auth_middleware(
     let Some((user, password)) = string.split_once(':') else {
         return bad_request;
     };
-    if user == config.http_server_user && password == config.http_server_password {
+
+    // Convert user and password values to equal length hash before comparison
+    let expected = create_hash(&[
+        config.http_server_user.as_bytes(),
+        b":",
+        config.http_server_password.as_bytes(),
+    ]);
+    let actual = create_hash(&[user.as_bytes(), b":", password.as_bytes()]);
+
+    // Use constant time comparison of the expected and actual value to avoid timing attacks
+    if expected.as_bytes().ct_eq(actual.as_bytes()).unwrap_u8() == 1 {
         next.run(request).await
     } else {
         unauthorized
