@@ -185,55 +185,27 @@ impl Summary {
                 continue;
             }
             let domain = report.policy_published.domain.to_lowercase();
-            if let Some(entry) = dmarc.domains.get_mut(&domain) {
-                *entry += 1;
-            } else {
-                dmarc.domains.insert(domain, 1);
-            }
+            *dmarc.domains.entry(domain).or_insert(0) += 1;
             let org = report.report_metadata.org_name.clone();
-            if let Some(entry) = dmarc.orgs.get_mut(&org) {
-                *entry += 1;
-            } else {
-                dmarc.orgs.insert(org, 1);
-            }
+            *dmarc.orgs.entry(org).or_insert(0) += 1;
             for record in &report.record {
                 for r in &record.auth_results.spf {
-                    if let Some(entry) = dmarc.spf_auth_results.get_mut(&r.result) {
-                        *entry += record.row.count;
-                    } else {
-                        dmarc
-                            .spf_auth_results
-                            .insert(r.result.clone(), record.row.count);
-                    }
+                    *dmarc.spf_auth_results.entry(r.result.clone()).or_insert(0) +=
+                        record.row.count;
                 }
                 if let Some(vec) = &record.auth_results.dkim {
                     for r in vec {
-                        if let Some(entry) = dmarc.dkim_auth_results.get_mut(&r.result) {
-                            *entry += record.row.count;
-                        } else {
-                            dmarc
-                                .dkim_auth_results
-                                .insert(r.result.clone(), record.row.count);
-                        }
+                        *dmarc.dkim_auth_results.entry(r.result.clone()).or_insert(0) +=
+                            record.row.count;
                     }
                 }
                 if let Some(result) = &record.row.policy_evaluated.spf {
-                    if let Some(entry) = dmarc.spf_policy_results.get_mut(result) {
-                        *entry += record.row.count;
-                    } else {
-                        dmarc
-                            .spf_policy_results
-                            .insert(result.clone(), record.row.count);
-                    }
+                    *dmarc.spf_policy_results.entry(result.clone()).or_insert(0) +=
+                        record.row.count;
                 }
                 if let Some(result) = &record.row.policy_evaluated.dkim {
-                    if let Some(entry) = dmarc.dkim_policy_results.get_mut(result) {
-                        *entry += record.row.count;
-                    } else {
-                        dmarc
-                            .dkim_policy_results
-                            .insert(result.clone(), record.row.count);
-                    }
+                    *dmarc.dkim_policy_results.entry(result.clone()).or_insert(0) +=
+                        record.row.count;
                 }
             }
         }
@@ -252,24 +224,13 @@ impl Summary {
                 continue;
             }
             let org = report.organization_name.clone();
-            if let Some(entry) = tls.orgs.get_mut(&org) {
-                *entry += 1;
-            } else {
-                tls.orgs.insert(org, 1);
-            }
+            *tls.orgs.entry(org).or_insert(0) += 1;
             for policy_result in report.policies.iter() {
                 let domain = policy_result.policy.policy_domain.to_lowercase();
-                if let Some(entry) = tls.domains.get_mut(&domain) {
-                    *entry += 1;
-                } else {
-                    tls.domains.insert(domain, 1);
-                }
-                if let Some(entry) = tls.policy_types.get_mut(&policy_result.policy.policy_type) {
-                    *entry += 1;
-                } else {
-                    tls.policy_types
-                        .insert(policy_result.policy.policy_type.clone(), 1);
-                }
+                *tls.domains.entry(domain).or_insert(0) += 1;
+                *tls.policy_types
+                    .entry(policy_result.policy.policy_type.clone())
+                    .or_insert(0) += 1;
                 let (policy_results, failure_types) = match &policy_result.policy.policy_type {
                     PolicyType::Sts => (&mut tls.sts_policy_results, &mut tls.sts_failure_types),
                     PolicyType::Tlsa => (&mut tls.tlsa_policy_results, &mut tls.tlsa_failure_types),
@@ -279,26 +240,13 @@ impl Summary {
                 };
                 let success_count = policy_result.summary.total_successful_session_count;
                 let failure_count = policy_result.summary.total_failure_session_count;
-                if let Some(entry) = policy_results.get_mut(&TlsResultType::Successful) {
-                    *entry += success_count;
-                } else {
-                    policy_results.insert(TlsResultType::Successful, success_count);
-                }
-                if let Some(entry) = policy_results.get_mut(&TlsResultType::Failure) {
-                    *entry += failure_count;
-                } else {
-                    policy_results.insert(TlsResultType::Failure, failure_count);
-                }
+                *policy_results.entry(TlsResultType::Successful).or_insert(0) += success_count;
+                *policy_results.entry(TlsResultType::Failure).or_insert(0) += failure_count;
                 if let Some(failure_details) = &policy_result.failure_details {
                     for failure_detail in failure_details {
-                        if let Some(entry) = failure_types.get_mut(&failure_detail.result_type) {
-                            *entry += failure_detail.failed_session_count;
-                        } else {
-                            failure_types.insert(
-                                failure_detail.result_type.clone(),
-                                failure_detail.failed_session_count,
-                            );
-                        }
+                        *failure_types
+                            .entry(failure_detail.result_type.clone())
+                            .or_insert(0) += failure_detail.failed_session_count;
                     }
                 }
             }
