@@ -44,18 +44,29 @@ pub struct Configuration {
 
     /// IMAP folder, will be used to look for all kinds of reports (DMARC and SMTP TLS).
     /// Will be only used if the dedicated folders for TLS and DMARC are not set!
+    /// See IMAP folder depth setting when you also want to scan sub-folders for mails.
     #[arg(long, env, default_value = "INBOX")]
     pub imap_folder: String,
 
     /// Optional IMAP folder (will be only checked for DMARC reports).
     /// Will disable the normal default folder when set.
+    /// See IMAP folder depth setting when you also want to scan sub-folders for mails.
     #[arg(long, env)]
     pub imap_folder_dmarc: Option<String>,
 
     /// Optional IMAP folder (will be only checked for SMTP TLS reports)
     /// Will disable the normal default folder when set.
+    /// See IMAP folder depth setting when you also want to scan sub-folders for mails.
     #[arg(long, env)]
     pub imap_folder_tls: Option<String>,
+
+    /// Maximum depth for recursive scanning of IMAP folders.
+    /// The default value 0 disables recursive scanning and ignores all sub-folders.
+    /// A depth of 1 will additionally scan the direct sub-folders of the configured folders,
+    /// a depth of 2 will also include their sub-folders, etc.
+    /// Applies to the single default IMAP folder as well as the dedicated DMARC and TLS folders.
+    #[arg(long, env, default_value_t = 0)]
+    pub imap_folder_depth: usize,
 
     /// Method of requesting the mail body from the IMAP server.
     /// The default should work for most IMAP servers.
@@ -214,6 +225,7 @@ impl Configuration {
         info!("IMAP Folder: {}", self.imap_folder);
         info!("IMAP DMARC Folder: {:?}", self.imap_folder_dmarc);
         info!("IMAP TLS Folder: {:?}", self.imap_folder_tls);
+        info!("IMAP Folder Depth: {}", self.imap_folder_depth);
         info!("IMAP Check Interval: {} seconds", self.imap_check_interval);
         info!(
             "IMAP Schedule: {}",

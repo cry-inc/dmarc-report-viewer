@@ -4,7 +4,7 @@ use crate::mail::{Mail, decode_subject};
 use anyhow::{Context, Result, anyhow, ensure};
 use async_imap::Client;
 use async_imap::imap_proto::Address;
-use async_imap::types::Fetch;
+use async_imap::types::{Fetch, NameAttribute};
 use futures::StreamExt;
 use std::collections::HashMap;
 use std::net::TcpStream as StdTcpStream;
@@ -19,6 +19,9 @@ use tokio_rustls::rustls::pki_types::{CertificateDer, ServerName};
 use tokio_rustls::rustls::{ClientConfig, RootCertStore};
 use tokio_util::either::Either;
 use tracing::{debug, info, trace, warn};
+
+/// Alias for session on plain or encrypted TCP connection
+type Session = async_imap::Session<Either<TcpStream, TlsStream<TcpStream>>>;
 
 pub async fn get_mails(
     config: &Configuration,
@@ -35,6 +38,109 @@ pub async fn get_mails(
         .context("Failed to log in and create IMAP session")?;
     debug!("IMAP login successful");
 
+    let folders = if config.imap_folder_depth > 0 {
+        list_folders_recursively(&mut session, imap_folder, config.imap_folder_depth)
+            .await
+            .context(format!("Failed to list sub-folders of {imap_folder}"))?
+    } else {
+        vec![imap_folder.to_string()]
+    };
+
+    let mut mails = HashMap::new();
+    for folder in &folders {
+        let folder_mails = get_mails_from_folder(&mut session, config, folder)
+            .await
+            .context(format!("Failed to get mails from IMAP folder {folder}"))?;
+        mails.extend(folder_mails);
+    }
+
+    // We have everything we need, any error is no longer failing the update
+    if let Err(err) = session.logout().await {
+        let anyhow_err = anyhow!(err);
+        warn!("Failed to log off from IMAP server: {anyhow_err:#}");
+    }
+
+    Ok(mails)
+}
+
+/// Lists the requested folder and all its sub-folders up to the requested depth.
+/// Uses the hierarchy delimiter reported by the IMAP server,
+/// since it can differ between servers (some use `/`, others use `.`).
+async fn list_folders_recursively(
+    session: &mut Session,
+    imap_folder: &str,
+    depth: usize,
+) -> Result<Vec<String>> {
+    // LIST without parameters to ask the server for the hierarchy delimiter
+    let names: Vec<_> = session
+        .list(None, None)
+        .await
+        .context("Failed to request hierarchy delimiter")?
+        .collect()
+        .await;
+    let delimiter = if let Some(delimiter) = names
+        .iter()
+        .filter_map(|name| name.as_ref().ok())
+        .find_map(|name| name.delimiter())
+    {
+        debug!("IMAP server reported hierarchy delimiter '{delimiter}'");
+        String::from(delimiter)
+    } else {
+        debug!("IMAP server did not return a hierarchy delimiter, falling back to '/'");
+        String::from("/")
+    };
+
+    // We now create a query string with a % placeholders for every level.
+    // This is a safer alternative to the * wildcard over all levels,
+    // since its not supported by all servers.
+    let base = imap_folder.trim_end_matches(&delimiter);
+    let mut folders = vec![base.to_string()];
+    for level in 1..=depth {
+        let pattern = build_list_pattern(base, &delimiter, level);
+        let names: Vec<_> = session
+            .list(Some(""), Some(&pattern))
+            .await
+            .context(format!("Failed to list folders with pattern {pattern}"))?
+            .collect()
+            .await;
+        for name in names {
+            let name = name.context("Failed to get next folder from IMAP list response")?;
+            // Folders marked as not selectable cannot be opened for fetching mails
+            let no_select = name
+                .attributes()
+                .iter()
+                .any(|attribute| matches!(attribute, NameAttribute::NoSelect));
+            let folder = name.name().to_string();
+            if !no_select && !folders.contains(&folder) {
+                folders.push(folder);
+            }
+        }
+    }
+
+    info!(
+        "Resolved folder {imap_folder} into {} folder(s): {folders:?}",
+        folders.len()
+    );
+
+    Ok(folders)
+}
+
+/// Builds an IMAP LIST pattern matching all sub-folders of a folder
+/// at exactly the requested depth, e.g. `INBOX/%/%` for a depth of two.
+fn build_list_pattern(folder: &str, delimiter: &str, depth: usize) -> String {
+    let mut pattern = folder.to_string();
+    for _ in 0..depth {
+        pattern += delimiter;
+        pattern += "%";
+    }
+    pattern
+}
+
+async fn get_mails_from_folder(
+    session: &mut Session,
+    config: &Configuration,
+    imap_folder: &str,
+) -> Result<HashMap<String, Mail>> {
     let mailbox = session
         .select(imap_folder)
         .await
@@ -166,12 +272,6 @@ pub async fn get_mails(
         }
 
         info!("Downloaded {} mails", ids.len());
-    }
-
-    // We have everything we need, an error is no longer preventing an update.
-    if let Err(err) = session.logout().await {
-        let anyhow_err = anyhow!(err);
-        warn!("Failed to log off from IMAP server: {anyhow_err:#}");
     }
 
     Ok(mails)
