@@ -1,7 +1,8 @@
 use anyhow::{Context, Result, bail, ensure};
 use dns_protocol::{Flags, Message, Question, ResourceRecord, ResourceType};
+use std::collections::HashSet;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
-use std::sync::atomic::AtomicU16;
+use std::sync::atomic::{AtomicU16, Ordering};
 use std::time::Duration;
 use tokio::net::UdpSocket;
 use tokio::time::timeout;
@@ -23,9 +24,7 @@ impl DnsClient {
 
     pub async fn host_from_ip(&self, ip: IpAddr) -> Result<Option<String>> {
         // Create a unique ID for the query
-        let id = self
-            .next_id
-            .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        let id = self.next_id.fetch_add(1, Ordering::Relaxed);
 
         // Create the query string
         let query = match ip {
@@ -82,9 +81,10 @@ impl DnsClient {
         }
 
         // Parse the DNS name
-        Ok(Some(
-            parse_dns_name(answer.data()).context("Failed to parse DNS name")?,
-        ))
+        let host_name =
+            parse_dns_name(&response, answer.data()).context("Failed to parse DNS name")?;
+
+        Ok(Some(host_name))
     }
 
     fn ipv4_query(ip: Ipv4Addr) -> String {
@@ -118,12 +118,16 @@ impl DnsClient {
             .write(&mut buf)
             .context("Failed to serialize DNS message")?;
 
-        // Create a UDP socket
-        let socket = UdpSocket::bind("0.0.0.0:0")
+        // Create a UDP socket bound to the same address family as the server.
+        let bind_addr = if self.server.is_ipv4() {
+            "0.0.0.0:0"
+        } else {
+            "[::]:0"
+        };
+        let socket = UdpSocket::bind(bind_addr)
             .await
             .context("Failed to bind UDP socket")?;
 
-        // Send the data
         socket
             .send_to(&buf[..len], self.server)
             .await
@@ -141,23 +145,98 @@ impl DnsClient {
     }
 }
 
-// Parse a DNS name from DNS label format (RFC 1035)
-fn parse_dns_name(data: &[u8]) -> Result<String> {
+// Parse a DNS name
+fn parse_dns_name(message: &[u8], data: &[u8]) -> Result<String> {
+    let start = data.as_ptr() as usize - message.as_ptr() as usize;
+    let labels = parse_dns_name_at_offset(message, start, &mut HashSet::new())?;
+    Ok(labels.join("."))
+}
+
+fn parse_dns_name_at_offset(
+    message: &[u8],
+    mut cursor: usize,
+    visited: &mut std::collections::HashSet<usize>,
+) -> Result<Vec<String>> {
     let mut labels = Vec::new();
-    let mut i = 0;
-    while i < data.len() {
-        let len = data[i] as usize;
+
+    loop {
+        if cursor >= message.len() {
+            bail!("Label length out of bounds");
+        }
+
+        let len = message[cursor] as usize;
         if len == 0 {
             break;
         }
-        i += 1;
-        if i + len > data.len() {
+
+        if len & 0xC0 == 0xC0 {
+            if cursor + 1 >= message.len() {
+                bail!("Compression pointer out of bounds");
+            }
+
+            let ptr = (((len & 0x3F) as u16) << 8) | message[cursor + 1] as u16;
+            let ptr = ptr as usize;
+            if !visited.insert(ptr) {
+                bail!("Compression pointer loop detected");
+            }
+
+            let mut tail_labels = parse_dns_name_at_offset(message, ptr, visited)?;
+            labels.append(&mut tail_labels);
+            break;
+        }
+
+        if cursor + 1 + len > message.len() {
             bail!("Label length out of bounds");
         }
-        let label = data[i..i + len].to_owned();
-        let parsed_label = String::from_utf8(label).context("Failed to parse segment as UTF8")?;
-        labels.push(parsed_label);
-        i += len;
+
+        let label_bytes = &message[cursor + 1..cursor + 1 + len];
+        let parsed_label =
+            std::str::from_utf8(label_bytes).context("Failed to parse segment as UTF8")?;
+        labels.push(parsed_label.to_string());
+        cursor += 1 + len;
     }
-    Ok(labels.join("."))
+
+    Ok(labels)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::parse_dns_name;
+
+    #[test]
+    fn parses_dns_wire_format_names() {
+        let data = [
+            3, b'w', b'w', b'w', 7, b'e', b'x', b'a', b'm', b'p', b'l', b'e', 3, b'c', b'o', b'm',
+            0,
+        ];
+        assert_eq!(parse_dns_name(&data, &data).unwrap(), "www.example.com");
+    }
+
+    #[test]
+    fn parses_compressed_dns_wire_format_names() {
+        let message = [7, b'e', b'x', b'a', b'm', b'p', b'l', b'e', 0, 0xC0, 0x00];
+        let data = &message[9..11];
+        assert_eq!(parse_dns_name(&message, data).unwrap(), "example");
+    }
+
+    #[test]
+    fn parses_compressed_tail_labels() {
+        let message = [
+            3, b'w', b'w', b'w', 0xC0, 0x06, /* pointer to offset 6 */
+            7, b'e', b'x', b'a', b'm', b'p', b'l', b'e', 3, b'c', b'o', b'm', 0,
+        ];
+        let data = &message[0..6];
+        assert_eq!(parse_dns_name(&message, data).unwrap(), "www.example.com");
+    }
+
+    #[test]
+    fn rejects_compression_pointer_loop() {
+        let message = [0xC0, 0x02, 0xC0, 0x00];
+        let data = &message[0..2];
+        let err = parse_dns_name(&message, data).unwrap_err();
+        assert!(
+            err.to_string()
+                .contains("Compression pointer loop detected")
+        );
+    }
 }
