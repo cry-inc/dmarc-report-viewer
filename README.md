@@ -87,9 +87,15 @@ The only exception is the certificate cache folder when using Let's Encrypt,
 this folder should be persisted and saved between application restarts.
 
 ### IMAP Folders
-You can define separate IMAP folders for fetching DMARC and TLS reports.
-By default one single `INBOX` is used to look for both kind of reports.
-If you specify at least one of the dedicated folders, the default folder will be disabled.
+By default, a single `INBOX` folder is used to look for all supported report types.
+You can change this to any other folder by specifying the ENV variable `IMAP_FOLDER`.
+To enable the search of one or more levels of sub-folders, use the setting `IMAP_FOLDER_DEPTH`.
+
+Its also possible to specify separate dedicated IMAP folders for each different report type.
+Use the ENV variables `IMAP_FOLDER_DMARC` or `IMAP_FOLDER_TLS` to use this feature. 
+Warning: As soon as you set one of the dedicated folders, the default folder will be ignored!
+TLS reports in the DMARC folder and vice versa will lead to warnings because of unexpected errors.
+
 Please note that fetching reports from different IMAP accounts is currently not supported.
 You might have to setup some forwarding if you are receiving them on separate accounts.
 
