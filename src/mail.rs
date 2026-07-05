@@ -58,8 +58,7 @@ fn q_decode(mut data: &str) -> Result<Vec<u8>> {
             data = &data[1..];
         } else if data.starts_with('=') {
             // This is followed by two hex digits encoding a byte
-            if data.len() >= 3 {
-                let hex = &data[1..3];
+            if let Some(hex) = data.get(1..3) {
                 let value = u8::from_str_radix(hex, 16)
                     .context("Expected valid hex string but found something else")?;
                 result.push(value);
@@ -123,9 +122,12 @@ mod tests {
 
     #[test]
     fn q_decode_test() {
+        // Cases without encoding
         assert_eq!(q_decode("").unwrap(), Vec::<u8>::new());
         assert_eq!(q_decode("abc").unwrap(), vec![b'a', b'b', b'c']);
         assert_eq!(q_decode("_").unwrap(), vec![0x20]);
+
+        // Valid decoding tests
         assert_eq!(
             q_decode("=00=ff=AA_abc").unwrap(),
             vec![0x00, 0xff, 0xaa, 0x20, b'a', b'b', b'c']
@@ -134,6 +136,9 @@ mod tests {
             q_decode("Best=C3=A4tigen").unwrap(),
             vec![66, 101, 115, 116, 195, 164, 116, 105, 103, 101, 110]
         );
+
+        // Inavlid multi-byte character case
+        assert!(q_decode("=a€").is_err());
     }
 
     #[test]
