@@ -14,7 +14,7 @@ pub async fn single_handler(
     Path(id): Path<String>,
 ) -> impl IntoResponse {
     let lock = state.lock().await;
-    if let Some((_, mail)) = lock.mails.iter().find(|(i, _)| **i == id) {
+    if let Some(mail) = lock.mails.get(&id) {
         let mail_json = serde_json::to_string(mail).expect("Failed to serialize JSON");
         (
             StatusCode::OK,
