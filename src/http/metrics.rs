@@ -19,7 +19,7 @@ pub async fn handler(State(state): State<Arc<Mutex<AppState>>>) -> impl IntoResp
         .duration_since(SystemTime::UNIX_EPOCH)
         .expect("Failed to get Unix time stamp")
         .as_secs()
-        - start_time;
+        .saturating_sub(start_time);
     let last_update = lock.last_update;
     let last_update_duration = lock.last_update_duration;
 
