@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.6.0] - 2026-07-08
+* Security: Limit maximum uncompressed file size to prevent unbounded memory use (remote DoS).
+* Security: Hardened basic auth username and password checks against timing attacks.
+* Security: Restrict Whois referral following to avoid non-default Whois ports to limit SSRF.
+* Security: Fixed panic in decoding code for mail subjects (remote DoS).
+* Fix: Made duplicate check for reports more robust (was more a theoretical issue).
+* Fix: Prevent possible subtraction underflow in uptime calculations.
+* Feature: Added printing and saving as PDF button to reports UI.
+* Feature: Support of optional IMAP sub-folders with configurable depth (see issue #84).
+* Feature: Extend DNS client to be able to deal with compressed pointers in responses.
+* Updated Cargo dependencies
+
 ## [2.5.2] - 2026-07-04
 * Fixed printing and PDF generation for reports (see also issue #89).
 * Updated Cargo dependencies
