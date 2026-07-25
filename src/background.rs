@@ -51,18 +51,24 @@ pub fn start_bg_task(
             };
 
             // Check how many seconds we need to sleep
-            let mut duration = Duration::from_secs(config.imap_check_interval);
-            if let Some(schedule) = &config.imap_check_schedule {
+            let duration = if let Some(schedule) = &config.imap_check_schedule {
                 if let Some(next_update) = schedule.upcoming(Local).next() {
                     let delta = next_update - Local::now();
-                    duration = Duration::from_millis(delta.num_milliseconds().max(0) as u64)
+                    Duration::from_millis(delta.num_milliseconds().max(0) as u64)
                 } else {
-                    warn!("Unable to find next scheduled check, falling back to interval...")
+                    warn!("Unable to find next scheduled check, falling back to interval...");
+                    Duration::from_secs(config.imap_check_interval)
                 }
-            }
+            } else {
+                Duration::from_secs(config.imap_check_interval)
+            };
 
-            // Print next update time
+            // Calculate next update time
             let next = Local::now() + duration;
+            {
+                let mut guard = state.lock().await;
+                guard.next_update = Some(next.timestamp().max(0) as u64);
+            }
             info!("Next update is planned for {next}");
 
             tokio::select! {
@@ -289,9 +295,7 @@ async fn bg_update(
         // Update state with new values
         locked_state.dmarc_reports = dmarc_reports;
         locked_state.tls_reports = tls_reports;
-        locked_state.last_update = timestamp;
-        locked_state.xml_files = xml_files.len();
-        locked_state.json_files = json_files.len();
+        locked_state.last_update = Some(timestamp);
         locked_state.parsing_errors = parsing_errors;
         locked_state.mails = mails;
         locked_state.last_update_duration = start.elapsed().as_secs_f64();

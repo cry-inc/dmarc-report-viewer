@@ -49,11 +49,10 @@ export class Dashboard extends LitElement {
 
         this.params = {};
         this.mails = 0;
-        this.xmlFiles = 0;
-        this.jsonFiles = 0;
         this.dmarcReports = 0;
         this.tlsReports = 0;
-        this.lastUpdate = 0;
+        this.lastUpdate = null;
+        this.nextUpdate = null;
         this.dmarcDomains = [];
         this.tlsDomains = [];
         this.filterDomains = [];
@@ -185,11 +184,10 @@ export class Dashboard extends LitElement {
         };
 
         this.mails = summary.mails;
-        this.xmlFiles = summary.dmarc.files;
-        this.jsonFiles = summary.tls.files;
         this.dmarcReports = summary.dmarc.reports;
         this.tlsReports = summary.tls.reports;
         this.lastUpdate = summary.last_update;
+        this.nextUpdate = summary.next_update;
         this.classesToHide = [];
 
         // Group orgs and domains with very small percentages as "Other"
@@ -361,9 +359,8 @@ export class Dashboard extends LitElement {
                 <span>DMARC Reports: <b>${this.dmarcReports}</b></span>
                 <span>SMTP TLS Reports: <b>${this.tlsReports}</b></span>
                 <span>Mails: <b>${this.mails}</b></span>
-                <span>XML Files: <b>${this.xmlFiles}</b></span>
-                <span>JSON Files: <b>${this.jsonFiles}</b></span>
-                <span>Last Update: <b>${new Date(this.lastUpdate * 1000).toLocaleString()}</b></span>
+                <span>Last Update: <b>${this.lastUpdate ? new Date(this.lastUpdate * 1000).toLocaleString() : "n/a"}</b></span>
+                <span>Next Update: <b>${this.nextUpdate ? new Date(this.nextUpdate * 1000).toLocaleString() : "n/a"}</b></span>
             </div>
 
             <div class="module stats">

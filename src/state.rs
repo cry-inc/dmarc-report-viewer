@@ -60,14 +60,13 @@ pub struct AppState {
     /// Parsed SMTP TLS reports with mail UID and corresponding hash as key
     pub tls_reports: BTreeMap<String, TlsReportWithMailId>,
 
-    /// Number of XML files extracted from mails
-    pub xml_files: usize,
+    /// Time of last update from IMAP inbox as Unix timestamp.
+    /// None if no update was yet completed.
+    pub last_update: Option<u64>,
 
-    /// Number of JSON files extracted from mails
-    pub json_files: usize,
-
-    /// Time of last update from IMAP inbox as Unix timestamp
-    pub last_update: u64,
+    /// Time of next update from IMAP inbox as Unix timestamp.
+    /// None if no next update was yet scheduled.
+    pub next_update: Option<u64>,
 
     /// Time the last update took in seconds
     pub last_update_duration: f64,
@@ -94,9 +93,8 @@ impl AppState {
             mails: BTreeMap::new(),
             dmarc_reports: BTreeMap::new(),
             tls_reports: BTreeMap::new(),
-            last_update: 0,
-            xml_files: 0,
-            json_files: 0,
+            last_update: None,
+            next_update: None,
             parsing_errors: HashMap::new(),
             ip_location_cache: CacheMap::new(CACHE_SIZE).expect("Failed to create location cache"),
             dns_client,

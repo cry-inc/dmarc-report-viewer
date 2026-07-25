@@ -46,15 +46,12 @@ pub async fn handler(
     }
     let summary = Summary::new(
         guard.mails.len(),
-        Files {
-            xml: guard.xml_files,
-            json: guard.json_files,
-        },
         Reports {
             dmarc: &guard.dmarc_reports,
             tls: &guard.tls_reports,
         },
         guard.last_update,
+        guard.next_update,
         time_span,
         filters.domain.clone(),
     );
@@ -63,9 +60,6 @@ pub async fn handler(
 
 #[derive(Serialize, Default, Clone)]
 pub struct DmarcSummary {
-    /// Number of XML files found in mails from IMAPinbox
-    pub files: usize,
-
     /// Number of successfully parsed DMARC reports XML files found in IMAP inbox
     pub reports: usize,
 
@@ -90,9 +84,6 @@ pub struct DmarcSummary {
 
 #[derive(Serialize, Default, Clone)]
 pub struct TlsSummary {
-    /// Number of JSON files found in mails from IMAP inbox
-    pub files: usize,
-
     /// Number of successfully parsed SMTP TLS reports JSON files found in IMAP inbox
     pub reports: usize,
 
@@ -118,14 +109,6 @@ pub struct TlsSummary {
     pub tlsa_failure_types: HashMap<FailureResultType, usize>,
 }
 
-pub struct Files {
-    /// Number of XML files found in mails from IMAP inbox
-    pub xml: usize,
-
-    /// Number of JSON files found in mails from IMAP inbox
-    pub json: usize,
-}
-
 pub struct Reports<'a> {
     /// Parsed DMARC reports with mail UID and corresponding hash as key
     pub dmarc: &'a BTreeMap<String, DmarcReportWithMailId>,
@@ -140,7 +123,10 @@ pub struct Summary {
     pub mails: usize,
 
     /// Unix timestamp with time of last update
-    pub last_update: u64,
+    pub last_update: Option<u64>,
+
+    /// Unix timestamp with time of next update
+    pub next_update: Option<u64>,
 
     /// Information about DMARC reports
     pub dmarc: DmarcSummary,
@@ -152,20 +138,18 @@ pub struct Summary {
 impl Summary {
     pub fn new(
         mails: usize,
-        files: Files,
         reports: Reports,
-        last_update: u64,
+        last_update: Option<u64>,
+        next_update: Option<u64>,
         time_span: Option<Duration>,
         domain_filter: Option<String>,
     ) -> Self {
         let mut dmarc = DmarcSummary {
-            files: files.xml,
             reports: reports.dmarc.len(),
             ..Default::default()
         };
 
         let mut tls = TlsSummary {
-            files: files.json,
             reports: reports.tls.len(),
             ..Default::default()
         };
@@ -254,6 +238,7 @@ impl Summary {
         Self {
             mails,
             last_update,
+            next_update,
             dmarc,
             tls,
         }

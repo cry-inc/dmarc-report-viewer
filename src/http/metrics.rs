@@ -10,8 +10,6 @@ pub async fn handler(State(state): State<Arc<Mutex<AppState>>>) -> impl IntoResp
     let lock = state.lock().await;
 
     let mails = lock.mails.len();
-    let xml_files = lock.xml_files;
-    let json_files = lock.json_files;
     let dmarc_reports = lock.dmarc_reports.len();
     let tls_reports = lock.tls_reports.len();
     let start_time = lock.start_time;
@@ -21,6 +19,7 @@ pub async fn handler(State(state): State<Arc<Mutex<AppState>>>) -> impl IntoResp
         .as_secs()
         .saturating_sub(start_time);
     let last_update = lock.last_update;
+    let next_update = lock.next_update;
     let last_update_duration = lock.last_update_duration;
 
     let dmarc_domains = get_dmarc_per_domain(&lock);
@@ -31,19 +30,26 @@ pub async fn handler(State(state): State<Arc<Mutex<AppState>>>) -> impl IntoResp
     let dmarc_domains = format_labeled_metric(&dmarc_domains, "dmarc_reports", "domain");
     let tls_domains = format_labeled_metric(&tls_domains, "tls_reports", "domain");
 
-    format!(
+    let mut metrics = format!(
         "mails {mails}\n\
-        xml_files {xml_files}\n\
-        json_files {json_files}\n\
         dmarc_reports {dmarc_reports}\n\
         {dmarc_domains}\
         tls_reports {tls_reports}\n\
         {tls_domains}\
-        last_update {last_update}\n\
         last_update_duration {last_update_duration}\n\
         start_time {start_time}\n\
         uptime {uptime}\n"
-    )
+    );
+
+    if let Some(last_update) = last_update {
+        metrics += &format!("last_update {last_update}\n");
+    }
+
+    if let Some(next_update) = next_update {
+        metrics += &format!("next_update {next_update}\n");
+    }
+
+    metrics
 }
 
 fn get_dmarc_per_domain(state: &AppState) -> BTreeMap<String, usize> {
