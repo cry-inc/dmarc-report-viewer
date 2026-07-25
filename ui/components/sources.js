@@ -130,7 +130,7 @@ export class Sources extends LitElement {
 
     render() {
         return html`
-            <h1>DMARC Mail Sources</h1>
+            <h1>Mail Sources</h1>
             <div>
                 ${this.filtered ?
                     html`Filter active! <a class="ml button" href="#/sources">Show all Sources</a>` :
