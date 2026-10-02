@@ -38,6 +38,6 @@ hyper-util = { version = "0.1", default-features = false }
 quick-xml = { version = "0.42", features = ["serialize"] }
 zip = { version = "8", default-features = false, features = ["deflate"] }
 tokio = { version = "1.36", features = ["macros", "rt-multi-thread", "signal", "fs"] }
-async-imap = { version = "0.11", default-features = false, features = ["runtime-tokio"] }
+async-imap = { version = "0.12", default-features = false, features = ["runtime-tokio"] }
 chrono = { version = "0.4.20", default-features = false, features = ["std", "clock", "serde"] }
 clap = { version = "4", default-features = false, features = ["std", "derive", "help", "env", "usage", "suggestions"] }
