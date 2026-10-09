@@ -1,6 +1,6 @@
 import { LitElement, html } from "lit";
 import { globalStyle } from "../style.js";
-import { join } from "../utils.js";
+import { join, newDayClass } from "../utils.js";
 
 export class TlsReportTable extends LitElement {
     static styles = [globalStyle];
@@ -60,8 +60,8 @@ export class TlsReportTable extends LitElement {
                     <th class="md-hidden">Begin</th>
                     <th class="md-hidden">End</th>
                 </tr>
-                ${this.reports.length !== 0 ? this.reports.map((report) =>
-                    html`<tr>
+                ${this.reports.length !== 0 ? this.reports.map((report, index) =>
+                    html`<tr class="${newDayClass(this.reports, index, r => r.date_begin)}">
                             <td><a href="#/tls-reports/${report.hash}" title="${report.id}">${this.prepareId(report.id)}</a></td>
                             <td class="xs-hidden"><a href="#/tls-reports?org=${encodeURIComponent(report.org)}">${report.org}</a></td>
                             <td class="sm-hidden">${this.renderDomains(report.domains)}</td>

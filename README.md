@@ -40,6 +40,7 @@ You can find more screenshots [here](screenshots/screenshots.md).
 - [x] Viewing filtered lists of reports
 - [x] Domain filter for report lists and mail sources
 - [x] List reports by source IP or source IP DNS name
+- [x] Filter mails and reports by time span or custom date range
 - [x] Viewing of individual reports
 - [x] Export reports as XML or JSON documents
 - [x] List all mails in the IMAP inbox

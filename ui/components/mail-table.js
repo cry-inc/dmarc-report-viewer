@@ -1,5 +1,6 @@
 import { LitElement, html } from "lit";
 import { globalStyle } from "../style.js";
+import { newDayClass } from "../utils.js";
 
 export class MailTable extends LitElement {
     static styles = [globalStyle];
@@ -80,8 +81,8 @@ export class MailTable extends LitElement {
                     <th class="lg-hidden help" title="Duplicated reports found in Mail?">Duplicates</th>
                     <th class="xs-hidden help" title="Did the mail cause parsing errors?">Errors</th>
                 </tr>
-                ${this.mails.length !== 0 ? this.mails.map((mail) =>
-                    html`<tr> 
+                ${this.mails.length !== 0 ? this.mails.map((mail, index) =>
+                    html`<tr class="${newDayClass(this.mails, index, m => m.date * 1000)}">
                         <td><a href="#/mails/${mail.id}">${this.prepareSubject(mail.subject)}</a></td>
                         <td class="sm-hidden"><a href="#/mails?sender=${encodeURIComponent(mail.sender)}">${mail.sender}</a></td>
                         <td class="md-hidden">${new Date(mail.date * 1000).toLocaleString()}</td>

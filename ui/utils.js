@@ -22,6 +22,13 @@ export function decodeParam(value) {
     }
 }
 
+// Returns the CSS class for table rows that start a new day compared to the row before
+export function newDayClass(items, index, getDate) {
+    if (index === 0) return "";
+    const day = (item) => new Date(getDate(item)).toDateString();
+    return day(items[index]) !== day(items[index - 1]) ? "new-day" : "";
+}
+
 // Converts the time filter params (ts, from, to) to query params for the backend
 export function timeQueryParams(params) {
     const query = [];

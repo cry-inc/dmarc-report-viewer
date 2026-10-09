@@ -1,3 +1,4 @@
+use super::in_date_range;
 use crate::state::AppState;
 use crate::tls::PolicyType;
 use crate::tls::Report;
@@ -83,6 +84,12 @@ pub struct ReportFilters {
     domain: Option<String>,
     org: Option<String>,
     ip: Option<String>,
+
+    /// UNIX timestamp in seconds, everything that ended before will be excluded
+    date_from: Option<i64>,
+
+    /// UNIX timestamp in seconds, everything that started after will be excluded
+    date_to: Option<i64>,
 }
 
 impl ReportFilters {
@@ -160,6 +167,14 @@ pub async fn list_handler(
             } else {
                 true
             }
+        })
+        .filter(|(_, rwi)| {
+            in_date_range(
+                rwi.report.date_range.start_datetime.timestamp(),
+                rwi.report.date_range.end_datetime.timestamp(),
+                filters.date_from,
+                filters.date_to,
+            )
         })
         .map(|(hash, rwi)| ReportHeader::from_report(hash, &rwi.report))
         .filter(|rh| {

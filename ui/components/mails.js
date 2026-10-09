@@ -1,5 +1,6 @@
 import { LitElement, html } from "lit";
 import { globalStyle } from "../style.js";
+import { timeQueryParams } from "../utils.js";
 
 export class Mails extends LitElement {
     static styles = [globalStyle];
@@ -23,7 +24,7 @@ export class Mails extends LitElement {
     }
 
     async updateMails() {
-        const queryParams = [];
+        const queryParams = timeQueryParams(this.params);
         if (this.params.oversized === "true" || this.params.oversized === "false") {
             queryParams.push("oversized=" + this.params.oversized);
         }
@@ -62,6 +63,9 @@ export class Mails extends LitElement {
                          <a class="button" href="#/mails?duplicates=true">With Duplicates</a>
                          <a class="button" href="#/mails?errors=true">Parsing Errors</a>`
             }
+                <label>Time Span:
+                    <drv-time-filter route="mails" .params="${this.params}"></drv-time-filter>
+                </label>
             </div>
             <drv-mail-table .mails="${this.mails}"></drv-mail-table>
         `;

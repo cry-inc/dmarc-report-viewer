@@ -1,6 +1,6 @@
 import { LitElement, html } from "lit";
 import { globalStyle } from "../style.js";
-import { decodeParam, navigate } from "../utils.js";
+import { decodeParam, navigate, timeQueryParams } from "../utils.js";
 
 export class DmarcReports extends LitElement {
     static styles = [globalStyle];
@@ -41,7 +41,7 @@ export class DmarcReports extends LitElement {
     }
 
     async updateReports() {
-        const urlParams = [];
+        const urlParams = timeQueryParams(this.params);
         if (this.params.flagged === "true" || this.params.flagged === "false") {
             urlParams.push("flagged=" + this.params.flagged);
         }
@@ -90,6 +90,9 @@ export class DmarcReports extends LitElement {
                     `
                 }
                 <drv-domain-filter route="dmarc-reports" .params="${this.params}" .domains="${this.domains}"></drv-domain-filter>
+                <label>Time Span:
+                    <drv-time-filter route="dmarc-reports" .params="${this.params}"></drv-time-filter>
+                </label>
                 <label>Source IP:
                     <input type="text" size="25" placeholder="e.g. 192.0.2.1" .value="${decodeParam(this.params.ip)}" @change="${this.onIpChange}">
                 </label>

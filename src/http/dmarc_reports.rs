@@ -1,3 +1,4 @@
+use super::in_date_range;
 use crate::dmarc::DkimResultType;
 use crate::dmarc::DmarcResultType;
 use crate::dmarc::Report;
@@ -108,6 +109,12 @@ pub struct ReportFilters {
 
     /// Part of the DNS name of a source IP, case insensitive
     dns: Option<String>,
+
+    /// UNIX timestamp in seconds, everything that ended before will be excluded
+    date_from: Option<i64>,
+
+    /// UNIX timestamp in seconds, everything that started after will be excluded
+    date_to: Option<i64>,
 }
 
 impl ReportFilters {
@@ -218,6 +225,15 @@ pub async fn list_handler(
             } else {
                 true
             }
+        })
+        .filter(|(_, rwi)| {
+            let date_range = &rwi.report.report_metadata.date_range;
+            in_date_range(
+                date_range.begin as i64,
+                date_range.end as i64,
+                filters.date_from,
+                filters.date_to,
+            )
         })
         .filter(|(_, rwi)| {
             if let Some(ips) = &dns_ips {
