@@ -7,6 +7,7 @@ export class Sources extends LitElement {
     static properties = {
         params: { type: Object },
         sources: { type: Array },
+        domains: { type: Array },
     };
 
     constructor() {
@@ -14,6 +15,7 @@ export class Sources extends LitElement {
         this.params = {};
         this.sources = [];
         this.filtered = false;
+        this.domains = [];
     }
 
     updated(changedProperties) {
@@ -26,6 +28,7 @@ export class Sources extends LitElement {
         const sourcesResponse = await fetch("sources");
         this.filtered = false;
         this.sources = await sourcesResponse.json();
+        this.domains = [...new Set(this.sources.map(s => s.domain.toLowerCase()))].sort();
         if (this.params.domain) {
             const lcDomain = this.params.domain.toLowerCase();
             this.sources = this.sources.filter(s => s.domain.toLowerCase() === lcDomain);
@@ -138,6 +141,7 @@ export class Sources extends LitElement {
                     <a class="ml button" href="#/sources?type=Dmarc">Only Sources from DMARC Reports</a>
                     <a class="ml button" href="#/sources?type=Tls">Only Sources from SMTP TLS Reports</a>`
                 }
+                <drv-domain-filter route="sources" .params="${this.params}" .domains="${this.domains}"></drv-domain-filter>
             </div>
             <table>
                 <tr>

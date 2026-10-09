@@ -7,6 +7,7 @@ export class TlsReports extends LitElement {
     static properties = {
         params: { type: Object },
         reports: { type: Array },
+        domains: { type: Array },
     };
 
     constructor() {
@@ -14,6 +15,14 @@ export class TlsReports extends LitElement {
         this.params = {};
         this.reports = [];
         this.filtered = false;
+        this.domains = [];
+        this.getDomains();
+    }
+
+    async getDomains() {
+        const response = await fetch("summary");
+        const summary = await response.json();
+        this.domains = Object.keys(summary.tls.domains).sort();
     }
 
     updated(changedProperties) {
@@ -64,6 +73,7 @@ export class TlsReports extends LitElement {
                         <a class="button mr-5" href="#/tls-reports?flagged_tlsa=true">Reports with TLSA Problems</a>
                     `
                 }
+                <drv-domain-filter route="tls-reports" .params="${this.params}" .domains="${this.domains}"></drv-domain-filter>
             </div>
             <drv-tls-report-table .reports="${this.reports}"></drv-tls-report-table>
         `;

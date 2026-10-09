@@ -7,6 +7,7 @@ export class DmarcReports extends LitElement {
     static properties = {
         params: { type: Object },
         reports: { type: Array },
+        domains: { type: Array },
     };
 
     constructor() {
@@ -14,6 +15,14 @@ export class DmarcReports extends LitElement {
         this.params = {};
         this.reports = [];
         this.filtered = false;
+        this.domains = [];
+        this.getDomains();
+    }
+
+    async getDomains() {
+        const response = await fetch("summary");
+        const summary = await response.json();
+        this.domains = Object.keys(summary.dmarc.domains).sort();
     }
 
     updated(changedProperties) {
@@ -68,6 +77,7 @@ export class DmarcReports extends LitElement {
                         <a class="button" href="#/dmarc-reports?flagged_dmarc=true">Reports with DMARC Problems</a>
                     `
                 }
+                <drv-domain-filter route="dmarc-reports" .params="${this.params}" .domains="${this.domains}"></drv-domain-filter>
             </div>
             <drv-dmarc-report-table .reports="${this.reports}"></drv-dmarc-report-table>
         `;
