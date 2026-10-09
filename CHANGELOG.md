@@ -2,14 +2,6 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
-* Feature: Custom date range for the dashboard summary charts (see issue #32).
-* Feature: Domain filter for DMARC reports, SMTP TLS reports and mail sources (see issue #52).
-* Feature: Source IP filter field for reports and clearer report links in the mail sources (see issue #56).
-* Feature: Filter DMARC reports by the DNS name of the source IPs (see issue #81).
-* Feature: Time span and date range filter for mails and reports, tables show a line between days (see issue #82).
-* Fix: An invalid IP in the report filters now matches no reports instead of all reports.
-
 ## [2.6.0] - 2026-07-08
 * Security: Limit maximum uncompressed file size to prevent unbounded memory use (remote DoS).
 * Security: Hardened basic auth username and password checks against timing attacks.
