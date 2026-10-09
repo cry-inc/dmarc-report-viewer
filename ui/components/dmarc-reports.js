@@ -24,6 +24,10 @@ export class DmarcReports extends LitElement {
         navigate("dmarc-reports", this.params, { ip: encodeURIComponent(event.target.value.trim()) });
     }
 
+    onDnsChange(event) {
+        navigate("dmarc-reports", this.params, { dns: encodeURIComponent(event.target.value.trim()) });
+    }
+
     async getDomains() {
         const response = await fetch("summary");
         const summary = await response.json();
@@ -59,6 +63,9 @@ export class DmarcReports extends LitElement {
         if (this.params.ip) {
             urlParams.push("ip=" + encodeURIComponent(this.params.ip));
         }
+        if (this.params.dns) {
+            urlParams.push("dns=" + encodeURIComponent(this.params.dns));
+        }
         let url = "dmarc-reports";
         if (urlParams.length > 0) {
             url += "?" + urlParams.join("&");
@@ -85,6 +92,9 @@ export class DmarcReports extends LitElement {
                 <drv-domain-filter route="dmarc-reports" .params="${this.params}" .domains="${this.domains}"></drv-domain-filter>
                 <label>Source IP:
                     <input type="text" size="25" placeholder="e.g. 192.0.2.1" .value="${decodeParam(this.params.ip)}" @change="${this.onIpChange}">
+                </label>
+                <label><span class="help" title="Shows reports with a source IP that has a DNS name containing this text. The first search can take a while.">Source IP DNS</span>:
+                    <input type="text" size="25" placeholder="e.g. example.com" .value="${decodeParam(this.params.dns)}" @change="${this.onDnsChange}">
                 </label>
             </div>
             <drv-dmarc-report-table .reports="${this.reports}"></drv-dmarc-report-table>

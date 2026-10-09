@@ -10,8 +10,10 @@ use axum::extract::State;
 use axum::http::StatusCode;
 use axum::http::header;
 use axum::response::IntoResponse;
+use futures::StreamExt;
 use serde::Deserialize;
 use serde::Serialize;
+use std::collections::HashSet;
 use std::net::IpAddr;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -103,6 +105,9 @@ pub struct ReportFilters {
     domain: Option<String>,
     org: Option<String>,
     ip: Option<String>,
+
+    /// Part of the DNS name of a source IP, case insensitive
+    dns: Option<String>,
 }
 
 impl ReportFilters {
@@ -122,7 +127,44 @@ impl ReportFilters {
             .as_ref()
             .and_then(|i| urlencoding::decode(i).ok())
             .map(|i| i.to_string());
+        self.dns = self
+            .dns
+            .as_ref()
+            .and_then(|d| urlencoding::decode(d).ok())
+            .map(|d| d.trim().to_lowercase())
+            .filter(|d| !d.is_empty());
     }
+}
+
+/// Returns all source IPs from the DMARC reports with a DNS name that contains the filter.
+/// IPs without DNS name or with failed DNS lookups never match.
+async fn source_ips_by_dns(state: &Arc<Mutex<AppState>>, dns_filter: &str) -> HashSet<IpAddr> {
+    // Limits the number of DNS queries that are sent at the same time
+    const MAX_PARALLEL_QUERIES: usize = 100;
+
+    // Do not keep the state locked while waiting for the DNS queries
+    let (dns_client, ips) = {
+        let locked = state.lock().await;
+        let ips: HashSet<IpAddr> = locked
+            .dmarc_reports
+            .values()
+            .flat_map(|rwi| rwi.report.record.iter().map(|r| r.row.source_ip))
+            .collect();
+        (locked.dns_client.clone(), ips)
+    };
+
+    futures::stream::iter(ips)
+        .map(|ip| {
+            let dns_client = dns_client.clone();
+            async move { (ip, dns_client.host_from_ip(ip).await) }
+        })
+        .buffer_unordered(MAX_PARALLEL_QUERIES)
+        .filter_map(|(ip, result)| async move {
+            let host = result.ok().flatten()?;
+            host.to_lowercase().contains(dns_filter).then_some(ip)
+        })
+        .collect()
+        .await
 }
 
 pub async fn list_handler(
@@ -137,6 +179,12 @@ pub async fn list_handler(
         .ip
         .as_deref()
         .map(|s| IpAddr::from_str(s.trim()).ok());
+
+    // Find the source IPs for the DNS filter before the state is locked for the reports
+    let dns_ips = match &filters.dns {
+        Some(dns) => Some(source_ips_by_dns(&state, dns).await),
+        None => None,
+    };
 
     let reports: Vec<ReportHeader> = state
         .lock()
@@ -167,6 +215,16 @@ pub async fn list_handler(
         .filter(|(_, rwi)| {
             if let Some(ip) = &ip_filter {
                 ip.is_some_and(|ip| rwi.report.record.iter().any(|r| r.row.source_ip == ip))
+            } else {
+                true
+            }
+        })
+        .filter(|(_, rwi)| {
+            if let Some(ips) = &dns_ips {
+                rwi.report
+                    .record
+                    .iter()
+                    .any(|r| ips.contains(&r.row.source_ip))
             } else {
                 true
             }
