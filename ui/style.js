@@ -66,6 +66,10 @@ export const globalStyle = css`
         padding-bottom: 5px;
     }
 
+    tr.new-day td {
+        border-top: 2px solid #495057;
+    }
+
     tr:hover {
         background-color: #f4f4f4;
     }

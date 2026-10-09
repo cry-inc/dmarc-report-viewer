@@ -1,10 +1,11 @@
+use super::in_date_range;
 use crate::dmarc::{DkimResultType, DmarcResultType, SpfResultType};
 use crate::state::{AppState, DmarcReportWithMailId, TlsReportWithMailId};
 use crate::tls::{FailureResultType, PolicyType, TlsResultType};
 use axum::Json;
 use axum::extract::{Query, State};
 use axum::response::IntoResponse;
-use chrono::{Duration, Utc};
+use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashMap};
 use std::sync::Arc;
@@ -16,6 +17,14 @@ pub struct SummaryFilters {
     /// Everything older will be excluded.
     /// None or a value of zero means the filter is disabled!
     time_span: Option<u64>,
+
+    /// UNIX timestamp in seconds, reports that ended before will be excluded.
+    /// None means the filter is disabled!
+    date_from: Option<i64>,
+
+    /// UNIX timestamp in seconds, reports that started after will be excluded.
+    /// None means the filter is disabled!
+    date_to: Option<i64>,
 
     /// Domain to be filtered. Other domains will be ignored.
     /// None means the filter is disabled!
@@ -38,11 +47,15 @@ pub async fn handler(
 ) -> impl IntoResponse {
     filters.url_decode();
     let guard = state.lock().await;
-    let mut time_span = None;
+    let mut date_from = filters.date_from;
     if let Some(hours) = filters.time_span
         && hours > 0
     {
-        time_span = Some(Duration::hours(hours as i64));
+        let seconds = i64::try_from(hours)
+            .unwrap_or(i64::MAX)
+            .saturating_mul(3600);
+        let threshold = Utc::now().timestamp().saturating_sub(seconds);
+        date_from = Some(date_from.map_or(threshold, |from| from.max(threshold)));
     }
     let summary = Summary::new(
         guard.mails.len(),
@@ -52,7 +65,8 @@ pub async fn handler(
         },
         guard.last_update,
         guard.next_update,
-        time_span,
+        date_from,
+        filters.date_to,
         filters.domain.clone(),
     );
     Json(summary)
@@ -141,7 +155,8 @@ impl Summary {
         reports: Reports,
         last_update: Option<u64>,
         next_update: Option<u64>,
-        time_span: Option<Duration>,
+        date_from: Option<i64>,
+        date_to: Option<i64>,
         domain_filter: Option<String>,
     ) -> Self {
         let mut dmarc = DmarcSummary {
@@ -154,13 +169,15 @@ impl Summary {
             ..Default::default()
         };
 
-        let threshold = time_span.map(|d| (Utc::now() - d).timestamp() as u64);
-        let threshold_datetime = time_span.map(|d| Utc::now() - d);
         let domain_filter = domain_filter.map(|d| d.to_lowercase());
         for DmarcReportWithMailId { report, .. } in reports.dmarc.values() {
-            if let Some(threshold) = threshold
-                && report.report_metadata.date_range.end < threshold
-            {
+            let date_range = &report.report_metadata.date_range;
+            if !in_date_range(
+                date_range.begin as i64,
+                date_range.end as i64,
+                date_from,
+                date_to,
+            ) {
                 continue;
             }
             if let Some(df) = &domain_filter
@@ -194,9 +211,12 @@ impl Summary {
             }
         }
         for TlsReportWithMailId { report, .. } in reports.tls.values() {
-            if let Some(threshold_datetime) = threshold_datetime
-                && report.date_range.end_datetime < threshold_datetime
-            {
+            if !in_date_range(
+                report.date_range.start_datetime.timestamp(),
+                report.date_range.end_datetime.timestamp(),
+                date_from,
+                date_to,
+            ) {
                 continue;
             }
             if let Some(df) = &domain_filter

@@ -1,5 +1,6 @@
 import { LitElement, html } from "lit";
 import { globalStyle } from "../style.js";
+import { newDayClass } from "../utils.js";
 
 export class DmarcReportTable extends LitElement {
     static styles = [globalStyle];
@@ -48,8 +49,8 @@ export class DmarcReportTable extends LitElement {
                     <th class="md-hidden">Begin</th>
                     <th class="md-hidden">End</th>
                 </tr>
-                ${this.reports.length !== 0 ? this.reports.map((report) =>
-                    html`<tr>
+                ${this.reports.length !== 0 ? this.reports.map((report, index) =>
+                    html`<tr class="${newDayClass(this.reports, index, r => r.date_begin * 1000)}">
                             <td><a href="#/dmarc-reports/${report.hash}" title="${report.id}">${this.prepareId(report.id)}</a></td>
                             <td class="xs-hidden"><a href="#/dmarc-reports?org=${encodeURIComponent(report.org)}">${report.org}</a></td>
                             <td class="sm-hidden"><a href="#/dmarc-reports?domain=${encodeURIComponent(report.domain)}">${report.domain}</a></td>

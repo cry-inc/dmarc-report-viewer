@@ -1,5 +1,6 @@
 import { LitElement, html, css } from "lit";
 import { globalStyle } from "../style.js";
+import { timeQueryParams } from "../utils.js";
 
 export class Dashboard extends LitElement {
     static styles = [globalStyle, css`
@@ -79,16 +80,6 @@ export class Dashboard extends LitElement {
         }
     }
 
-    onTimeSpanChange(event) {
-        const value = event.target.value;
-        if (value && value !== "0") {
-            this.params.ts = value;
-        } else {
-            delete this.params.ts;
-        }
-        this.updateByParams();
-    }
-
     onDomainChange(event) {
         const value = event.target.value;
         if (value && value !== "all") {
@@ -137,10 +128,7 @@ export class Dashboard extends LitElement {
     }
 
     async updateCharts() {
-        const queryParams = [];
-        if (this.params.ts && this.params.ts !== "0") {
-            queryParams.push("time_span=" + this.params.ts);
-        }
+        const queryParams = timeQueryParams(this.params);
         if (this.params.domain && this.params.domain !== "all") {
             queryParams.push("domain=" + this.params.domain);
         }
@@ -366,14 +354,7 @@ export class Dashboard extends LitElement {
             <div class="module stats">
                 <span>
                     Time Span for Summary Charts:
-                    <select @change="${this.onTimeSpanChange}">
-                        <option value="0">Everything</option>
-                        <option ?selected=${this.params.ts === "72"} value="72">Last Three Days</option>
-                        <option ?selected=${this.params.ts === "168"} value="168">Last Week</option>
-                        <option ?selected=${this.params.ts === "744"} value="744">Last Month</option>
-                        <option ?selected=${this.params.ts === "4464"} value="4464">Last Six Months</option>
-                        <option ?selected=${this.params.ts === "8760"} value="8760">Last Year</option>
-                    </select>
+                    <drv-time-filter route="dashboard" .params="${this.params}"></drv-time-filter>
                 </span>
 
                 <span>

@@ -35,9 +35,12 @@ You can find more screenshots [here](screenshots/screenshots.md).
 - [x] Easy configuration via command line arguments or ENV variables
 - [x] Configurable maximum size of mails (to skip oversized mails)
 - [x] Summary with charts for domains, organizations and passed/failed checks
-- [x] Filter charts summary by domain or time span
+- [x] Filter charts summary by domain, time span or custom date range
 - [x] Viewing of ranked sources/IPs by domain and report type
 - [x] Viewing filtered lists of reports
+- [x] Domain filter for report lists and mail sources
+- [x] List reports by source IP or source IP DNS name
+- [x] Filter mails and reports by time span or custom date range
 - [x] Viewing of individual reports
 - [x] Export reports as XML or JSON documents
 - [x] List all mails in the IMAP inbox

@@ -1,3 +1,4 @@
+use super::in_date_range;
 use crate::state::AppState;
 use crate::tls::PolicyType;
 use crate::tls::Report;
@@ -83,6 +84,12 @@ pub struct ReportFilters {
     domain: Option<String>,
     org: Option<String>,
     ip: Option<String>,
+
+    /// UNIX timestamp in seconds, everything that ended before will be excluded
+    date_from: Option<i64>,
+
+    /// UNIX timestamp in seconds, everything that started after will be excluded
+    date_to: Option<i64>,
 }
 
 impl ReportFilters {
@@ -112,8 +119,11 @@ pub async fn list_handler(
     // Remove URL encoding from strings in filters
     filters.url_decode();
 
-    // Parse IP once to speed up filters
-    let ip_filter = filters.ip.as_deref().and_then(|s| IpAddr::from_str(s).ok());
+    // Parse IP once to speed up filters, an invalid IP matches no reports
+    let ip_filter = filters
+        .ip
+        .as_deref()
+        .map(|s| IpAddr::from_str(s.trim()).ok());
 
     let reports: Vec<ReportHeader> = state
         .lock()
@@ -146,16 +156,25 @@ pub async fn list_handler(
         })
         .filter(|(_, rwi)| {
             if let Some(ip) = &ip_filter {
-                rwi.report.policies.iter().any(|p| {
-                    if let Some(failures) = &p.failure_details {
-                        failures.iter().any(|f| f.sending_mta_ip == Some(*ip))
-                    } else {
-                        false
-                    }
-                })
+                ip.is_some()
+                    && rwi.report.policies.iter().any(|p| {
+                        if let Some(failures) = &p.failure_details {
+                            failures.iter().any(|f| f.sending_mta_ip == *ip)
+                        } else {
+                            false
+                        }
+                    })
             } else {
                 true
             }
+        })
+        .filter(|(_, rwi)| {
+            in_date_range(
+                rwi.report.date_range.start_datetime.timestamp(),
+                rwi.report.date_range.end_datetime.timestamp(),
+                filters.date_from,
+                filters.date_to,
+            )
         })
         .map(|(hash, rwi)| ReportHeader::from_report(hash, &rwi.report))
         .filter(|rh| {

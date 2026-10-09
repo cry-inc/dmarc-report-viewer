@@ -1,3 +1,4 @@
+use super::in_date_range;
 use crate::mail::Mail;
 use crate::state::AppState;
 use axum::extract::State;
@@ -67,6 +68,12 @@ pub struct MailFilters {
     oversized: Option<bool>,
     errors: Option<bool>,
     duplicates: Option<bool>,
+
+    /// UNIX timestamp in seconds, everything that ended before will be excluded
+    date_from: Option<i64>,
+
+    /// UNIX timestamp in seconds, everything that started after will be excluded
+    date_to: Option<i64>,
 }
 
 impl MailFilters {
@@ -129,6 +136,7 @@ pub async fn list_handler(
                 true
             }
         })
+        .filter(|m| in_date_range(m.date, m.date, filters.date_from, filters.date_to))
         .collect();
     let mails_json = serde_json::to_string(&mails).expect("Failed to serialize JSON");
     (
