@@ -132,8 +132,11 @@ pub async fn list_handler(
     // Remove URL encoding from strings in filters
     filters.url_decode();
 
-    // Parse IP once to speed up filters
-    let ip_filter = filters.ip.as_deref().and_then(|s| IpAddr::from_str(s).ok());
+    // Parse IP once to speed up filters, an invalid IP matches no reports
+    let ip_filter = filters
+        .ip
+        .as_deref()
+        .map(|s| IpAddr::from_str(s.trim()).ok());
 
     let reports: Vec<ReportHeader> = state
         .lock()
@@ -163,7 +166,7 @@ pub async fn list_handler(
         })
         .filter(|(_, rwi)| {
             if let Some(ip) = &ip_filter {
-                rwi.report.record.iter().any(|r| r.row.source_ip == *ip)
+                ip.is_some_and(|ip| rwi.report.record.iter().any(|r| r.row.source_ip == ip))
             } else {
                 true
             }

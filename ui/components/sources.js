@@ -107,16 +107,18 @@ export class Sources extends LitElement {
         })
     }
 
-    prepareTypesBadges(source) {
-        // Sort to always have the same badge order
+    prepareReportLinks(source) {
+        // Sort to always have the same link order
         source.types.sort();
 
-        // Convert to nice bades with tool tips
+        const ip = encodeURIComponent(source.ip);
+        const dmarcIssues = source.issues.some(i => ["SpfPolicy", "SpfAuth", "DkimPolicy", "DkimAuth"].includes(i));
         return source.types.map(type => {
             if (type === "Tls") {
-                return html`<a class="button sm help" href="#/tls-reports?ip=${encodeURIComponent(source.ip)}" title="Show all SMTP TLS reports for this IP">SMTP TLS</a> `;
+                return html`<a class="button sm" href="#/tls-reports?ip=${ip}" title="Show all SMTP TLS reports for this IP">SMTP TLS</a> `;
             } else if (type === "Dmarc") {
-                return html`<a class="button sm help" href="#/dmarc-reports?ip=${encodeURIComponent(source.ip)}" title="Show all DMARC reports for this IP">DMARC</a> `;
+                return html`<a class="button sm" href="#/dmarc-reports?ip=${ip}" title="Show all DMARC reports for this IP">DMARC</a> ${dmarcIssues ?
+                    html`<a class="button sm" href="#/dmarc-reports?flagged=true&ip=${ip}" title="Show only DMARC reports with problems for this IP">DMARC Problems</a> ` : ""}`;
             }
         })
     }
@@ -149,7 +151,7 @@ export class Sources extends LitElement {
                     <th class="md-hidden">DNS Name</th>
                     <th class="help" title="Number of records from reports for this IP">Count</th>
                     <th class="sm-hidden">Domain</th>
-                    <th class="sm-hidden help" title="Report Types">Types</th>
+                    <th class="sm-hidden help" title="Click to list the reports for this IP">Reports</th>
                     <th class="xs-hidden help" title="Issues detected in reports from this IP">Issues</th>
                 </tr>
                 ${this.sources.length !== 0 ? this.sources.map((source) =>
@@ -158,7 +160,7 @@ export class Sources extends LitElement {
                         <td class="md-hidden">${this.prepareDnsName(source.dns)}</td>
                         <td>${source.count}</td>
                         <td class="sm-hidden"><a href="#/sources?domain=${encodeURIComponent(source.domain)}">${source.domain}</a></td>
-                        <td class="sm-hidden">${this.prepareTypesBadges(source)}</td>
+                        <td class="sm-hidden">${this.prepareReportLinks(source)}</td>
                         <td class="xs-hidden">${this.prepareIssueBadges(source.issues)}</td>
                     </tr>`
                 ) : html`<tr>

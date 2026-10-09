@@ -13,6 +13,15 @@ export function navigate(route, params, changes) {
     document.location.href = "#/" + route + (query ? "?" + query : "");
 }
 
+// Decodes an URL encoded param for display, invalid encodings are returned unchanged
+export function decodeParam(value) {
+    try {
+        return decodeURIComponent(value ?? "");
+    } catch {
+        return value;
+    }
+}
+
 // Converts the time filter params (ts, from, to) to query params for the backend
 export function timeQueryParams(params) {
     const query = [];

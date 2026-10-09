@@ -1,5 +1,6 @@
 import { LitElement, html } from "lit";
 import { globalStyle } from "../style.js";
+import { decodeParam, navigate } from "../utils.js";
 
 export class TlsReports extends LitElement {
     static styles = [globalStyle];
@@ -17,6 +18,10 @@ export class TlsReports extends LitElement {
         this.filtered = false;
         this.domains = [];
         this.getDomains();
+    }
+
+    onIpChange(event) {
+        navigate("tls-reports", this.params, { ip: encodeURIComponent(event.target.value.trim()) });
     }
 
     async getDomains() {
@@ -74,6 +79,9 @@ export class TlsReports extends LitElement {
                     `
                 }
                 <drv-domain-filter route="tls-reports" .params="${this.params}" .domains="${this.domains}"></drv-domain-filter>
+                <label>Source IP:
+                    <input type="text" size="25" placeholder="e.g. 192.0.2.1" .value="${decodeParam(this.params.ip)}" @change="${this.onIpChange}">
+                </label>
             </div>
             <drv-tls-report-table .reports="${this.reports}"></drv-tls-report-table>
         `;
