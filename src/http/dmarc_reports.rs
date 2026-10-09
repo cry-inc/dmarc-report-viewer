@@ -66,8 +66,11 @@ impl ReportHeader {
             {
                 spf_flagged = true;
             }
+            // One passing signature is enough, mails can carry multiple
+            // signatures (e.g. ed25519 + RSA) and receivers may not support all.
             if let Some(dkim) = &record.auth_results.dkim
-                && dkim.iter().any(|x| x.result != DkimResultType::Pass)
+                && !dkim.is_empty()
+                && dkim.iter().all(|x| x.result != DkimResultType::Pass)
             {
                 dkim_flagged = true;
             }
@@ -267,5 +270,49 @@ pub async fn xml_handler(
             [(header::CONTENT_TYPE, "text/plain")],
             String::from("Cannot find report"),
         )
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::dmarc::DkimAuthResultType;
+    use std::fs::File;
+    use std::io::BufReader;
+
+    fn dkim_flag(results: &[DkimResultType]) -> bool {
+        let reader = BufReader::new(File::open("testdata/dmarc-reports/acme.xml").unwrap());
+        let mut report: Report = quick_xml::de::from_reader(reader).unwrap();
+        for record in &mut report.record {
+            record.row.policy_evaluated.dkim = Some(DmarcResultType::Pass);
+            record.auth_results.dkim = Some(
+                results
+                    .iter()
+                    .map(|result| DkimAuthResultType {
+                        domain: String::from("example.com"),
+                        selector: None,
+                        result: result.clone(),
+                        human_result: None,
+                    })
+                    .collect(),
+            );
+        }
+        ReportHeader::flags(&report).0
+    }
+
+    #[test]
+    fn dkim_auth_flag_needs_only_one_pass() {
+        // Dual signing (e.g. ed25519 + RSA): one passing signature is enough
+        assert!(!dkim_flag(&[
+            DkimResultType::PermanentError,
+            DkimResultType::Pass
+        ]));
+        assert!(!dkim_flag(&[DkimResultType::Pass]));
+        assert!(!dkim_flag(&[]));
+        assert!(dkim_flag(&[DkimResultType::Fail]));
+        assert!(dkim_flag(&[
+            DkimResultType::Fail,
+            DkimResultType::PermanentError
+        ]));
     }
 }
