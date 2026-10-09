@@ -1,4 +1,4 @@
-use crate::config::Configuration;
+use crate::config::{Configuration, ImapAccount};
 use crate::hasher::create_hash;
 use crate::mail::{Mail, decode_subject};
 use anyhow::{Context, Result, anyhow, ensure};
@@ -25,14 +25,15 @@ type Session = async_imap::Session<Either<TcpStream, TlsStream<TcpStream>>>;
 
 pub async fn get_mails(
     config: &Configuration,
+    account: &ImapAccount,
     imap_folder: &String,
 ) -> Result<HashMap<String, Mail>> {
-    let client = create_client(config)
+    let client = create_client(config, account)
         .await
         .context("Failed to create IMAP client")?;
 
     let mut session = client
-        .login(&config.imap_user, &config.imap_password)
+        .login(&account.user, &account.password)
         .await
         .map_err(|e| e.0)
         .context("Failed to log in and create IMAP session")?;
@@ -48,7 +49,7 @@ pub async fn get_mails(
 
     let mut mails = HashMap::new();
     for folder in &folders {
-        let folder_mails = get_mails_from_folder(&mut session, config, folder)
+        let folder_mails = get_mails_from_folder(&mut session, config, account, folder)
             .await
             .context(format!("Failed to get mails from IMAP folder {folder}"))?;
         mails.extend(folder_mails);
@@ -139,6 +140,7 @@ fn build_list_pattern(folder: &str, delimiter: &str, depth: usize) -> String {
 async fn get_mails_from_folder(
     session: &mut Session,
     config: &Configuration,
+    account: &ImapAccount,
     imap_folder: &str,
 ) -> Result<HashMap<String, Mail>> {
     let mailbox = session
@@ -163,13 +165,8 @@ async fn get_mails_from_folder(
         while let Some(fetch_result) = stream.next().await {
             let fetched =
                 fetch_result.context("Failed to get next mail header from IMAP fetch response")?;
-            let mail = extract_metadata(
-                &fetched,
-                config.max_mail_size,
-                &config.imap_user,
-                imap_folder,
-            )
-            .context("Unable to extract mail metadata")?;
+            let mail = extract_metadata(&fetched, config.max_mail_size, account, imap_folder)
+                .context("Unable to extract mail metadata")?;
             mails.insert(mail.id.clone(), mail);
         }
         info!("Downloaded metadata of {} mails", mails.len());
@@ -280,8 +277,9 @@ async fn get_mails_from_folder(
 /// Creates an unecrypted or encrypted IMAP client
 async fn create_client(
     config: &Configuration,
+    account: &ImapAccount,
 ) -> Result<Client<Either<TcpStream, TlsStream<TcpStream>>>> {
-    let host_port = format!("{}:{}", config.imap_host.as_str(), config.imap_port);
+    let host_port = format!("{}:{}", account.host.as_str(), account.port);
     let addrs = host_port
         .to_socket_addrs()
         .context("Failed to convert host name and port to socket address")?
@@ -301,7 +299,7 @@ async fn create_client(
         .context("Failed to create TCP stream to IMAP server")?;
     debug!("Created async TCP stream");
 
-    let stream = if config.imap_starttls {
+    let stream = if account.starttls {
         debug!("Sending STARTTLS command over plain connection...");
         let mut plain_client = Client::new(tcp_stream);
         plain_client
@@ -315,16 +313,16 @@ async fn create_client(
             .await
             .context("Failed to run STARTTLS command")?;
         debug!("Requested STARTTLS, upgrading...");
-        let tls_stream = create_tls_stream(config, plain_client.into_inner())
+        let tls_stream = create_tls_stream(account, plain_client.into_inner())
             .await
             .context("Failed to upgrade to TLS stream")?;
         Either::Right(tls_stream)
-    } else if config.imap_disable_tls {
+    } else if account.disable_tls {
         warn!("Using unecrypted TCP connection for IMAP client");
         Either::Left(tcp_stream)
     } else {
         debug!("Directly creating TLS stream...");
-        let tls_stream = create_tls_stream(config, tcp_stream)
+        let tls_stream = create_tls_stream(account, tcp_stream)
             .await
             .context("Failed to create TLS stream")?;
         Either::Right(tls_stream)
@@ -336,7 +334,7 @@ async fn create_client(
 }
 
 async fn create_tls_stream(
-    config: &Configuration,
+    account: &ImapAccount,
     tcp_stream: TcpStream,
 ) -> Result<TlsStream<TcpStream>> {
     let mut root_cert_store = RootCertStore::empty();
@@ -344,7 +342,7 @@ async fn create_tls_stream(
     root_cert_store.extend(certs);
     debug!("Created Root CA cert store");
 
-    if let Some(ca_certs) = &config.imap_tls_ca_certs {
+    if let Some(ca_certs) = &account.tls_ca_certs {
         info!(
             "Loading file with custom TLS CA certificates for IMAP client from {}...",
             ca_certs.display()
@@ -372,8 +370,8 @@ async fn create_tls_stream(
     let connector = TlsConnector::from(Arc::new(client_config));
     debug!("Created TLS connector");
 
-    let dns_name = ServerName::try_from(config.imap_host.clone())
-        .context("Failed to get DNS name from host")?;
+    let dns_name =
+        ServerName::try_from(account.host.clone()).context("Failed to get DNS name from host")?;
     debug!("Got DNS name: {dns_name:?}");
 
     let tls_stream = connector
@@ -385,7 +383,12 @@ async fn create_tls_stream(
     Ok(tls_stream)
 }
 
-fn extract_metadata(mail: &Fetch, max_size: usize, account: &str, folder: &str) -> Result<Mail> {
+fn extract_metadata(
+    mail: &Fetch,
+    max_size: usize,
+    account: &ImapAccount,
+    folder: &str,
+) -> Result<Mail> {
     let uid = mail.uid.context("Mail server did not provide UID")?;
     let size = mail.size.unwrap_or(0) as usize; // In case the mail server ignored our request for the size
     let env = mail
@@ -409,11 +412,23 @@ fn extract_metadata(mail: &Fetch, max_size: usize, account: &str, folder: &str) 
     );
 
     // The UID is not globally unique, so we need to add some other properties!
-    let id = create_hash(&[&uid.to_le_bytes(), account.as_bytes(), folder.as_bytes()]);
+    // Additional accounts also add the host, since the same user can exist on different servers.
+    // The first account does not, to keep its mail IDs stable.
+    let host = if account.number > 1 {
+        account.host.as_str()
+    } else {
+        ""
+    };
+    let id = create_hash(&[
+        &uid.to_le_bytes(),
+        account.user.as_bytes(),
+        folder.as_bytes(),
+        host.as_bytes(),
+    ]);
 
     Ok(Mail {
         id,
-        account: account.to_string(),
+        account: account.user.clone(),
         folder: folder.to_string(),
         body: None,
         uid,
