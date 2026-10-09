@@ -2,6 +2,7 @@ mod dmarc_reports;
 mod ips;
 mod mails;
 mod metrics;
+mod oidc;
 mod sources;
 mod static_files;
 mod summary;
@@ -9,6 +10,7 @@ mod tls_reports;
 
 use crate::config::Configuration;
 use crate::hasher::create_hash;
+use crate::http::oidc::Oidc;
 use crate::state::AppState;
 use anyhow::{Context, Result};
 use axum::Json;
@@ -35,10 +37,13 @@ use tokio::sync::Mutex;
 use tracing::{error, info, warn};
 
 pub async fn run_http_server(config: &Configuration, state: Arc<Mutex<AppState>>) -> Result<()> {
-    if config.http_server_password.is_empty() {
+    let oidc = Oidc::discover(config)
+        .await
+        .context("Failed to set up OIDC authentication")?;
+    if oidc.is_none() && config.http_server_password.is_empty() {
         warn!("Detected empty password: Basic Authentication will be disabled")
     }
-    let make_service = Router::new()
+    let router = Router::new()
         .route("/summary", get(summary::handler))
         .route("/mails", get(mails::list_handler))
         .route("/mails/{id}", get(mails::single_handler))
@@ -58,13 +63,23 @@ pub async fn run_http_server(config: &Configuration, state: Arc<Mutex<AppState>>
         .route("/build", get(build))
         .route("/metrics", get(metrics::handler))
         .route("/", get(static_files::handler)) // index.html
-        .route("/{*filepath}", get(static_files::handler)) // all other files
-        .route_layer(middleware::from_fn_with_state(
+        .route("/{*filepath}", get(static_files::handler)); // all other files
+
+    // Routes are protected by either OIDC or basic auth, never both
+    let router = match &oidc {
+        Some(oidc) => router.route_layer(middleware::from_fn_with_state(
+            oidc.clone(),
+            oidc::auth_middleware,
+        )),
+        None => router.route_layer(middleware::from_fn_with_state(
             config.clone(),
             basic_auth_middleware,
-        ))
+        )),
+    };
+    let make_service = router
         .route("/health", get(health)) // After auth middleware so its unprotected!
         .with_state(state.clone())
+        .merge(oidc.map(|oidc| oidc.router()).unwrap_or_default()) // Unprotected login routes
         .into_make_service();
 
     let binding = format!("{}:{}", config.http_server_binding, config.http_server_port);
