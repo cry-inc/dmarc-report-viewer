@@ -74,6 +74,11 @@ const STATIC_FILES: &[StaticFile] = &[
         data: include_bytes!("../../ui/components/dashboard.js"),
     },
     StaticFile {
+        http_path: "/components/time-filter.js",
+        file_path: "ui/components/time-filter.js",
+        data: include_bytes!("../../ui/components/time-filter.js"),
+    },
+    StaticFile {
         http_path: "/components/mail-table.js",
         file_path: "ui/components/mail-table.js",
         data: include_bytes!("../../ui/components/mail-table.js"),

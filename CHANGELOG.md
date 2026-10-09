@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+* Feature: Custom date range for the dashboard summary charts (see issue #32).
+
 ## [2.6.0] - 2026-07-08
 * Security: Limit maximum uncompressed file size to prevent unbounded memory use (remote DoS).
 * Security: Hardened basic auth username and password checks against timing attacks.

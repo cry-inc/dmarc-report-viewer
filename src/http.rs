@@ -258,3 +258,25 @@ async fn health() -> HeaderMap {
     headers.insert(CACHE_CONTROL, HeaderValue::from_static("no-cache"));
     headers
 }
+
+/// Checks if the period from begin to end overlaps with the optional filter limits.
+/// All values are UNIX timestamps in seconds.
+fn in_date_range(begin: i64, end: i64, from: Option<i64>, to: Option<i64>) -> bool {
+    from.is_none_or(|from| end >= from) && to.is_none_or(|to| begin <= to)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::in_date_range;
+
+    #[test]
+    fn date_range_overlap() {
+        assert!(in_date_range(10, 20, None, None));
+        assert!(in_date_range(10, 20, Some(20), None));
+        assert!(!in_date_range(10, 20, Some(21), None));
+        assert!(in_date_range(10, 20, None, Some(10)));
+        assert!(!in_date_range(10, 20, None, Some(9)));
+        assert!(in_date_range(10, 20, Some(12), Some(15)));
+        assert!(!in_date_range(10, 20, Some(30), Some(5)));
+    }
+}
