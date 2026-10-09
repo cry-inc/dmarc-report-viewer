@@ -1,6 +1,7 @@
-use crate::config::Configuration;
+use crate::config::{Configuration, ImapAccount};
 use crate::hasher::create_hash;
 use crate::imap::get_mails;
+use crate::mail::Mail;
 use crate::state::{
     AppState, DmarcReportWithMailId, FileType, ReportParsingError, TlsReportWithMailId,
 };
@@ -79,6 +80,36 @@ pub fn start_bg_task(
     })
 }
 
+/// Gets the mails from all configured folders of an IMAP account
+async fn get_account_mails(
+    config: &Configuration,
+    account: &ImapAccount,
+) -> Result<HashMap<String, Mail>> {
+    let mut mails = HashMap::new();
+    if let Some(dmarc_folder) = account.folder_dmarc.as_ref() {
+        mails.extend(
+            get_mails(config, account, dmarc_folder)
+                .await
+                .context("Failed to get mails from DMARC folder")?,
+        );
+    }
+    if let Some(tls_folder) = account.folder_tls.as_ref() {
+        mails.extend(
+            get_mails(config, account, tls_folder)
+                .await
+                .context("Failed to get mails from TLS folder")?,
+        );
+    }
+    if account.folder_dmarc.is_none() && account.folder_tls.is_none() {
+        mails.extend(
+            get_mails(config, account, &account.folder)
+                .await
+                .context("Failed to get mails")?,
+        );
+    }
+    Ok(mails)
+}
+
 /// Executes a background update and returns the IDs of all new mails
 async fn bg_update(
     config: &Configuration,
@@ -86,59 +117,43 @@ async fn bg_update(
     start: &Instant,
 ) -> Result<Vec<String>> {
     let mut mails = BTreeMap::new();
-    if let Some(dmarc_folder) = config.imap_folder_dmarc.as_ref() {
-        mails.extend(
-            get_mails(config, dmarc_folder)
-                .await
-                .context("Failed to get mails from DMARC folder")?,
-        );
-    }
-    if let Some(tls_folder) = config.imap_folder_tls.as_ref() {
-        mails.extend(
-            get_mails(config, tls_folder)
-                .await
-                .context("Failed to get mails from TLS folder")?,
-        );
-    }
-    if config.imap_folder_dmarc.is_none() && config.imap_folder_tls.is_none() {
-        mails.extend(
-            get_mails(config, &config.imap_folder)
-                .await
-                .context("Failed to get mails")?,
-        );
-    }
-
     let mut xml_files = BTreeMap::new();
     let mut json_files = BTreeMap::new();
     let mut mails_without_reports = 0;
-    for mail in &mut mails.values_mut() {
-        if mail.body.is_none() {
-            trace!(
-                "Skipping data extraction for mail with UID {} because of empty body",
-                mail.uid
-            );
-            continue;
-        }
-        match extract_report_files(mail, config) {
-            Ok(files) => {
-                if files.is_empty() {
-                    mails_without_reports += 1;
-                }
-                for file in files {
-                    match file.file_type {
-                        FileType::Xml => {
-                            xml_files.insert(file.hash.clone(), file);
-                            mail.xml_files += 1;
-                        }
-                        FileType::Json => {
-                            json_files.insert(file.hash.clone(), file);
-                            mail.json_files += 1;
+    for account in &config.imap_accounts {
+        let mut account_mails = get_account_mails(config, account)
+            .await
+            .context(format!("Failed IMAP account {}", account.number))?;
+        for mail in account_mails.values_mut() {
+            if mail.body.is_none() {
+                trace!(
+                    "Skipping data extraction for mail with UID {} because of empty body",
+                    mail.uid
+                );
+                continue;
+            }
+            match extract_report_files(mail, config, account) {
+                Ok(files) => {
+                    if files.is_empty() {
+                        mails_without_reports += 1;
+                    }
+                    for file in files {
+                        match file.file_type {
+                            FileType::Xml => {
+                                xml_files.insert(file.hash.clone(), file);
+                                mail.xml_files += 1;
+                            }
+                            FileType::Json => {
+                                json_files.insert(file.hash.clone(), file);
+                                mail.json_files += 1;
+                            }
                         }
                     }
                 }
+                Err(err) => warn!("Failed to extract report files from mail: {err:#}"),
             }
-            Err(err) => warn!("Failed to extract report files from mail: {err:#}"),
         }
+        mails.extend(account_mails);
     }
     if mails_without_reports > 0 {
         warn!("Found {mails_without_reports} mail(s) without report files");
