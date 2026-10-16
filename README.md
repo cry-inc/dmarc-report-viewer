@@ -32,6 +32,7 @@ You can find more screenshots [here](screenshots/screenshots.md).
 - [x] Updates are scheduled via simple update interval or cron expression
 - [x] Automatic HTTPS via ACME/Let's Encrypt
 - [x] Basic Auth password protection for HTTP server
+- [x] Optional login via OpenID Connect (OIDC) providers
 - [x] Easy configuration via command line arguments or ENV variables
 - [x] Configurable maximum size of mails (to skip oversized mails)
 - [x] Summary with charts for domains, organizations and passed/failed checks
@@ -138,6 +139,43 @@ Note that on Linux this will bind to both, IPv4 and IPv6 by default.
 By default the application requires you to set an password to secure access via basic HTTP authentication.
 If you want to use other access controls (e.g. via reverse proxy),
 you can disable basic authentication by setting an empty string as password.
+For logins via an OpenID Connect provider see the next section.
+
+### OIDC Authentication
+As alternative to basic HTTP authentication, you can use any OpenID Connect (OIDC) provider for the login.
+
+> **Note:** OIDC replaces basic authentication, both cannot be combined!
+> Do not set an HTTP server password when using OIDC.
+
+Register the application at your provider as confidential client with the authorization code flow and set all four settings:
+
+| ENV Variable         | Description                                                 |
+|----------------------|-------------------------------------------------------------|
+| `OIDC_ISSUER_URL`    | Issuer URL of the provider                                  |
+| `OIDC_CLIENT_ID`     | Client ID registered at the provider                        |
+| `OIDC_CLIENT_SECRET` | Client secret registered at the provider                    |
+| `OIDC_REDIRECT_URI`  | Public URL of this application followed by `/oidc/callback` |
+
+Here is an example:
+
+    sudo docker run --rm \
+      -e IMAP_HOST=imap.mymailserver.com \
+      -e IMAP_USER=dmarc@mymailserver.com \
+      -e IMAP_PASSWORD=mysecurepassword \
+      -e OIDC_ISSUER_URL=https://idp.myserver.org/realms/myrealm \
+      -e OIDC_CLIENT_ID=dmarc-report-viewer \
+      -e OIDC_CLIENT_SECRET=my-client-secret \
+      -e OIDC_REDIRECT_URI=https://dmarc.myserver.org/oidc/callback \
+      -p 8080:8080 \
+      ghcr.io/cry-inc/dmarc-report-viewer
+
+Good to know:
+* **Access:** Every user that the provider allows to use this client gets full access.
+* **Sessions:** A login is valid for eight hours and is lost when the application restarts.
+* **Logout:** Open the URL `/oidc/logout` to end the session.
+* **Endpoints:** All endpoints except `/health` require the login, including `/metrics`.
+* **Security:** Use HTTPS for the provider and the application. The ID token signature is not checked,
+  the token is trusted because of the TLS connection to the provider.
 
 ### Health Checks
 The service provides an health check endpoint at `/health` that always returns an empty HTTP 200 OK response.
