@@ -180,10 +180,13 @@ This means you can iterate on the UI without rebuilding the Rust backend every t
 This does not work for release builds where the UI load the files directly from the binary.
 
 ## Contributing
-Please create an issue before creating a PR for a bigger feature, so we can discuss your idea.
-I might decline some contributions because I want to keep the scope as small as possible.
+Please avoid creating unannounced feature PRs, even when there is already a corresponding open issue.
+I want to keep the scoppe of the app as small as possible.
+Additionally, its real work to review and audit PRs to keep the app stable and secure.
+Its now easy to create huge PRs in minutes, and in this asymmetric world I prefer to
+not spend my spare time with reviews of LLM-generated code.
 
-Once you are ready to create a PR, please do the following:
+Please do the following before you create a PR:
 * Format the code (run `cargo fmt`).
 * Run Clippy for linting (run `cargo clippy --all --all-targets --all-features`).
 * Execute the included test suite (run `cargo test`).
