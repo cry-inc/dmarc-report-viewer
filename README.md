@@ -181,9 +181,9 @@ This does not work for release builds where the UI load the files directly from 
 
 ## Contributing
 Please avoid creating unannounced feature PRs, even when there is already a corresponding open issue.
-I want to keep the scoppe of the app as small as possible.
-Additionally, its real work to review and audit PRs to keep the app stable and secure.
-Its now easy to create huge PRs in minutes, and in this asymmetric world I prefer to
+I want to keep the scope of the app as small as possible.
+Additionally, its real work to review and audit PRs to keep the app stable, robust and secure.
+It is now easy to create huge PRs in minutes, and in this asymmetric world I prefer to
 not spend my spare time with reviews of LLM-generated code.
 
 Please do the following before you create a PR:
