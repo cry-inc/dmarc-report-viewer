@@ -1,4 +1,4 @@
-use crate::config::Configuration;
+use crate::config::{Configuration, ImapAccount};
 use crate::hasher::create_hash;
 use crate::mail::Mail;
 use crate::state::FileType;
@@ -130,14 +130,17 @@ fn get_report_from_gz(gz_bytes: &[u8], max_size: usize) -> Result<Vec<u8>> {
     Ok(report_file)
 }
 
-pub fn extract_report_files(mail: &mut Mail, config: &Configuration) -> Result<Vec<ReportFile>> {
+pub fn extract_report_files(
+    mail: &mut Mail,
+    config: &Configuration,
+    account: &ImapAccount,
+) -> Result<Vec<ReportFile>> {
     // Consume mail body to avoid keeping the longer needed data in memory
     let body = mail.body.take().context("Missing mail body")?;
 
-    let expect_all = config.imap_folder_dmarc.is_none() && config.imap_folder_tls.is_none();
-    let expect_dmarc_report =
-        expect_all || config.imap_folder_dmarc.as_deref() == Some(&mail.folder);
-    let expect_tls_report = expect_all || config.imap_folder_tls.as_deref() == Some(&mail.folder);
+    let expect_all = account.folder_dmarc.is_none() && account.folder_tls.is_none();
+    let expect_dmarc_report = expect_all || account.folder_dmarc.as_deref() == Some(&mail.folder);
+    let expect_tls_report = expect_all || account.folder_tls.as_deref() == Some(&mail.folder);
 
     let mut report_files = Vec::new();
     let parsed = mailparse::parse_mail(&body).context("Failed to parse mail body")?;
