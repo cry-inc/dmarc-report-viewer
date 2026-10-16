@@ -22,7 +22,7 @@ tracing = "0.1"
 base64 = "0.23"
 serde_json = "1"
 urlencoding = "2"
-mailparse = "0.17"
+mailparse = "0.18"
 tokio-util = "0.7"
 webpki-roots = "1"
 axum-server = "0.8"
@@ -36,7 +36,7 @@ hyper = { version = "1", features = ["client"] }
 rustls-acme = { version = "0.15", features = ["axum"] }
 hyper-util = { version = "0.1", default-features = false }
 quick-xml = { version = "0.42", features = ["serialize"] }
-zip = { version = "8", default-features = false, features = ["deflate"] }
+zip = { version = "9", default-features = false, features = ["deflate"] }
 tokio = { version = "1.36", features = ["macros", "rt-multi-thread", "signal", "fs"] }
 async-imap = { version = "0.12", default-features = false, features = ["runtime-tokio"] }
 chrono = { version = "0.4.20", default-features = false, features = ["std", "clock", "serde"] }

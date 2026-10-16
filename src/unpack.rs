@@ -43,7 +43,7 @@ fn get_reports_from_zip(zip_bytes: &[u8], max_size: usize) -> Result<Vec<FileDat
     let mut files = Vec::new();
     for i in 0..file_count {
         let file = archive.by_index(i).context("Unable to get file from ZIP")?;
-        let file_name = file.name();
+        let file_name = file.name().context("Unable to get file name from ZIP")?;
         let lower_file_name = file_name.to_lowercase();
         if lower_file_name.ends_with(".json") {
             let mut json_file = Vec::new();
