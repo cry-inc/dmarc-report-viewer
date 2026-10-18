@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.6.1] - 2026-10-18
+* Fix: Flag DKIM auth only when no signature passes (fix for issue #85 by @FrauJulian).
+* Removed XML and JSON count from dashboard and added next update time.
+* Updated Cargo dependencies.
+
 ## [2.6.0] - 2026-07-08
 * Security: Limit maximum uncompressed file size to prevent unbounded memory use (remote DoS).
 * Security: Hardened basic auth username and password checks against timing attacks.
