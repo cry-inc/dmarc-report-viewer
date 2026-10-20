@@ -67,6 +67,9 @@ pub struct MailFilters {
     oversized: Option<bool>,
     errors: Option<bool>,
     duplicates: Option<bool>,
+    time_span: Option<u64>,
+    from: Option<i64>,
+    to: Option<i64>,
 }
 
 impl MailFilters {
@@ -86,10 +89,13 @@ pub async fn list_handler(
     // Remove URL encoding from strings in filters
     filters.url_decode();
 
+    let range = super::TimeRange::new(filters.time_span, filters.from, filters.to);
+
     let lock = state.lock().await;
     let mails: Vec<&Mail> = lock
         .mails
         .values()
+        .filter(|m| range.overlaps(m.date, m.date))
         .filter(|m| {
             if let Some(queried_sender) = &filters.sender {
                 m.sender.to_lowercase() == *queried_sender

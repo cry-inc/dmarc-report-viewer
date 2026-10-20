@@ -1,5 +1,6 @@
 import { LitElement, html } from "lit";
 import { globalStyle } from "../style.js";
+import { timeParams, timeQuery, timeSpanSelect } from "../utils.js";
 
 export class TlsReports extends LitElement {
     static styles = [globalStyle];
@@ -42,6 +43,8 @@ export class TlsReports extends LitElement {
         if (this.params.ip) {
             urlParams.push("ip=" + encodeURIComponent(this.params.ip));
         }
+        this.filtered = urlParams.length > 0;
+        urlParams.push(...timeQuery(this.params));
         let url = "tls-reports";
         if (urlParams.length > 0) {
             url += "?" + urlParams.join("&");
@@ -49,21 +52,22 @@ export class TlsReports extends LitElement {
         const response = await fetch(url);
         this.reports = await response.json();
         this.reports.sort((a, b) => new Date(b.date_begin) - new Date(a.date_begin));
-        this.filtered = this.filtered = urlParams.length > 0;
     }
 
     render() {
+        const time = timeParams(this.params);
         return html`
             <h1>SMTP TLS Reports</h1>
             <div>
                 ${this.filtered ?
-                    html`Filter active! <a class="ml button" href="#/tls-reports">Show all Reports</a>` :
+                    html`Filter active! <a class="ml button" href="#/tls-reports${time ? "?" + time : ""}">Show all Reports</a>` :
                     html`Filters:
-                        <a class="ml button mr-5" href="#/tls-reports?flagged=true">Reports with Problems</a>
-                        <a class="button mr-5" href="#/tls-reports?flagged_sts=true">Reports with MTA-STS Problems</a>
-                        <a class="button mr-5" href="#/tls-reports?flagged_tlsa=true">Reports with TLSA Problems</a>
+                        <a class="ml button mr-5" href="#/tls-reports?flagged=true${time ? "&" + time : ""}">Reports with Problems</a>
+                        <a class="button mr-5" href="#/tls-reports?flagged_sts=true${time ? "&" + time : ""}">Reports with MTA-STS Problems</a>
+                        <a class="button mr-5" href="#/tls-reports?flagged_tlsa=true${time ? "&" + time : ""}">Reports with TLSA Problems</a>
                     `
                 }
+                ${timeSpanSelect(this.params, "tls-reports")}
             </div>
             <drv-tls-report-table .reports="${this.reports}"></drv-tls-report-table>
         `;

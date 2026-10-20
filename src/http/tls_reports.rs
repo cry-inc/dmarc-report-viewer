@@ -83,6 +83,9 @@ pub struct ReportFilters {
     domain: Option<String>,
     org: Option<String>,
     ip: Option<String>,
+    time_span: Option<u64>,
+    from: Option<i64>,
+    to: Option<i64>,
 }
 
 impl ReportFilters {
@@ -115,11 +118,20 @@ pub async fn list_handler(
     // Parse IP once to speed up filters
     let ip_filter = filters.ip.as_deref().and_then(|s| IpAddr::from_str(s).ok());
 
+    let range = super::TimeRange::new(filters.time_span, filters.from, filters.to);
+
     let reports: Vec<ReportHeader> = state
         .lock()
         .await
         .tls_reports
         .iter()
+        .filter(|(_, rwi)| {
+            let date_range = &rwi.report.date_range;
+            range.overlaps(
+                date_range.start_datetime.timestamp(),
+                date_range.end_datetime.timestamp(),
+            )
+        })
         .filter(|(_, rwi)| {
             if let Some(id) = &filters.id {
                 rwi.mail_id == *id

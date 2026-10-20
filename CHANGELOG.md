@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+* Feature: Filter mails and reports by time span or custom date range (issues #82 and #32 by @FrauJulian).
+
 ## [2.6.1] - 2026-10-18
 * Fix: Flag DKIM auth only when no signature passes (fix for issue #85 by @FrauJulian).
 * Removed XML and JSON count from dashboard and added next update time.
