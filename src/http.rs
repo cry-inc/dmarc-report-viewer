@@ -23,6 +23,7 @@ use axum::{Router, extract::State};
 use axum_server::Handle;
 use base64::Engine;
 use base64::engine::general_purpose::STANDARD;
+use chrono::{TimeDelta, Utc};
 use futures::StreamExt;
 use rustls_acme::AcmeConfig;
 use rustls_acme::caches::DirCache;
@@ -257,4 +258,71 @@ async fn health() -> HeaderMap {
     let mut headers = HeaderMap::new();
     headers.insert(CACHE_CONTROL, HeaderValue::from_static("no-cache"));
     headers
+}
+
+/// UNIX seconds, missing bounds are unlimited.
+#[derive(Clone, Copy, Default)]
+struct TimeRange {
+    from: Option<i64>,
+    to: Option<i64>,
+}
+
+impl TimeRange {
+    /// Invalid time spans are ignored, the stricter lower bound wins.
+    fn new(time_span: Option<u64>, from: Option<i64>, to: Option<i64>) -> Self {
+        let threshold = time_span
+            .and_then(|hours| i64::try_from(hours).ok())
+            .filter(|hours| *hours > 0)
+            .and_then(TimeDelta::try_hours)
+            .and_then(|delta| Utc::now().checked_sub_signed(delta))
+            .map(|t| t.timestamp());
+        Self {
+            from: threshold.max(from),
+            to,
+        }
+    }
+
+    fn overlaps(&self, begin: i64, end: i64) -> bool {
+        self.from.is_none_or(|from| end >= from) && self.to.is_none_or(|to| begin <= to)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn time_range_time_span() {
+        assert!(TimeRange::new(None, None, None).from.is_none());
+        assert!(TimeRange::new(Some(0), None, None).from.is_none());
+        assert!(TimeRange::new(Some(u64::MAX), None, None).from.is_none());
+        assert!(
+            TimeRange::new(Some(i64::MAX as u64), None, None)
+                .from
+                .is_none()
+        );
+        let from = TimeRange::new(Some(24), None, None).from.unwrap();
+        let expected = (Utc::now() - TimeDelta::hours(24)).timestamp();
+        assert!((expected - from).abs() < 5);
+    }
+
+    #[test]
+    fn time_range_from_to() {
+        assert_eq!(
+            TimeRange::new(Some(24), Some(0), None).from,
+            TimeRange::new(Some(24), None, None).from
+        );
+        assert_eq!(
+            TimeRange::new(Some(24), Some(i64::MAX), None).from,
+            Some(i64::MAX)
+        );
+        let range = TimeRange::new(None, Some(100), Some(200));
+        assert!(range.overlaps(150, 150));
+        assert!(range.overlaps(50, 100));
+        assert!(range.overlaps(200, 300));
+        assert!(range.overlaps(50, 300));
+        assert!(!range.overlaps(50, 99));
+        assert!(!range.overlaps(201, 300));
+        assert!(TimeRange::default().overlaps(i64::MIN, i64::MIN));
+    }
 }

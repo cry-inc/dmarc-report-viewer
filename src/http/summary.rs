@@ -4,7 +4,6 @@ use crate::tls::{FailureResultType, PolicyType, TlsResultType};
 use axum::Json;
 use axum::extract::{Query, State};
 use axum::response::IntoResponse;
-use chrono::{Duration, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashMap};
 use std::sync::Arc;
@@ -16,6 +15,10 @@ pub struct SummaryFilters {
     /// Everything older will be excluded.
     /// None or a value of zero means the filter is disabled!
     time_span: Option<u64>,
+
+    /// Inclusive UNIX seconds, overlapping reports are included.
+    from: Option<i64>,
+    to: Option<i64>,
 
     /// Domain to be filtered. Other domains will be ignored.
     /// None means the filter is disabled!
@@ -38,12 +41,6 @@ pub async fn handler(
 ) -> impl IntoResponse {
     filters.url_decode();
     let guard = state.lock().await;
-    let mut time_span = None;
-    if let Some(hours) = filters.time_span
-        && hours > 0
-    {
-        time_span = Some(Duration::hours(hours as i64));
-    }
     let summary = Summary::new(
         guard.mails.len(),
         Reports {
@@ -52,7 +49,7 @@ pub async fn handler(
         },
         guard.last_update,
         guard.next_update,
-        time_span,
+        super::TimeRange::new(filters.time_span, filters.from, filters.to),
         filters.domain.clone(),
     );
     Json(summary)
@@ -141,7 +138,7 @@ impl Summary {
         reports: Reports,
         last_update: Option<u64>,
         next_update: Option<u64>,
-        time_span: Option<Duration>,
+        range: super::TimeRange,
         domain_filter: Option<String>,
     ) -> Self {
         let mut dmarc = DmarcSummary {
@@ -154,13 +151,10 @@ impl Summary {
             ..Default::default()
         };
 
-        let threshold = time_span.map(|d| (Utc::now() - d).timestamp() as u64);
-        let threshold_datetime = time_span.map(|d| Utc::now() - d);
         let domain_filter = domain_filter.map(|d| d.to_lowercase());
         for DmarcReportWithMailId { report, .. } in reports.dmarc.values() {
-            if let Some(threshold) = threshold
-                && report.report_metadata.date_range.end < threshold
-            {
+            let date_range = &report.report_metadata.date_range;
+            if !range.overlaps(date_range.begin as i64, date_range.end as i64) {
                 continue;
             }
             if let Some(df) = &domain_filter
@@ -194,9 +188,10 @@ impl Summary {
             }
         }
         for TlsReportWithMailId { report, .. } in reports.tls.values() {
-            if let Some(threshold_datetime) = threshold_datetime
-                && report.date_range.end_datetime < threshold_datetime
-            {
+            if !range.overlaps(
+                report.date_range.start_datetime.timestamp(),
+                report.date_range.end_datetime.timestamp(),
+            ) {
                 continue;
             }
             if let Some(df) = &domain_filter

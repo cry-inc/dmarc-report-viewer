@@ -108,6 +108,31 @@ export const globalStyle = css`
         background-color: rgb(90, 98, 104);
     }
 
+    .time-range {
+        border: 1px solid rgb(206, 212, 218);
+        border-radius: 3px;
+        padding: 15px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .time-range label {
+        margin-right: 10px;
+    }
+
+    .time-range .button {
+        margin-top: 10px;
+    }
+
+    .time-range .error {
+        margin-top: 10px;
+        color: rgb(220, 53, 69);
+    }
+
+    .button:disabled {
+        cursor: not-allowed;
+        opacity: 0.5;
+    }
+
     .button.sm {
         padding: 1px;
         padding-left: 4px;

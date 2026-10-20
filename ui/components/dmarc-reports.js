@@ -1,5 +1,6 @@
 import { LitElement, html } from "lit";
 import { globalStyle } from "../style.js";
+import { timeParams, timeQuery, timeSpanSelect } from "../utils.js";
 
 export class DmarcReports extends LitElement {
     static styles = [globalStyle];
@@ -45,6 +46,8 @@ export class DmarcReports extends LitElement {
         if (this.params.ip) {
             urlParams.push("ip=" + encodeURIComponent(this.params.ip));
         }
+        this.filtered = urlParams.length > 0;
+        urlParams.push(...timeQuery(this.params));
         let url = "dmarc-reports";
         if (urlParams.length > 0) {
             url += "?" + urlParams.join("&");
@@ -52,22 +55,23 @@ export class DmarcReports extends LitElement {
         const response = await fetch(url);
         this.reports = await response.json();
         this.reports.sort((a, b) => b.date_begin - a.date_begin);
-        this.filtered = this.filtered = urlParams.length > 0;
     }
 
     render() {
+        const time = timeParams(this.params);
         return html`
             <h1>DMARC Reports</h1>
             <div>
                 ${this.filtered ?
-                    html`Filter active! <a class="ml button" href="#/dmarc-reports">Show all Reports</a>` :
+                    html`Filter active! <a class="ml button" href="#/dmarc-reports${time ? "?" + time : ""}">Show all Reports</a>` :
                     html`Filters:
-                        <a class="ml button mr-5" href="#/dmarc-reports?flagged=true">Reports with Problems</a>
-                        <a class="button mr-5" href="#/dmarc-reports?flagged_dkim=true">Reports with DKIM Problems</a>
-                        <a class="button mr-5" href="#/dmarc-reports?flagged_spf=true">Reports with SPF Problems</a>
-                        <a class="button" href="#/dmarc-reports?flagged_dmarc=true">Reports with DMARC Problems</a>
+                        <a class="ml button mr-5" href="#/dmarc-reports?flagged=true${time ? "&" + time : ""}">Reports with Problems</a>
+                        <a class="button mr-5" href="#/dmarc-reports?flagged_dkim=true${time ? "&" + time : ""}">Reports with DKIM Problems</a>
+                        <a class="button mr-5" href="#/dmarc-reports?flagged_spf=true${time ? "&" + time : ""}">Reports with SPF Problems</a>
+                        <a class="button" href="#/dmarc-reports?flagged_dmarc=true${time ? "&" + time : ""}">Reports with DMARC Problems</a>
                     `
                 }
+                ${timeSpanSelect(this.params, "dmarc-reports")}
             </div>
             <drv-dmarc-report-table .reports="${this.reports}"></drv-dmarc-report-table>
         `;
