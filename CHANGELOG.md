@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.6.2] - 2026-10-21
+* Fix: Recognize more types of zipped XML attachments with DMARC reports (see issue #101).
+* Updated Cargo dependencies.
+
 ## [2.6.1] - 2026-10-18
 * Fix: Flag DKIM auth only when no signature passes (fix for issue #85 by @FrauJulian).
 * Removed XML and JSON count from dashboard and added next update time.
