@@ -172,7 +172,7 @@ pub fn extract_report_files(mail: &mut Mail, config: &Configuration) -> Result<V
         // For example AWS uses such values:
         // Content-Type: application/octet-stream;name=amazonses.com!example.com!1722384000!1722470400.xml.gz
         //
-        // Other provides use application/octet-stream and the file name is in the content disposition header.:
+        // Other provides use application/octet-stream and the file name is in the content disposition header:
         // Content-Type: application/octet-stream
         // Content-Disposition: attachment; filename="foobar.xml.zip"
         if content_type.contains("application/zip")
