@@ -150,7 +150,14 @@ pub fn extract_report_files(mail: &mut Mail, config: &Configuration) -> Result<V
             trace!("Skipping part {index} of mail with UID {uid} because of missing content type",);
             continue;
         };
-        trace!("Part {index} of mail with UID {uid} has content type '{content_type}'");
+        let content_disposition = part
+            .get_headers()
+            .get_first_value("Content-Disposition")
+            .unwrap_or_default()
+            .to_lowercase();
+        trace!(
+            "Part {index} of mail with UID {uid} has content type '{content_type}' and content disposition '{content_disposition}'"
+        );
 
         // Some long names in content type headers names are split into multiple lines and parts:
         // application/octet-stream;
@@ -161,12 +168,18 @@ pub fn extract_report_files(mail: &mut Mail, config: &Configuration) -> Result<V
         // Detect compression based on content type header.
         // In most cases is directly a ZIP or GZIP type, but in some cases its generic
         // and we need to check for a file name ending with a certain extension.
+        //
         // For example AWS uses such values:
         // Content-Type: application/octet-stream;name=amazonses.com!example.com!1722384000!1722470400.xml.gz
+        //
+        // Other provides use application/octet-stream and the file name is in the content disposition header.:
+        // Content-Type: application/octet-stream
+        // Content-Disposition: attachment; filename="foobar.xml.zip"
         if content_type.contains("application/zip")
             || content_type.contains("application/zip-compressed")
             || content_type.contains("application/x-zip-compressed")
-            || content_type.contains("application/octet-stream") && content_type.contains(".zip")
+            || content_type.contains("application/octet-stream")
+                && (content_type.contains(".zip") || content_disposition.contains(".zip"))
         {
             trace!("Detected ZIP attachment for mail with UID {uid} in part {index}");
             let body = part
