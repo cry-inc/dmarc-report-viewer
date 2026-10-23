@@ -15,6 +15,10 @@ pub struct SummaryFilters {
     /// If set, reports older than this are excluded.
     after: Option<i64>,
 
+    /// Optional Unix timestamp in seconds.
+    /// If set, reports newer than this are excluded.
+    before: Option<i64>,
+
     /// Domain to be filtered. Other domains will be ignored.
     /// None means the filter is disabled!
     domain: Option<String>,
@@ -45,6 +49,7 @@ pub async fn handler(
         guard.last_update,
         guard.next_update,
         filters.after,
+        filters.before,
         filters.domain.clone(),
     );
     Json(summary)
@@ -134,6 +139,7 @@ impl Summary {
         last_update: Option<u64>,
         next_update: Option<u64>,
         after: Option<i64>,
+        before: Option<i64>,
         domain_filter: Option<String>,
     ) -> Self {
         let mut dmarc = DmarcSummary {
@@ -153,6 +159,14 @@ impl Summary {
                 let report_range_end = i128::from(report.report_metadata.date_range.end);
                 let after = i128::from(after);
                 if report_range_end < after {
+                    continue;
+                }
+            }
+            if let Some(before) = before {
+                // Safe comparison between u64 and i64 timestamps
+                let report_range_begin = i128::from(report.report_metadata.date_range.begin);
+                let before = i128::from(before);
+                if report_range_begin > before {
                     continue;
                 }
             }
@@ -189,6 +203,11 @@ impl Summary {
         for TlsReportWithMailId { report, .. } in reports.tls.values() {
             if let Some(after) = after
                 && report.date_range.end_datetime.timestamp() < after
+            {
+                continue;
+            }
+            if let Some(before) = before
+                && report.date_range.start_datetime.timestamp() > before
             {
                 continue;
             }
