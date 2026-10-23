@@ -13,7 +13,6 @@ export class Dropdown extends LitElement {
         :host {
             display: inline-block;
             position: relative;
-            margin-right: 10px;
         }
 
         .dropdown-button {
