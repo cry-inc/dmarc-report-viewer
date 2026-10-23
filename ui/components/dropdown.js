@@ -96,15 +96,15 @@ export class Dropdown extends LitElement {
 
     select(item) {
         const changed = this.selectedItem !== item;
-        this.items = this.items.map((availableItem) => ({
-            value: availableItem.value,
-            displayName: availableItem.displayName,
-            selected: availableItem === item,
-        }));
+        const accepted = !changed || !this.onChange || this.onChange(item.value) !== false;
         this.open = false;
         document.removeEventListener("pointerdown", this.handleOutsideClick);
-        if (changed && this.onChange) {
-            this.onChange(item.value);
+        if (accepted) {
+            this.items = this.items.map((availableItem) => ({
+                value: availableItem.value,
+                displayName: availableItem.displayName,
+                selected: availableItem === item,
+            }));
         }
     }
 
