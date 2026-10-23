@@ -139,7 +139,8 @@ export class Dashboard extends LitElement {
     async updateCharts() {
         const queryParams = [];
         if (this.params.ts && this.params.ts !== "0") {
-            queryParams.push("time_span=" + this.params.ts);
+            const after = Math.floor(Date.now() / 1000) - Number(this.params.ts) * 3600;
+            queryParams.push("after=" + after);
         }
         if (this.params.domain && this.params.domain !== "all") {
             queryParams.push("domain=" + this.params.domain);
