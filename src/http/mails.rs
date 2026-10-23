@@ -62,19 +62,19 @@ pub enum Attachment {
 
 #[derive(Deserialize, Debug)]
 pub struct MailFilters {
-    /// Optional sender email address to filter by. Case-insensitive.
+    /// Sender email address to filter by. Case-insensitive.
     sender: Option<String>,
-    /// Optional attachment filter, for example to show only mails with DMARC reports.
+    /// Attachment filter, for example to show only mails with DMARC reports.
     attachment: Option<Attachment>,
-    /// Optional filter to only show oversized mails.
+    /// Filter to only show oversized mails.
     oversized: Option<bool>,
-    /// Optional filter to only show mails with parsing errors.
+    /// Filter to only show mails with parsing errors.
     errors: Option<bool>,
-    /// Optional filter to show only mails with duplicated reports.
+    /// Filter to show only mails with duplicated reports.
     duplicates: Option<bool>,
-    /// Optional Unix timestamp in seconds. Mails older than this are excluded.
+    /// Unix timestamp in seconds. Mails older than this are excluded.
     after: Option<i64>,
-    /// Optional Unix timestamp in seconds. Mails newer than this are excluded.
+    /// Unix timestamp in seconds. Mails newer than this are excluded.
     before: Option<i64>,
 }
 

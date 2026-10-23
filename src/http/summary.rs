@@ -11,12 +11,12 @@ use tokio::sync::Mutex;
 
 #[derive(Deserialize, Debug)]
 pub struct SummaryFilters {
-    /// Optional Unix timestamp in seconds.
-    /// If set, reports older than this are excluded.
+    /// Unix timestamp in seconds.
+    /// If set, reports ending before this are excluded.
     after: Option<i64>,
 
-    /// Optional Unix timestamp in seconds.
-    /// If set, reports newer than this are excluded.
+    /// Unix timestamp in seconds.
+    /// If set, reports beginning after this are excluded.
     before: Option<i64>,
 
     /// Domain to be filtered. Other domains will be ignored.
@@ -154,21 +154,15 @@ impl Summary {
 
         let domain_filter = domain_filter.map(|d| d.to_lowercase());
         for DmarcReportWithMailId { report, .. } in reports.dmarc.values() {
-            if let Some(after) = after {
-                // Safe comparison between u64 and i64 timestamps
-                let report_range_end = i128::from(report.report_metadata.date_range.end);
-                let after = i128::from(after);
-                if report_range_end < after {
-                    continue;
-                }
+            if let Some(after) = after
+                && i128::from(report.report_metadata.date_range.end) < i128::from(after)
+            {
+                continue;
             }
-            if let Some(before) = before {
-                // Safe comparison between u64 and i64 timestamps
-                let report_range_begin = i128::from(report.report_metadata.date_range.begin);
-                let before = i128::from(before);
-                if report_range_begin > before {
-                    continue;
-                }
+            if let Some(before) = before
+                && i128::from(report.report_metadata.date_range.begin) > i128::from(before)
+            {
+                continue;
             }
             if let Some(df) = &domain_filter
                 && report.policy_published.domain.to_lowercase() != *df

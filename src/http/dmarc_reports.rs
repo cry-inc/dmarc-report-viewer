@@ -98,14 +98,28 @@ impl ReportHeader {
 
 #[derive(Deserialize)]
 pub struct ReportFilters {
+    /// Report hash or ID of the mail that contains the report.
     id: Option<String>,
+    /// Whether the report contains any DKIM, SPF, or DMARC issues.
     flagged: Option<bool>,
+    /// Whether the report contains DKIM issues.
     flagged_dkim: Option<bool>,
+    /// Whether the report contains SPF issues.
     flagged_spf: Option<bool>,
+    /// Whether the report contains DMARC issues.
     flagged_dmarc: Option<bool>,
+    /// Exact domain to filter reports by.
     domain: Option<String>,
+    /// Organization name reported by the sender.
     org: Option<String>,
+    /// Source IP address to find in the report's records.
     ip: Option<String>,
+    /// Unix timestamp in seconds.
+    /// If set, reports ending before this are excluded.
+    after: Option<i64>,
+    /// Unix timestamp in seconds.
+    /// If set, reports beginning after this are excluded.
+    before: Option<i64>,
 }
 
 impl ReportFilters {
@@ -146,6 +160,20 @@ pub async fn list_handler(
         .filter(|(_, rwi)| {
             if let Some(id) = &filters.id {
                 rwi.mail_id == *id
+            } else {
+                true
+            }
+        })
+        .filter(|(_, rwi)| {
+            if let Some(after) = filters.after {
+                i128::from(rwi.report.report_metadata.date_range.end) >= i128::from(after)
+            } else {
+                true
+            }
+        })
+        .filter(|(_, rwi)| {
+            if let Some(before) = filters.before {
+                i128::from(rwi.report.report_metadata.date_range.begin) <= i128::from(before)
             } else {
                 true
             }
