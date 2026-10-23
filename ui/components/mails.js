@@ -38,6 +38,11 @@ export class Mails extends LitElement {
         if (this.params.duplicates === "true" || this.params.duplicates === "false") {
             queryParams.push("duplicates=" + this.params.duplicates);
         }
+        if (this.params.days) {
+            const days = Number(this.params.days);
+            const after = Math.floor(Date.now() / 1000) - days * 24 * 60 * 60;
+            queryParams.push("after=" + after);
+        }
         let url = "mails";
         if (queryParams.length > 0) {
             url += "?" + queryParams.join("&");
@@ -107,6 +112,16 @@ export class Mails extends LitElement {
                     <option value="">All</option>
                     <option value="true">Errors</option>
                     <option value="false">No Errors</option>
+                </select>
+                Time:
+                <select .value="${[3, 7, 30, 180, 365].includes(Number(this.params.days)) ? this.params.days : ""}"
+                    @change="${(event) => this.setFilter("days", event.target.value)}">
+                    <option value="">All</option>
+                    <option value="3">Last 3 days</option>
+                    <option value="7">Last week</option>
+                    <option value="30">Last month</option>
+                    <option value="180">Last six months</option>
+                    <option value="365">Last year</option>
                 </select>
                 <button ?disabled="${!this.hasFilters()}" @click="${this.clearFilters}">Clear filters</button>
             </div>
