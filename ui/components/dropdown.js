@@ -94,11 +94,10 @@ export class Dropdown extends LitElement {
         }
     }
 
-    select(item) {
-        const changed = this.selectedItem !== item;
-        const accepted = !changed || !this.onChange || this.onChange(item.value) !== false;
+    async select(item) {
         this.open = false;
         document.removeEventListener("pointerdown", this.handleOutsideClick);
+        const accepted = !this.onChange || await this.onChange(item.value) !== false;
         if (accepted) {
             this.items = this.items.map((availableItem) => ({
                 value: availableItem.value,
