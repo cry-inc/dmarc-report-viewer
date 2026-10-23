@@ -13,7 +13,6 @@ export class Mails extends LitElement {
         super();
         this.params = {};
         this.mails = [];
-        this.filtered = false;
     }
 
     updated(changedProperties) {
@@ -46,22 +45,70 @@ export class Mails extends LitElement {
         const mailsResponse = await fetch(url);
         this.mails = await mailsResponse.json();
         this.mails.sort((a, b) => b.date - a.date);
-        this.filtered = queryParams.length > 0;
+    }
+
+    setFilter(name, value) {
+        // Get filter params from hash part of the URL
+        const hashParams = document.location.hash.split("?")[1] || "";
+        
+        // Parse the parameter string
+        const params = new URLSearchParams(hashParams);
+        
+        // Replace/add/delete value
+        if (value) {
+            params.set(name, value);
+        } else {
+            params.delete(name);
+        }
+
+        // Build new string and update hash
+        const query = params.toString();
+        document.location.hash = query ? `#/mails?${query}` : "#/mails";
+    }
+
+    clearFilters() {
+        document.location.hash = "#/mails";
+    }
+
+    hasFilters() {
+        const hashParams = document.location.hash.split("?")[1];
+        return Boolean(hashParams);
     }
 
     render() {
         return html`
             <h1>Mails</h1>
             <div>
-                ${this.filtered ?
-                    html`Filter active! <a class="ml button" href="#/mails">Show all Mails</a>` :
-                    html`Filters: <a class="ml button" href="#/mails?oversized=true">Oversized Mails</a>
-                         <a class="button" href="#/mails?attachment=dmarc&oversized=false">With DMARC</a>
-                         <a class="button" href="#/mails?attachment=tls&oversized=false">With TLS</a>
-                         <a class="button" href="#/mails?attachment=none&oversized=false">Without Files</a>
-                         <a class="button" href="#/mails?duplicates=true">With Duplicates</a>
-                         <a class="button" href="#/mails?errors=true">Parsing Errors</a>`
-            }
+                Size:
+                <select .value="${this.params.oversized === "true" ? "true" : this.params.oversized === "false" ? "false" : ""}"
+                    @change="${(event) => this.setFilter("oversized", event.target.value)}">
+                    <option value="">All</option>
+                    <option value="false">Valid</option>
+                    <option value="true">Oversized</option>
+                </select>
+                Type:
+                <select .value="${this.params.attachment || ""}"
+                    @change="${(event) => this.setFilter("attachment", event.target.value)}">
+                    <option value="">All</option>
+                    <option value="dmarc">DMARC</option>
+                    <option value="tls">TLS</option>
+                    <option value="none">None</option>
+                </select>
+                Duplicates:
+                <select .value="${this.params.duplicates === "true" ? "true" : this.params.duplicates === "false" ? "false" : ""}"
+                    @change="${(event) => this.setFilter("duplicates", event.target.value)}">
+                    <option value="">All</option>
+                    <option value="true">Duplicates</option>
+                    <option value="false">No Duplicates</option>
+                </select>
+                Parsing Errors:
+                <select .value="${this.params.errors === "true" ? "true" : this.params.errors === "false" ? "false" : ""}"
+                    @change="${(event) => this.setFilter("errors", event.target.value)}">
+                    <option value="">All</option>
+                    <option value="true">Errors</option>
+                    <option value="false">No Errors</option>
+                </select>
+                <button ?disabled="${!this.hasFilters()}" @click="${this.clearFilters}">Clear filters</button>
             </div>
             <drv-mail-table .mails="${this.mails}"></drv-mail-table>
         `;
