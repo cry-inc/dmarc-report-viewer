@@ -108,6 +108,12 @@ export const globalStyle = css`
         background-color: rgb(90, 98, 104);
     }
 
+    .button:disabled,
+    .button:disabled:hover {
+        cursor: not-allowed;
+        background-color: #adb5bd;
+    }
+
     .button.sm {
         padding: 1px;
         padding-left: 4px;
