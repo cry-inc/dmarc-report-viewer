@@ -76,13 +76,27 @@ impl ReportHeader {
 
 #[derive(Deserialize)]
 pub struct ReportFilters {
+    /// Mail ID containing the report.
     id: Option<String>,
+    /// Whether the report contains STS or TLSA issues.
     flagged: Option<bool>,
+    /// Whether the report contains STS issues.
     flagged_sts: Option<bool>,
+    /// Whether the report contains TLSA issues.
     flagged_tlsa: Option<bool>,
+    /// Exact policy domain to filter reports by.
     domain: Option<String>,
+    /// Organization name reported by the sender.
     org: Option<String>,
+    /// Sending MTA IP address to find in failure details.
+    /// Invalid IPs are ignored and will not filter anything.
     ip: Option<String>,
+    /// Unix timestamp in seconds.
+    /// If set, reports ending before this are excluded.
+    after: Option<i64>,
+    /// Unix timestamp in seconds.
+    /// If set, reports beginning after this are excluded.
+    before: Option<i64>,
 }
 
 impl ReportFilters {
@@ -123,6 +137,20 @@ pub async fn list_handler(
         .filter(|(_, rwi)| {
             if let Some(id) = &filters.id {
                 rwi.mail_id == *id
+            } else {
+                true
+            }
+        })
+        .filter(|(_, rwi)| {
+            if let Some(after) = filters.after {
+                rwi.report.date_range.end_datetime.timestamp() >= after
+            } else {
+                true
+            }
+        })
+        .filter(|(_, rwi)| {
+            if let Some(before) = filters.before {
+                rwi.report.date_range.start_datetime.timestamp() <= before
             } else {
                 true
             }
