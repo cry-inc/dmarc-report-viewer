@@ -92,8 +92,8 @@ export class Mails extends LitElement {
             this.params.after ? new Date(Number(this.params.after) * 1000) : undefined,
         );
 
-        // Date dialog was saved without confirmation
-        if (!selected) return;
+        // Keep the current time filter when the dialog is cancelled
+        if (!selected) return false;
 
         const hashParams = document.location.hash.split("?")[1] || "";
         const params = new URLSearchParams(hashParams);
@@ -121,50 +121,48 @@ export class Mails extends LitElement {
         return html`
             <h1>Mails</h1>
             <div>
-                Size:
-                <select .value="${this.params.oversized === "true" ? "true" : this.params.oversized === "false" ? "false" : ""}"
-                    @change="${(event) => this.setFilter("oversized", event.target.value)}">
-                    <option value="">All</option>
-                    <option value="false">Valid</option>
-                    <option value="true">Oversized</option>
-                </select>
-                Type:
-                <select .value="${this.params.attachment || ""}"
-                    @change="${(event) => this.setFilter("attachment", event.target.value)}">
-                    <option value="">All</option>
-                    <option value="dmarc">DMARC</option>
-                    <option value="tls">TLS</option>
-                    <option value="none">None</option>
-                </select>
-                Duplicates:
-                <select .value="${this.params.duplicates === "true" ? "true" : this.params.duplicates === "false" ? "false" : ""}"
-                    @change="${(event) => this.setFilter("duplicates", event.target.value)}">
-                    <option value="">All</option>
-                    <option value="true">Duplicates</option>
-                    <option value="false">No Duplicates</option>
-                </select>
-                Parsing Errors:
-                <select .value="${this.params.errors === "true" ? "true" : this.params.errors === "false" ? "false" : ""}"
-                    @change="${(event) => this.setFilter("errors", event.target.value)}">
-                    <option value="">All</option>
-                    <option value="true">Errors</option>
-                    <option value="false">No Errors</option>
-                </select>
-                Time:
-                <select .value="${[3, 7, 30, 180, 365].includes(Number(this.params.days)) ? this.params.days : this.params.before || this.params.after ? "custom" : ""}"
-                    @change="${(event) => event.target.value === "custom" ? this.openCustomDateDialog() : this.setFilter("days", event.target.value)}">
-                    <option value="">All</option>
-                    <option value="3">Last 3 days</option>
-                    <option value="7">Last week</option>
-                    <option value="30">Last month</option>
-                    <option value="180">Last six months</option>
-                    <option value="365">Last year</option>
-                    <option value="custom">Custom...</option>
-                </select>
-                ${this.params.before || this.params.after ? html`
-                    <button @click="${this.openCustomDateDialog}">Edit custom range</button>
-                ` : ""}
-                <button ?disabled="${!this.hasFilters()}" @click="${this.clearFilters}">Clear filters</button>
+                Filters:
+                <drv-dropdown class="ml" title="Size"
+                    .items="${[
+                        { value: "", displayName: "All", selected: !["true", "false"].includes(this.params.oversized) },
+                        { value: "false", displayName: "Valid", selected: this.params.oversized === "false" },
+                        { value: "true", displayName: "Oversized", selected: this.params.oversized === "true" },
+                    ]}"
+                    .onChange="${(value) => this.setFilter("oversized", value)}"></drv-dropdown>
+                <drv-dropdown title="Type"
+                    .items="${[
+                        { value: "", displayName: "All", selected: !this.params.attachment },
+                        { value: "dmarc", displayName: "DMARC", selected: this.params.attachment === "dmarc" },
+                        { value: "tls", displayName: "TLS", selected: this.params.attachment === "tls" },
+                        { value: "none", displayName: "None", selected: this.params.attachment === "none" },
+                    ]}"
+                    .onChange="${(value) => this.setFilter("attachment", value)}"></drv-dropdown>
+                <drv-dropdown title="Duplicates"
+                    .items="${[
+                        { value: "", displayName: "All", selected: !["true", "false"].includes(this.params.duplicates) },
+                        { value: "true", displayName: "Duplicates", selected: this.params.duplicates === "true" },
+                        { value: "false", displayName: "No Duplicates", selected: this.params.duplicates === "false" },
+                    ]}"
+                    .onChange="${(value) => this.setFilter("duplicates", value)}"></drv-dropdown>
+                <drv-dropdown title="Parsing Errors"
+                    .items="${[
+                        { value: "", displayName: "All", selected: !["true", "false"].includes(this.params.errors) },
+                        { value: "true", displayName: "Errors", selected: this.params.errors === "true" },
+                        { value: "false", displayName: "No Errors", selected: this.params.errors === "false" },
+                    ]}"
+                    .onChange="${(value) => this.setFilter("errors", value)}"></drv-dropdown>
+                <drv-dropdown title="Time"
+                    .items="${[
+                        { value: "", displayName: "All", selected: ![3, 7, 30, 180, 365].includes(Number(this.params.days)) && !(this.params.before || this.params.after) },
+                        { value: "3", displayName: "Last 3 days", selected: this.params.days === "3" },
+                        { value: "7", displayName: "Last week", selected: this.params.days === "7" },
+                        { value: "30", displayName: "Last month", selected: this.params.days === "30" },
+                        { value: "180", displayName: "Last six months", selected: this.params.days === "180" },
+                        { value: "365", displayName: "Last year", selected: this.params.days === "365" },
+                        { value: "custom", displayName: "Custom...", selected: Boolean(this.params.before || this.params.after) },
+                    ]}"
+                    .onChange="${(value) => value === "custom" ? this.openCustomDateDialog() : this.setFilter("days", value)}"></drv-dropdown>
+                <button class="button" ?disabled="${!this.hasFilters()}" @click="${this.clearFilters}">Clear</button>
             </div>
             <drv-mail-table .mails="${this.mails}"></drv-mail-table>
         `;
