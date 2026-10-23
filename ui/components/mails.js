@@ -1,5 +1,6 @@
 import { LitElement, html } from "lit";
 import { globalStyle } from "../style.js";
+import { customDateRange } from "../utils.js";
 
 export class Mails extends LitElement {
     static styles = [globalStyle];
@@ -43,6 +44,12 @@ export class Mails extends LitElement {
             const after = Math.floor(Date.now() / 1000) - days * 24 * 60 * 60;
             queryParams.push("after=" + after);
         }
+        if (this.params.after) {
+            queryParams.push("after=" + this.params.after);
+        }
+        if (this.params.before) {
+            queryParams.push("before=" + this.params.before);
+        }
         let url = "mails";
         if (queryParams.length > 0) {
             url += "?" + queryParams.join("&");
@@ -53,17 +60,21 @@ export class Mails extends LitElement {
     }
 
     setFilter(name, value) {
-        // Get filter params from hash part of the URL
+        // Get filter params from hash part of the URL and parse them
         const hashParams = document.location.hash.split("?")[1] || "";
-        
-        // Parse the parameter string
         const params = new URLSearchParams(hashParams);
-        
+
         // Replace/add/delete value
         if (value) {
             params.set(name, value);
         } else {
             params.delete(name);
+        }
+
+        // Prevent incompatible combinations
+        if (name === "days") {
+            params.delete("before");
+            params.delete("after");
         }
 
         // Build new string and update hash
@@ -73,6 +84,32 @@ export class Mails extends LitElement {
 
     clearFilters() {
         document.location.hash = "#/mails";
+    }
+
+    async openCustomDateDialog() {
+        const selected = await customDateRange(
+            this.params.before ? new Date(Number(this.params.before) * 1000) : undefined,
+            this.params.after ? new Date(Number(this.params.after) * 1000) : undefined,
+        );
+
+        // Date dialog was saved without confirmation
+        if (!selected) return;
+
+        const hashParams = document.location.hash.split("?")[1] || "";
+        const params = new URLSearchParams(hashParams);
+        params.delete("days"); // Prevent incompatible combinations
+
+        for (const [name, date] of [["before", selected.before], ["after", selected.after]]) {
+            if (date) {
+                params.set(name, Math.floor(date.getTime() / 1000).toString());
+            } else {
+                params.delete(name);
+            }
+        }
+
+        // Update hash query params
+        const query = params.toString();
+        document.location.hash = query ? `#/mails?${query}` : "#/mails";
     }
 
     hasFilters() {
@@ -114,15 +151,19 @@ export class Mails extends LitElement {
                     <option value="false">No Errors</option>
                 </select>
                 Time:
-                <select .value="${[3, 7, 30, 180, 365].includes(Number(this.params.days)) ? this.params.days : ""}"
-                    @change="${(event) => this.setFilter("days", event.target.value)}">
+                <select .value="${[3, 7, 30, 180, 365].includes(Number(this.params.days)) ? this.params.days : this.params.before || this.params.after ? "custom" : ""}"
+                    @change="${(event) => event.target.value === "custom" ? this.openCustomDateDialog() : this.setFilter("days", event.target.value)}">
                     <option value="">All</option>
                     <option value="3">Last 3 days</option>
                     <option value="7">Last week</option>
                     <option value="30">Last month</option>
                     <option value="180">Last six months</option>
                     <option value="365">Last year</option>
+                    <option value="custom">Custom...</option>
                 </select>
+                ${this.params.before || this.params.after ? html`
+                    <button @click="${this.openCustomDateDialog}">Edit custom range</button>
+                ` : ""}
                 <button ?disabled="${!this.hasFilters()}" @click="${this.clearFilters}">Clear filters</button>
             </div>
             <drv-mail-table .mails="${this.mails}"></drv-mail-table>
