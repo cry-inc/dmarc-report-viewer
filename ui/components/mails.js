@@ -1,6 +1,6 @@
 import { LitElement, html } from "lit";
 import { globalStyle } from "../style.js";
-import { customDateRange } from "../utils.js";
+import { timeRangeDialog } from "./time-range.js";
 
 export class Mails extends LitElement {
     static styles = [globalStyle];
@@ -87,7 +87,7 @@ export class Mails extends LitElement {
     }
 
     async openCustomDateDialog() {
-        const selected = await customDateRange(
+        const selected = await timeRangeDialog(
             this.params.before ? new Date(Number(this.params.before) * 1000) : undefined,
             this.params.after ? new Date(Number(this.params.after) * 1000) : undefined,
         );

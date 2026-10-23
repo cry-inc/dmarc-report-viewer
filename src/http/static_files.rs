@@ -69,6 +69,11 @@ const STATIC_FILES: &[StaticFile] = &[
         data: include_bytes!("../../ui/components/app.js"),
     },
     StaticFile {
+        http_path: "/components/time-range.js",
+        file_path: "ui/components/time-range.js",
+        data: include_bytes!("../../ui/components/time-range.js"),
+    },
+    StaticFile {
         http_path: "/components/dropdown.js",
         file_path: "ui/components/dropdown.js",
         data: include_bytes!("../../ui/components/dropdown.js"),
