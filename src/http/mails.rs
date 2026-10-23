@@ -62,11 +62,20 @@ pub enum Attachment {
 
 #[derive(Deserialize, Debug)]
 pub struct MailFilters {
+    /// Optional sender email address to filter by. Case-insensitive.
     sender: Option<String>,
+    /// Optional attachment filter, for example to show only mails with DMARC reports.
     attachment: Option<Attachment>,
+    /// Optional filter to only show oversized mails.
     oversized: Option<bool>,
+    /// Optional filter to only show mails with parsing errors.
     errors: Option<bool>,
+    /// Optional filter to show only mails with duplicated reports.
     duplicates: Option<bool>,
+    /// Optional Unix timestamp in seconds. Mails older than this are excluded.
+    after: Option<i64>,
+    /// Optional Unix timestamp in seconds. Mails newer than this are excluded.
+    before: Option<i64>,
 }
 
 impl MailFilters {
@@ -93,6 +102,20 @@ pub async fn list_handler(
         .filter(|m| {
             if let Some(queried_sender) = &filters.sender {
                 m.sender.to_lowercase() == *queried_sender
+            } else {
+                true
+            }
+        })
+        .filter(|m| {
+            if let Some(after) = filters.after {
+                m.date >= after
+            } else {
+                true
+            }
+        })
+        .filter(|m| {
+            if let Some(before) = filters.before {
+                m.date <= before
             } else {
                 true
             }
