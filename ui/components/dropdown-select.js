@@ -20,13 +20,8 @@ export class Dropdown extends LitElement {
             text-align: left;
         }
 
-        .button-label, .button-size {
-            grid-area: 1 / 1;
+        .button-label {
             white-space: nowrap;
-        }
-
-        .button-size {
-            visibility: hidden;
         }
 
         .items {
@@ -109,11 +104,9 @@ export class Dropdown extends LitElement {
 
     render() {
         const selectedItem = this.selectedItem;
-        const longestItemName = this.items.reduce((longest, item) => item.displayName.length > longest.length ? item.displayName : longest, "");
         return html`
             <button class="button dropdown-button" @click="${this.toggle}">
                 <span class="button-label">${this.title}: ${selectedItem?.displayName || ""}</span>
-                <span class="button-size">${this.title}: ${longestItemName}</span>
             </button>
             ${this.open ? html`
                 <div class="items" role="listbox">
