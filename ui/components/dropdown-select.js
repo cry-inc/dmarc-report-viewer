@@ -4,6 +4,7 @@ import { globalStyle } from "../style.js";
 export class Dropdown extends LitElement {
     static properties = {
         title: { type: String },
+        tooltip: { type: String },
         items: { type: Array },
         onChange: { attribute: false }, // Javascript callback, not an HTML attribute!
         open: { type: Boolean, state: true }, // Internal state
@@ -58,6 +59,7 @@ export class Dropdown extends LitElement {
     constructor() {
         super();
         this.title = "";
+        this.tooltip = "";
         this.items = [];
         this.open = false;
         this.onChange = null;
@@ -105,7 +107,7 @@ export class Dropdown extends LitElement {
     render() {
         const selectedItem = this.selectedItem;
         return html`
-            <button class="button dropdown-button" @click="${this.toggle}">
+            <button class="button dropdown-button" title="${this.tooltip}" @click="${this.toggle}">
                 <span class="button-label">${this.title}: ${selectedItem?.displayName || ""}</span>
             </button>
             ${this.open ? html`

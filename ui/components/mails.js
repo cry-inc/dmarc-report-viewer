@@ -117,6 +117,15 @@ export class Mails extends LitElement {
         return Boolean(hashParams);
     }
 
+    timeFilterTooltip() {
+        const excludedBefore = this.params.after ? new Date(Number(this.params.after) * 1000).toLocaleString() : undefined;
+        const excludedAfter = this.params.before ? new Date(Number(this.params.before) * 1000).toLocaleString() : undefined;
+        if (excludedBefore && excludedAfter) return `All mails before ${excludedBefore} and after ${excludedAfter} are excluded.`;
+        if (excludedBefore) return `All mails before ${excludedBefore} are excluded.`;
+        if (excludedAfter) return `All mails after ${excludedAfter} are excluded.`;
+        return "";
+    }
+
     render() {
         return html`
             <h1>Mails</h1>
@@ -151,7 +160,7 @@ export class Mails extends LitElement {
                         { value: "false", displayName: "Hide", selected: this.params.errors === "false" },
                     ]}"
                     .onChange="${(value) => this.setFilter("errors", value)}"></drv-dropdown-select>
-                <drv-dropdown-select title="Time"
+                <drv-dropdown-select title="Time" .tooltip="${this.timeFilterTooltip()}"
                     .items="${[
                         { value: "", displayName: "All", selected: ![3, 7, 30, 180, 365].includes(Number(this.params.days)) && !(this.params.before || this.params.after) },
                         { value: "3", displayName: "Last 3 days", selected: this.params.days === "3" },
