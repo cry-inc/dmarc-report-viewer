@@ -6,6 +6,7 @@ class TimeRange extends LitElement {
         before: { type: Number, reflect: true },
         after: { type: Number, reflect: true },
         invalidRange: { state: true },
+        rangeComplete: { state: true },
     };
 
     static styles = [globalStyle, css`
@@ -74,6 +75,7 @@ class TimeRange extends LitElement {
         this.before = undefined;
         this.after = undefined;
         this.invalidRange = false;
+        this.rangeComplete = false;
     }
 
     toLocalInput(timestamp) {
@@ -139,6 +141,7 @@ class TimeRange extends LitElement {
     updateRangeValidity(form = this.renderRoot.querySelector("form")) {
         const after = form.elements.namedItem("after").value;
         const before = form.elements.namedItem("before").value;
+        this.rangeComplete = Boolean(after || before);
         this.invalidRange = Boolean(after && before && new Date(after) >= new Date(before));
     }
 
@@ -179,7 +182,7 @@ class TimeRange extends LitElement {
                     ${this.invalidRange ? html`<p class="range-warning" role="alert">Error: Start must be before end date!</p>` : ""}
                     <div class="dialog-actions">
                         <button class="button" type="button" @click=${() => this.finish(undefined)}>Cancel</button>
-                        <button class="button" type="submit" ?disabled=${this.invalidRange}>Apply</button>
+                        <button class="button" type="submit" ?disabled=${!this.rangeComplete || this.invalidRange}>Apply</button>
                     </div>
                 </form>
             </dialog>
