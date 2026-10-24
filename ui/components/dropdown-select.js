@@ -128,4 +128,4 @@ export class Dropdown extends LitElement {
     }
 }
 
-customElements.define("drv-dropdown", Dropdown);
+customElements.define("drv-dropdown-select", Dropdown);

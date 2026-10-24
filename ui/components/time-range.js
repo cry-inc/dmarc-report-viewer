@@ -1,7 +1,7 @@
 import { LitElement, html, css } from "lit";
 import { globalStyle } from "../style.js";
 
-export class TimeRange extends LitElement {
+class TimeRange extends LitElement {
     static properties = {
         before: { type: Number, reflect: true },
         after: { type: Number, reflect: true },

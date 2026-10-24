@@ -122,36 +122,36 @@ export class Mails extends LitElement {
             <h1>Mails</h1>
             <div>
                 Filters:
-                <drv-dropdown class="ml" title="Size"
+                <drv-dropdown-select class="ml" title="Size"
                     .items="${[
                         { value: "", displayName: "All", selected: !["true", "false"].includes(this.params.oversized) },
                         { value: "false", displayName: "Valid", selected: this.params.oversized === "false" },
                         { value: "true", displayName: "Oversized", selected: this.params.oversized === "true" },
                     ]}"
-                    .onChange="${(value) => this.setFilter("oversized", value)}"></drv-dropdown>
-                <drv-dropdown title="Type"
+                    .onChange="${(value) => this.setFilter("oversized", value)}"></drv-dropdown-select>
+                <drv-dropdown-select title="Type"
                     .items="${[
                         { value: "", displayName: "All", selected: !this.params.attachment },
                         { value: "dmarc", displayName: "DMARC", selected: this.params.attachment === "dmarc" },
                         { value: "tls", displayName: "TLS", selected: this.params.attachment === "tls" },
                         { value: "none", displayName: "None", selected: this.params.attachment === "none" },
                     ]}"
-                    .onChange="${(value) => this.setFilter("attachment", value)}"></drv-dropdown>
-                <drv-dropdown title="Duplicates"
+                    .onChange="${(value) => this.setFilter("attachment", value)}"></drv-dropdown-select>
+                <drv-dropdown-select title="Duplicates"
                     .items="${[
                         { value: "", displayName: "All", selected: !["true", "false"].includes(this.params.duplicates) },
                         { value: "true", displayName: "Duplicates", selected: this.params.duplicates === "true" },
                         { value: "false", displayName: "No Duplicates", selected: this.params.duplicates === "false" },
                     ]}"
-                    .onChange="${(value) => this.setFilter("duplicates", value)}"></drv-dropdown>
-                <drv-dropdown title="Parsing Errors"
+                    .onChange="${(value) => this.setFilter("duplicates", value)}"></drv-dropdown-select>
+                <drv-dropdown-select title="Parsing Errors"
                     .items="${[
                         { value: "", displayName: "All", selected: !["true", "false"].includes(this.params.errors) },
                         { value: "true", displayName: "Errors", selected: this.params.errors === "true" },
                         { value: "false", displayName: "No Errors", selected: this.params.errors === "false" },
                     ]}"
-                    .onChange="${(value) => this.setFilter("errors", value)}"></drv-dropdown>
-                <drv-dropdown title="Time"
+                    .onChange="${(value) => this.setFilter("errors", value)}"></drv-dropdown-select>
+                <drv-dropdown-select title="Time"
                     .items="${[
                         { value: "", displayName: "All", selected: ![3, 7, 30, 180, 365].includes(Number(this.params.days)) && !(this.params.before || this.params.after) },
                         { value: "3", displayName: "Last 3 days", selected: this.params.days === "3" },
@@ -161,7 +161,7 @@ export class Mails extends LitElement {
                         { value: "365", displayName: "Last year", selected: this.params.days === "365" },
                         { value: "custom", displayName: "Custom...", selected: Boolean(this.params.before || this.params.after) },
                     ]}"
-                    .onChange="${(value) => value === "custom" ? this.openCustomDateDialog() : this.setFilter("days", value)}"></drv-dropdown>
+                    .onChange="${(value) => value === "custom" ? this.openCustomDateDialog() : this.setFilter("days", value)}"></drv-dropdown-select>
                 <button class="button" ?disabled="${!this.hasFilters()}" @click="${this.clearFilters}">Clear</button>
             </div>
             <drv-mail-table .mails="${this.mails}"></drv-mail-table>
