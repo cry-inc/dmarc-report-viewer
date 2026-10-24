@@ -22,7 +22,7 @@ export class Dashboard extends LitElement {
         }
 
         .stats {
-            margin-bottom: 10px;
+            margin-bottom: 20px;
         }
 
         .stats span {
@@ -79,36 +79,26 @@ export class Dashboard extends LitElement {
         }
     }
 
-    onTimeSpanChange(event) {
-        const value = event.target.value;
-        if (value && value !== "0") {
-            this.params.ts = value;
+    setFilter(name, value) {
+        const hashParams = document.location.hash.split("?")[1] || "";
+        const params = new URLSearchParams(hashParams);
+
+        if (value) {
+            params.set(name, value);
         } else {
-            delete this.params.ts;
+            params.delete(name);
         }
-        this.updateByParams();
+
+        const query = params.toString();
+        document.location.hash = query ? `#/dashboard?${query}` : "#/dashboard";
     }
 
-    onDomainChange(event) {
-        const value = event.target.value;
-        if (value && value !== "all") {
-            this.params.domain = value;
-        } else {
-            delete this.params.domain;
-        }
-        this.updateByParams();
+    clearFilters() {
+        document.location.hash = "#/dashboard";
     }
 
-    updateByParams() {
-        let params = Object.
-            keys(this.params).
-            map(k => k + "=" + this.params[k]).
-            join("&");
-        if (params.length > 0) {
-            document.location.href = "#/dashboard?" + params;
-        } else {
-            document.location.href = "#/dashboard";
-        }
+    hasFilters() {
+        return Boolean(this.params.days || this.params.domain);
     }
 
     groupData(data, maxPercent, minItems, label) {
@@ -138,8 +128,8 @@ export class Dashboard extends LitElement {
 
     async updateCharts() {
         const queryParams = [];
-        if (this.params.ts && this.params.ts !== "0") {
-            const after = Math.floor(Date.now() / 1000) - Number(this.params.ts) * 3600;
+        if (this.params.days) {
+            const after = Math.floor(Date.now() / 1000) - Number(this.params.days) * 24 * 60 * 60;
             queryParams.push("after=" + after);
         }
         if (this.params.domain && this.params.domain !== "all") {
@@ -364,34 +354,33 @@ export class Dashboard extends LitElement {
                 <span>Next Update: <b>${this.nextUpdate ? new Date(this.nextUpdate * 1000).toLocaleString() : "n/a"}</b></span>
             </div>
 
-            <div class="module stats">
-                <span>
-                    Time Span for Summary Charts:
-                    <select @change="${this.onTimeSpanChange}">
-                        <option value="0">Everything</option>
-                        <option ?selected=${this.params.ts === "72"} value="72">Last Three Days</option>
-                        <option ?selected=${this.params.ts === "168"} value="168">Last Week</option>
-                        <option ?selected=${this.params.ts === "744"} value="744">Last Month</option>
-                        <option ?selected=${this.params.ts === "4464"} value="4464">Last Six Months</option>
-                        <option ?selected=${this.params.ts === "8760"} value="8760">Last Year</option>
-                    </select>
-                </span>
-
-                <span>
-                    Domain:
-                    <select @change="${this.onDomainChange}">
-                        <option value="all">All</option>
-                        ${this.filterDomains.map((domain) =>
-            html`<option
-                                ?selected=${this.params.domain === encodeURIComponent(domain)}
-                                value="${encodeURIComponent(domain)}">${domain}</option>`
-        )}
-                    </select>
-                </span>
+            <h2>Summary Charts</h2>
+            <div class="mb">
+                Filters:
+                <drv-dropdown-select class="ml" title="Domain"
+                    .items="${[
+                        { value: "", displayName: "All", selected: !this.params.domain },
+                        ...this.filterDomains.map(domain => ({
+                            value: domain,
+                            displayName: domain,
+                            selected: this.params.domain === domain,
+                        })),
+                    ]}"
+                    .onChange="${(value) => this.setFilter("domain", value)}"></drv-dropdown-select>
+                <drv-dropdown-select title="Time"
+                    .items="${[
+                        { value: "", displayName: "All", selected: !this.params.days },
+                        { value: "3", displayName: "Last 3 days", selected: this.params.days === "3" },
+                        { value: "7", displayName: "Last week", selected: this.params.days === "7" },
+                        { value: "30", displayName: "Last month", selected: this.params.days === "30" },
+                        { value: "180", displayName: "Last 6 months", selected: this.params.days === "180" },
+                        { value: "365", displayName: "Last year", selected: this.params.days === "365" },
+                    ]}"
+                    .onChange="${(value) => this.setFilter("days", value)}"></drv-dropdown-select>
+                <button class="button" ?disabled="${!this.hasFilters()}" @click="${this.clearFilters}">Clear</button>
             </div>
 
-            <h2 class="dmarc_charts">DMARC Summary</h2>
-            <div class="grid dmarc_charts">
+            <div class="grid dmarc_charts mb">
                 <div class="module dmarc_orgs">
                     <h3>DMARC Organizations</h3>
                     <canvas class="dmarc_orgs_chart"></canvas>
@@ -423,7 +412,6 @@ export class Dashboard extends LitElement {
                 </div>
             </div>
 
-            <h2 class="tls_charts">SMTP TLS Report Summary</h2>
             <div class="grid tls_charts">
                 <div class="module tls_orgs">
                     <h3>TLS Organizations</h3>

@@ -125,6 +125,10 @@ export const globalStyle = css`
         margin-left: 10px;
     }
 
+    .mb {
+        margin-bottom: 10px;
+    }
+
     .sourceip .name {
         padding-left: 40px;
     }

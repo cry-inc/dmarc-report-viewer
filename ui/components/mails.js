@@ -166,7 +166,7 @@ export class Mails extends LitElement {
                         { value: "3", displayName: "Last 3 days", selected: this.params.days === "3" },
                         { value: "7", displayName: "Last week", selected: this.params.days === "7" },
                         { value: "30", displayName: "Last month", selected: this.params.days === "30" },
-                        { value: "180", displayName: "Last six months", selected: this.params.days === "180" },
+                        { value: "180", displayName: "Last 6 months", selected: this.params.days === "180" },
                         { value: "365", displayName: "Last year", selected: this.params.days === "365" },
                         { value: "custom", displayName: "Custom...", selected: Boolean(this.params.before || this.params.after) },
                     ]}"
