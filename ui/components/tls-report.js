@@ -1,6 +1,7 @@
 import { LitElement, html, nothing } from "lit";
 import { globalStyle } from "../style.js";
 import { join } from "../utils.js";
+import { ipDialog } from "./ip.js";
 
 export class TlsReport extends LitElement {
     static styles = [globalStyle];
@@ -17,9 +18,6 @@ export class TlsReport extends LitElement {
         this.id = null;
         this.mailId = null;
         this.report = null;
-        this.ip2dns = {};
-        this.ip2location = {};
-        this.ipDetails = {};
     }
 
     async updated(changedProperties) {
@@ -29,39 +27,6 @@ export class TlsReport extends LitElement {
             this.report = rwi.report;
             this.mailId = rwi.mail_id;
         }
-    }
-
-    async lookupIp(ip) {
-        if (this.ipDetails[ip]) {
-            this.ipDetails[ip] = false;
-        } else {
-            this.ipDetails[ip] = true;
-            this.getDnsForIp(ip);
-            this.getLocationForIp(ip);
-        }
-        this.requestUpdate();
-    }
-
-    async getDnsForIp(ip) {
-        const response = await fetch("ips/" + ip + "/dns");
-        if (response.status === 200) {
-            const result = await response.text();
-            this.ip2dns[ip] = result;
-        } else {
-            this.ip2dns[ip] = null;
-        }
-        this.requestUpdate();
-    }
-
-    async getLocationForIp(ip) {
-        const response = await fetch("ips/" + ip + "/location");
-        if (response.status === 200) {
-            const result = await response.json();
-            this.ip2location[ip] = result;
-        } else {
-            this.ip2location[ip] = null;
-        }
-        this.requestUpdate();
     }
 
     renderPolicyTypeBadge(result) {
@@ -117,23 +82,6 @@ export class TlsReport extends LitElement {
     renderMultilineCell(array) {
         const lines = array.map(l => html`${l}`);
         return join(lines, html`<br>`);
-    }
-
-    renderLocation(lat, lon) {
-        if (lat === undefined || lon === undefined) {
-            return html`<span class="faded">n/a</span>`;
-        }
-        return html`<a target="_blank" title="Show on OpenStreeMap" href="https://www.openstreetmap.org/#map=8/${lat}/${lon}">${lat}, ${lon}</a>`;
-    }
-
-    renderPropIfObjDefined(obj, prop) {
-        if (obj === undefined) {
-            return html`<span class="faded">loading...</span>`;
-        } else if (obj) {
-            return obj[prop]
-        } else {
-            return html`<span class="faded">n/a</span>`;
-        }
     }
 
     renderIfDefined(obj) {
@@ -244,48 +192,9 @@ export class TlsReport extends LitElement {
                                 <td>
                                     ${this.renderIfDefined(failureDetails["sending-mta-ip"])}
                                     ${failureDetails["sending-mta-ip"] ? html`
-                                        <button @click="${() => this.lookupIp(failureDetails["sending-mta-ip"])}" class="button sm help print-hide" title="Search DNS hostname for IP and geolocate it">DNS and Location</button>
+                                        <button @click="${() => ipDialog(failureDetails["sending-mta-ip"])}" class="button sm help print-hide" title="Search DNS hostname for IP and geolocate it">DNS and Location</button>
                                         <a class="button sm help print-hide" title="Look up WHOIS record for IP and show in new tab" target="blank" href="ips/${failureDetails["sending-mta-ip"]}/whois">WHOIS</a>
                                     ` : nothing}
-                                </td>
-                            </tr>
-                        </tbody>
-                        <tbody class="sourceip" style="${this.ipDetails[failureDetails["sending-mta-ip"]] ? "": "display:none"}">
-                            <tr>
-                                <td class="name">Sending MTA IP DNS</td>
-                                <td>${this.renderIfDefined(this.ip2dns[failureDetails["sending-mta-ip"]])}
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="name">Sending MTA IP Country</td>
-                                <td>${this.renderPropIfObjDefined(this.ip2location[failureDetails["sending-mta-ip"]], "country")}</td>
-                            </tr>
-                            <tr>
-                                <td class="name">Sending MTA IP City</td>
-                                <td>${this.renderPropIfObjDefined(this.ip2location[failureDetails["sending-mta-ip"]], "city")}</td>
-                            </tr>
-                            <tr>
-                                <td class="name">Sending MTA IP ISP</td>
-                                <td>${this.renderPropIfObjDefined(this.ip2location[failureDetails["sending-mta-ip"]], "isp")}</td>
-                            </tr>
-                            <tr>
-                                <td class="name">Sending MTA IP AS</td>
-                                <td>${this.renderPropIfObjDefined(this.ip2location[failureDetails["sending-mta-ip"]], "as")}</td>
-                            </tr>
-                            <tr>
-                                <td class="name help" title="Known Proxy, VPN or Tor exit address?">Sending MTA IP Proxy</td>
-                                <td>${this.renderPropIfObjDefined(this.ip2location[failureDetails["sending-mta-ip"]], "proxy")}</td>
-                            </tr>
-                            <tr>
-                                <td class="name help" title="Known data center, hosting or colocated">Sending MTA IP Data Center</td>
-                                <td>${this.renderPropIfObjDefined(this.ip2location[failureDetails["sending-mta-ip"]], "hosting")}</td>
-                            </tr>
-                            <tr>
-                                <td class="name">Sending MTA IP Location</td>
-                                <td>${this.ip2location[failureDetails["sending-mta-ip"]] === undefined ?
-                                        html`<span class="faded">loading</span>` :
-                                        this.renderLocation(this.ip2location[failureDetails["sending-mta-ip"]]?.lat, this.ip2location[failureDetails["sending-mta-ip"]]?.lon)
-                                    }
                                 </td>
                             </tr>
                         </tbody>
@@ -307,47 +216,8 @@ export class TlsReport extends LitElement {
                                     <td class="name">Receiving IP</td>
                                     <td>
                                         ${failureDetails["receiving-ip"]}
-                                        <button @click="${() => this.lookupIp(failureDetails["receiving-ip"])}" class="button sm help print-hide" title="Search DNS hostname for IP and geolocate it">DNS and Location</button>
+                                        <button @click="${() => ipDialog(failureDetails["receiving-ip"])}" class="button sm help print-hide" title="Search DNS hostname for IP and geolocate it">DNS and Location</button>
                                         <a class="button sm help print-hide" title="Look up WHOIS record for IP and show in new tab" target="blank" href="ips/${failureDetails["receiving-ip"]}/whois">WHOIS</a>
-                                    </td>
-                                </tr>
-                            </tbody>
-                            <tbody class="sourceip" style="${this.ipDetails[failureDetails["receiving-ip"]] ? "": "display:none"}">
-                                <tr>
-                                    <td class="name">Receiving IP DNS</td>
-                                    <td>${this.renderIfDefined(this.ip2dns[failureDetails["receiving-ip"]])}
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="name">Receiving IP Country</td>
-                                    <td>${this.renderPropIfObjDefined(this.ip2location[failureDetails["receiving-ip"]], "country")}</td>
-                                </tr>
-                                <tr>
-                                    <td class="name">Receiving IP City</td>
-                                    <td>${this.renderPropIfObjDefined(this.ip2location[failureDetails["receiving-ip"]], "city")}</td>
-                                </tr>
-                                <tr>
-                                    <td class="name">Receiving IP ISP</td>
-                                    <td>${this.renderPropIfObjDefined(this.ip2location[failureDetails["receiving-ip"]], "isp")}</td>
-                                </tr>
-                                <tr>
-                                    <td class="name">Receiving IP AS</td>
-                                    <td>${this.renderPropIfObjDefined(this.ip2location[failureDetails["receiving-ip"]], "as")}</td>
-                                </tr>
-                                <tr>
-                                    <td class="name help" title="Known Proxy, VPN or Tor exit address?">Receiving IP Proxy</td>
-                                    <td>${this.renderPropIfObjDefined(this.ip2location[failureDetails["receiving-ip"]], "proxy")}</td>
-                                </tr>
-                                <tr>
-                                    <td class="name help" title="Known data center, hosting or colocated">Receiving IP Data Center</td>
-                                    <td>${this.renderPropIfObjDefined(this.ip2location[failureDetails["receiving-ip"]], "hosting")}</td>
-                                </tr>
-                                <tr>
-                                    <td class="name">Receiving IP Location</td>
-                                    <td>${this.ip2location[failureDetails["receiving-ip"]] === undefined ?
-                                            html`<span class="faded">loading</span>` :
-                                            this.renderLocation(this.ip2location[failureDetails["receiving-ip"]]?.lat, this.ip2location[failureDetails["receiving-ip"]]?.lon)
-                                        }
                                     </td>
                                 </tr>
                             </tbody>

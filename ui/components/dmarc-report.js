@@ -1,5 +1,6 @@
 import { LitElement, html } from "lit";
 import { globalStyle } from "../style.js";
+import { ipDialog } from "./ip.js";
 
 export class DmarcReport extends LitElement {
     static styles = [globalStyle];
@@ -17,9 +18,6 @@ export class DmarcReport extends LitElement {
         this.id = null;
         this.mailId = null;
         this.report = null;
-        this.ip2dns = {};
-        this.ip2location = {};
-        this.ipDetails = {};
         this.recordFilter = "all";
     }
 
@@ -30,39 +28,6 @@ export class DmarcReport extends LitElement {
             this.report = rwi.report;
             this.mailId = rwi.mail_id;
         }
-    }
-
-    async lookupIp(ip) {
-        if (this.ipDetails[ip]) {
-            this.ipDetails[ip] = false;
-        } else {
-            this.ipDetails[ip] = true;
-            this.getDnsForIp(ip);
-            this.getLocationForIp(ip);
-        }
-        this.requestUpdate();
-    }
-
-    async getDnsForIp(ip) {
-        const response = await fetch("ips/" + ip + "/dns");
-        if (response.status === 200) {
-            const result = await response.text();
-            this.ip2dns[ip] = result;
-        } else {
-            this.ip2dns[ip] = null;
-        }
-        this.requestUpdate();
-    }
-
-    async getLocationForIp(ip) {
-        const response = await fetch("ips/" + ip + "/location");
-        if (response.status === 200) {
-            const result = await response.json();
-            this.ip2location[ip] = result;
-        } else {
-            this.ip2location[ip] = null;
-        }
-        this.requestUpdate();
     }
 
     renderOptional(value) {
@@ -85,33 +50,6 @@ export class DmarcReport extends LitElement {
             return html`<span class="faded">n/a</span>`;
         } else {
             return html`<span class="badge">${result}</span>`;
-        }
-    }
-
-    renderLocation(lat, lon) {
-        if (lat === undefined || lon === undefined) {
-            return html`<span class="faded">n/a</span>`;
-        }
-        return html`<a target="_blank" title="Show on OpenStreeMap" href="https://www.openstreetmap.org/#map=8/${lat}/${lon}">${lat}, ${lon}</a>`;
-    }
-
-    renderPropIfObjDefined(obj, prop) {
-        if (obj === undefined) {
-            return html`<span class="faded">loading...</span>`;
-        } else if (obj) {
-            return obj[prop]
-        } else {
-            return html`<span class="faded">n/a</span>`;
-        }
-    }
-
-    renderIfDefined(obj) {
-        if (obj === undefined) {
-            return html`<span class="faded">loading...</span>`;
-        } else if (obj) {
-            return obj;
-        } else {
-            return html`<span class="faded">n/a</span>`;
         }
     }
 
@@ -311,49 +249,10 @@ export class DmarcReport extends LitElement {
                         <td class="name">Source IP</td>
                         <td>
                             ${record.row.source_ip}
-                            <button @click="${() => this.lookupIp(record.row.source_ip)}" class="button sm help print-hide" title="Search DNS hostname for IP and geolocate it">DNS and Location</button>
+                            <button @click="${() => ipDialog(record.row.source_ip)}" class="button sm help print-hide" title="Search DNS hostname for IP and geolocate it">DNS and Location</button>
                             <a class="button sm help print-hide" title="Look up WHOIS record for IP and show in new tab" target="blank" href="ips/${record.row.source_ip}/whois">WHOIS</a>
                         </td>
                     </tr>
-                    <tbody class="sourceip" style="${this.ipDetails[record.row.source_ip] ? "" : "display:none"}">
-                        <tr>
-                            <td class="name">Source IP DNS</td>
-                            <td>${this.renderIfDefined(this.ip2dns[record.row.source_ip])}
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="name">Source IP Country</td>
-                            <td>${this.renderPropIfObjDefined(this.ip2location[record.row.source_ip], "country")}</td>
-                        </tr>
-                        <tr>
-                            <td class="name">Source IP City</td>
-                            <td>${this.renderPropIfObjDefined(this.ip2location[record.row.source_ip], "city")}</td>
-                        </tr>
-                        <tr>
-                            <td class="name">Source IP ISP</td>
-                            <td>${this.renderPropIfObjDefined(this.ip2location[record.row.source_ip], "isp")}</td>
-                        </tr>
-                        <tr>
-                            <td class="name">Source IP AS</td>
-                            <td>${this.renderPropIfObjDefined(this.ip2location[record.row.source_ip], "as")}</td>
-                        </tr>
-                        <tr>
-                            <td class="name help" title="Known Proxy, VPN or Tor exit address?">Source IP Proxy</td>
-                            <td>${this.renderPropIfObjDefined(this.ip2location[record.row.source_ip], "proxy")}</td>
-                        </tr>
-                        <tr>
-                            <td class="name help" title="Known data center, hosting or colocated">Source IP Data Center</td>
-                            <td>${this.renderPropIfObjDefined(this.ip2location[record.row.source_ip], "hosting")}</td>
-                        </tr>
-                        <tr>
-                            <td class="name">Source IP Location</td>
-                            <td>${this.ip2location[record.row.source_ip] === undefined ?
-                                    html`<span class="faded">loading</span>` :
-                                    this.renderLocation(this.ip2location[record.row.source_ip]?.lat, this.ip2location[record.row.source_ip]?.lon)
-                                }
-                            </td>
-                        </tr>
-                    </tbody>
                     <tr>
                         <td class="name">Count</td>
                         <td>${record.row.count}</td>
