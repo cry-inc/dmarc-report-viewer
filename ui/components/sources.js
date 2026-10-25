@@ -1,5 +1,6 @@
 import { LitElement, html } from "lit";
 import { globalStyle } from "../style.js";
+import { ipDialog } from "./ip.js";
 
 export class Sources extends LitElement {
     static styles = [globalStyle];
@@ -150,7 +151,7 @@ export class Sources extends LitElement {
                 </tr>
                 ${this.sources.length !== 0 ? this.sources.map((source) =>
                     html`<tr> 
-                        <td>${source.ip}</a></td>
+                        <td><a href="#" @click=${(e) => { e.preventDefault(); ipDialog(source.ip); }}>${source.ip}</a></td>
                         <td class="md-hidden">${this.prepareDnsName(source.dns)}</td>
                         <td>${source.count}</td>
                         <td class="sm-hidden"><a href="#/sources?domain=${encodeURIComponent(source.domain)}">${source.domain}</a></td>
