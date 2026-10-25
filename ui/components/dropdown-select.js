@@ -21,6 +21,10 @@ export class Dropdown extends LitElement {
             text-align: left;
         }
 
+        .dropdown-button.highlight {
+            border-left: 4px solid #fd7e14;
+        }
+
         .button-label {
             white-space: nowrap;
         }
@@ -106,8 +110,9 @@ export class Dropdown extends LitElement {
 
     render() {
         const selectedItem = this.selectedItem;
+        const highlight = this.items.indexOf(selectedItem) > 0;
         return html`
-            <button class="button dropdown-button" title="${this.tooltip}" @click="${this.toggle}">
+            <button class="button dropdown-button ${highlight ? "highlight" : ""}" title="${this.tooltip}" @click="${this.toggle}">
                 <span class="button-label">${this.title}: ${selectedItem?.displayName || ""}</span>
             </button>
             ${this.open ? html`
