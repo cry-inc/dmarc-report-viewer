@@ -1,5 +1,6 @@
 import { LitElement, html, css } from "lit";
 import { globalStyle } from "../style.js";
+import { timeRangeDialog } from "./time-range.js";
 
 export class Dashboard extends LitElement {
     static styles = [globalStyle, css`
@@ -89,6 +90,11 @@ export class Dashboard extends LitElement {
             params.delete(name);
         }
 
+        if (name === "days") {
+            params.delete("before");
+            params.delete("after");
+        }
+
         const query = params.toString();
         document.location.hash = query ? `#/dashboard?${query}` : "#/dashboard";
     }
@@ -97,8 +103,41 @@ export class Dashboard extends LitElement {
         document.location.hash = "#/dashboard";
     }
 
+    async openCustomDateDialog() {
+        const selected = await timeRangeDialog(
+            this.params.before ? new Date(Number(this.params.before) * 1000) : undefined,
+            this.params.after ? new Date(Number(this.params.after) * 1000) : undefined,
+        );
+
+        if (!selected) return false;
+
+        const hashParams = document.location.hash.split("?")[1] || "";
+        const params = new URLSearchParams(hashParams);
+        params.delete("days");
+
+        for (const [name, date] of [["before", selected.before], ["after", selected.after]]) {
+            if (date) {
+                params.set(name, Math.floor(date.getTime() / 1000).toString());
+            } else {
+                params.delete(name);
+            }
+        }
+
+        const query = params.toString();
+        document.location.hash = query ? `#/dashboard?${query}` : "#/dashboard";
+    }
+
+    timeFilterTooltip() {
+        const excludedBefore = this.params.after ? new Date(Number(this.params.after) * 1000).toLocaleString() : undefined;
+        const excludedAfter = this.params.before ? new Date(Number(this.params.before) * 1000).toLocaleString() : undefined;
+        if (excludedBefore && excludedAfter) return `All reports before ${excludedBefore} and after ${excludedAfter} are excluded.`;
+        if (excludedBefore) return `All reports before ${excludedBefore} are excluded.`;
+        if (excludedAfter) return `All reports after ${excludedAfter} are excluded.`;
+        return "";
+    }
+
     hasFilters() {
-        return Boolean(this.params.days || this.params.domain);
+        return Boolean(this.params.days || this.params.domain || this.params.before || this.params.after);
     }
 
     groupData(data, maxPercent, minItems, label) {
@@ -131,6 +170,11 @@ export class Dashboard extends LitElement {
         if (this.params.days) {
             const after = Math.floor(Date.now() / 1000) - Number(this.params.days) * 24 * 60 * 60;
             queryParams.push("after=" + after);
+        } else if (this.params.after) {
+            queryParams.push("after=" + this.params.after);
+        }
+        if (this.params.before) {
+            queryParams.push("before=" + this.params.before);
         }
         if (this.params.domain && this.params.domain !== "all") {
             queryParams.push("domain=" + this.params.domain);
@@ -367,16 +411,17 @@ export class Dashboard extends LitElement {
                         })),
                     ]}"
                     .onChange="${(value) => this.setFilter("domain", value)}"></drv-dropdown-select>
-                <drv-dropdown-select title="Time"
+                <drv-dropdown-select title="Time" .tooltip="${this.timeFilterTooltip()}"
                     .items="${[
-                        { value: "", displayName: "All", selected: !this.params.days },
+                        { value: "", displayName: "All", selected: ![3, 7, 30, 180, 365].includes(Number(this.params.days)) && !(this.params.before || this.params.after) },
                         { value: "3", displayName: "Last 3 days", selected: this.params.days === "3" },
                         { value: "7", displayName: "Last week", selected: this.params.days === "7" },
                         { value: "30", displayName: "Last month", selected: this.params.days === "30" },
                         { value: "180", displayName: "Last 6 months", selected: this.params.days === "180" },
                         { value: "365", displayName: "Last year", selected: this.params.days === "365" },
+                        { value: "custom", displayName: "Custom...", selected: Boolean(this.params.before || this.params.after) },
                     ]}"
-                    .onChange="${(value) => this.setFilter("days", value)}"></drv-dropdown-select>
+                    .onChange="${(value) => value === "custom" ? this.openCustomDateDialog() : this.setFilter("days", value)}"></drv-dropdown-select>
                 <button class="button" ?disabled="${!this.hasFilters()}" @click="${this.clearFilters}">Clear</button>
             </div>
 
