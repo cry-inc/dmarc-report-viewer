@@ -1,5 +1,6 @@
 import { LitElement, html } from "lit";
 import { globalStyle } from "../style.js";
+import { timeRangeDialog } from "./time-range.js";
 
 export class TlsReports extends LitElement {
     static styles = [globalStyle];
@@ -13,13 +14,68 @@ export class TlsReports extends LitElement {
         super();
         this.params = {};
         this.reports = [];
-        this.filtered = false;
     }
 
     updated(changedProperties) {
         if (changedProperties.has("params")) {
             this.updateReports();
         }
+    }
+
+    setFilter(name, value) {
+        const hashParams = document.location.hash.split("?")[1] || "";
+        const params = new URLSearchParams(hashParams);
+        if (value) {
+            params.set(name, value);
+        } else {
+            params.delete(name);
+        }
+        if (name === "days") {
+            params.delete("before");
+            params.delete("after");
+        }
+        const query = params.toString();
+        document.location.hash = query ? `#/tls-reports?${query}` : "#/tls-reports";
+    }
+
+    clearFilters() {
+        document.location.hash = "#/tls-reports";
+    }
+
+    async openCustomDateDialog() {
+        const selected = await timeRangeDialog(
+            this.params.before ? new Date(Number(this.params.before) * 1000) : undefined,
+            this.params.after ? new Date(Number(this.params.after) * 1000) : undefined,
+        );
+        if (!selected) return false;
+
+        const hashParams = document.location.hash.split("?")[1] || "";
+        const params = new URLSearchParams(hashParams);
+        params.delete("days");
+
+        for (const [name, date] of [["before", selected.before], ["after", selected.after]]) {
+            if (date) {
+                params.set(name, Math.floor(date.getTime() / 1000).toString());
+            } else {
+                params.delete(name);
+            }
+        }
+
+        const query = params.toString();
+        document.location.hash = query ? `#/tls-reports?${query}` : "#/tls-reports";
+    }
+
+    timeFilterTooltip() {
+        const excludedBefore = this.params.after ? new Date(Number(this.params.after) * 1000).toLocaleString() : undefined;
+        const excludedAfter = this.params.before ? new Date(Number(this.params.before) * 1000).toLocaleString() : undefined;
+        if (excludedBefore && excludedAfter) return `All reports before ${excludedBefore} and after ${excludedAfter} are excluded.`;
+        if (excludedBefore) return `All reports before ${excludedBefore} are excluded.`;
+        if (excludedAfter) return `All reports after ${excludedAfter} are excluded.`;
+        return "";
+    }
+
+    hasFilters() {
+        return Boolean(document.location.hash.split("?")[1]);
     }
 
     async updateReports() {
@@ -42,6 +98,17 @@ export class TlsReports extends LitElement {
         if (this.params.ip) {
             urlParams.push("ip=" + encodeURIComponent(this.params.ip));
         }
+        if (this.params.days) {
+            const days = Number(this.params.days);
+            const after = Math.floor(Date.now() / 1000) - days * 24 * 60 * 60;
+            urlParams.push("after=" + after);
+        }
+        if (this.params.after) {
+            urlParams.push("after=" + this.params.after);
+        }
+        if (this.params.before) {
+            urlParams.push("before=" + this.params.before);
+        }
         let url = "tls-reports";
         if (urlParams.length > 0) {
             url += "?" + urlParams.join("&");
@@ -49,21 +116,46 @@ export class TlsReports extends LitElement {
         const response = await fetch(url);
         this.reports = await response.json();
         this.reports.sort((a, b) => new Date(b.date_begin) - new Date(a.date_begin));
-        this.filtered = this.filtered = urlParams.length > 0;
     }
 
     render() {
         return html`
             <h1>SMTP TLS Reports</h1>
             <div>
-                ${this.filtered ?
-                    html`Filter active! <a class="ml button" href="#/tls-reports">Show all Reports</a>` :
-                    html`Filters:
-                        <a class="ml button mr-5" href="#/tls-reports?flagged=true">Reports with Problems</a>
-                        <a class="button mr-5" href="#/tls-reports?flagged_sts=true">Reports with MTA-STS Problems</a>
-                        <a class="button mr-5" href="#/tls-reports?flagged_tlsa=true">Reports with TLSA Problems</a>
-                    `
-                }
+                Filters:
+                <drv-dropdown-select class="ml" title="Problems"
+                    .items="${[
+                        { value: "", displayName: "All", selected: !["true", "false"].includes(this.params.flagged) },
+                        { value: "true", displayName: "Yes", selected: this.params.flagged === "true" },
+                        { value: "false", displayName: "No", selected: this.params.flagged === "false" },
+                    ]}"
+                    .onChange="${(value) => this.setFilter("flagged", value)}"></drv-dropdown-select>
+                <drv-dropdown-select title="MTA-STS Problems"
+                    .items="${[
+                        { value: "", displayName: "All", selected: !["true", "false"].includes(this.params.flagged_sts) },
+                        { value: "true", displayName: "Yes", selected: this.params.flagged_sts === "true" },
+                        { value: "false", displayName: "No", selected: this.params.flagged_sts === "false" },
+                    ]}"
+                    .onChange="${(value) => this.setFilter("flagged_sts", value)}"></drv-dropdown-select>
+                <drv-dropdown-select title="TLSA Problems"
+                    .items="${[
+                        { value: "", displayName: "All", selected: !["true", "false"].includes(this.params.flagged_tlsa) },
+                        { value: "true", displayName: "Yes", selected: this.params.flagged_tlsa === "true" },
+                        { value: "false", displayName: "No", selected: this.params.flagged_tlsa === "false" },
+                    ]}"
+                    .onChange="${(value) => this.setFilter("flagged_tlsa", value)}"></drv-dropdown-select>
+                <drv-dropdown-select title="Time" .tooltip="${this.timeFilterTooltip()}"
+                    .items="${[
+                        { value: "", displayName: "All", selected: ![3, 7, 30, 180, 365].includes(Number(this.params.days)) && !(this.params.before || this.params.after) },
+                        { value: "3", displayName: "Last 3 days", selected: this.params.days === "3" },
+                        { value: "7", displayName: "Last week", selected: this.params.days === "7" },
+                        { value: "30", displayName: "Last month", selected: this.params.days === "30" },
+                        { value: "180", displayName: "Last 6 months", selected: this.params.days === "180" },
+                        { value: "365", displayName: "Last year", selected: this.params.days === "365" },
+                        { value: "custom", displayName: "Custom...", selected: Boolean(this.params.before || this.params.after) },
+                    ]}"
+                    .onChange="${(value) => value === "custom" ? this.openCustomDateDialog() : this.setFilter("days", value)}"></drv-dropdown-select>
+                <button class="button" ?disabled="${!this.hasFilters()}" @click="${this.clearFilters}">Clear</button>
             </div>
             <drv-tls-report-table .reports="${this.reports}"></drv-tls-report-table>
         `;
