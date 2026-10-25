@@ -149,15 +149,15 @@ export class Mails extends LitElement {
                 <drv-dropdown-select title="Duplicates"
                     .items="${[
                         { value: "", displayName: "All", selected: !["true", "false"].includes(this.params.duplicates) },
-                        { value: "true", displayName: "Show", selected: this.params.duplicates === "true" },
-                        { value: "false", displayName: "Hide", selected: this.params.duplicates === "false" },
+                        { value: "true", displayName: "Yes", selected: this.params.duplicates === "true" },
+                        { value: "false", displayName: "No", selected: this.params.duplicates === "false" },
                     ]}"
                     .onChange="${(value) => this.setFilter("duplicates", value)}"></drv-dropdown-select>
                 <drv-dropdown-select title="Errors"
                     .items="${[
                         { value: "", displayName: "All", selected: !["true", "false"].includes(this.params.errors) },
-                        { value: "true", displayName: "Show", selected: this.params.errors === "true" },
-                        { value: "false", displayName: "Hide", selected: this.params.errors === "false" },
+                        { value: "true", displayName: "Yes", selected: this.params.errors === "true" },
+                        { value: "false", displayName: "No", selected: this.params.errors === "false" },
                     ]}"
                     .onChange="${(value) => this.setFilter("errors", value)}"></drv-dropdown-select>
                 <drv-dropdown-select title="Time" .tooltip="${this.timeFilterTooltip()}"
