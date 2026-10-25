@@ -14,16 +14,6 @@ class TimeRange extends LitElement {
             display: block;
         }
 
-        dialog {
-            border: none;
-            border-radius: 5px;
-            padding: 40px;
-        }
-
-        dialog::backdrop {
-            background: rgb(0 0 0 / 70%);
-        }
-
         h2 {
             margin-top: 0;
         }
@@ -32,7 +22,7 @@ class TimeRange extends LitElement {
             display: block;
         }
 
-        input[type="datetime-local"] {
+        input {
             box-sizing: border-box;
             display: block;
             width: 100%;
@@ -42,19 +32,19 @@ class TimeRange extends LitElement {
             margin-bottom: 40px;
         }
 
-        .quickselects {
+        .quick-selects {
             display: flex;
             flex-wrap: wrap;
             gap: 4px;
             margin-top: 4px;
         }
 
-        .quickselect-label {
+        .quick-select-label {
             display: inline-flex;
             align-items: center;
         }
 
-        .quickselects .button {
+        .quick-selects .button {
             margin: 0;
         }
 
@@ -169,13 +159,13 @@ class TimeRange extends LitElement {
                     <h2>Select Time Range</h2>
                     <div class="range-field">
                         <label>Start: <input name="after" type="datetime-local" .value=${this.toLocalInput(this.after)} @input=${() => this.updateRangeValidity()}></label>
-                        <div class="quickselects">
+                        <div class="quick-selects">
                             ${this.quickSelectButtons("after")}
                         </div>
                     </div>
                     <div class="range-field">
                         <label>End: <input name="before" type="datetime-local" .value=${this.toLocalInput(this.before)} @input=${() => this.updateRangeValidity()}></label>
-                        <div class="quickselects">
+                        <div class="quick-selects">
                             ${this.quickSelectButtons("before")}
                         </div>
                     </div>

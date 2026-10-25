@@ -1,6 +1,16 @@
 import { css } from "lit";
 
 export const globalStyle = css`
+    dialog {
+        border: none;
+        border-radius: 5px;
+        padding: 40px;
+    }
+
+    dialog::backdrop {
+        background: rgb(0 0 0 / 70%);
+    }
+
     a {
         color: rgb(0, 123, 255);
         text-decoration: none;
