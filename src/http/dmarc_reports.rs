@@ -12,6 +12,7 @@ use axum::http::header;
 use axum::response::IntoResponse;
 use serde::Deserialize;
 use serde::Serialize;
+use std::collections::HashSet;
 use std::net::IpAddr;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -142,6 +143,16 @@ impl ReportFilters {
     }
 }
 
+#[derive(Serialize)]
+struct ReportListResponse {
+    /// Requested filtered reports
+    reports: Vec<ReportHeader>,
+    /// Domains from all reports (unfiltered)
+    domains: Vec<String>,
+    /// Orgs from all reports (unfiltered)
+    orgs: Vec<String>,
+}
+
 pub async fn list_handler(
     State(state): State<Arc<Mutex<AppState>>>,
     mut filters: Query<ReportFilters>,
@@ -152,9 +163,24 @@ pub async fn list_handler(
     // Parse IP once to speed up filters
     let ip_filter = filters.ip.as_deref().and_then(|s| IpAddr::from_str(s).ok());
 
+    let state = state.lock().await;
+    let domains = state
+        .dmarc_reports
+        .values()
+        .map(|rwi| rwi.report.policy_published.domain.as_str())
+        .collect::<HashSet<&str>>()
+        .into_iter()
+        .map(|d| d.to_string())
+        .collect();
+    let orgs = state
+        .dmarc_reports
+        .values()
+        .map(|rwi| rwi.report.report_metadata.org_name.as_str())
+        .collect::<HashSet<&str>>()
+        .into_iter()
+        .map(|o| o.to_string())
+        .collect();
     let reports: Vec<ReportHeader> = state
-        .lock()
-        .await
         .dmarc_reports
         .iter()
         .filter(|(_, rwi)| {
@@ -229,7 +255,13 @@ pub async fn list_handler(
             }
         })
         .collect();
-    Json(reports)
+    drop(state);
+
+    Json(ReportListResponse {
+        reports,
+        domains,
+        orgs,
+    })
 }
 
 pub async fn single_handler(

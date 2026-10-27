@@ -61,7 +61,8 @@ export class DmarcReports extends LitElement {
             url += "?" + urlParams.join("&");
         }
         const response = await fetch(url);
-        this.reports = await response.json();
+        const data = await response.json();
+        this.reports = data.reports;
         this.reports.sort((a, b) => b.date_begin - a.date_begin);
     }
 
