@@ -29,6 +29,7 @@ You can find more screenshots [here](screenshots/screenshots.md).
 - [x] Embedded HTTP server for Web UI
 - [x] Responsive Web UI that works also on small screens
 - [x] Automatic fetching of reports from IMAP inbox
+- [x] Multiple IMAP accounts
 - [x] Updates are scheduled via simple update interval or cron expression
 - [x] Automatic HTTPS via ACME/Let's Encrypt
 - [x] Basic Auth password protection for HTTP server
@@ -96,8 +97,24 @@ Use the ENV variables `IMAP_FOLDER_DMARC` or `IMAP_FOLDER_TLS` to use this featu
 Warning: As soon as you set one of the dedicated folders, the default folder will be ignored!
 TLS reports in the DMARC folder and vice versa will lead to warnings because of unexpected errors.
 
-Please note that fetching reports from different IMAP accounts is currently not supported.
-You might have to setup some forwarding if you are receiving them on separate accounts.
+### Multiple IMAP Accounts
+Reports can be fetched from more than one IMAP account.
+Additional accounts are configured with numbered ENV variables, starting with the number 2.
+They cannot be configured with command line arguments.
+
+`IMAP_USER_<N>` and `IMAP_PASSWORD_<N>` are required for every additional account.
+The connection settings `IMAP_HOST_<N>`, `IMAP_PORT_<N>`, `IMAP_STARTTLS_<N>`, `IMAP_DISABLE_TLS_<N>`
+and `IMAP_TLS_CA_CERTS_<N>` are optional and inherited from the first account when not set.
+The folder settings `IMAP_FOLDER_<N>` (default `INBOX`), `IMAP_FOLDER_DMARC_<N>` and `IMAP_FOLDER_TLS_<N>`
+are optional and not inherited. All other IMAP settings apply to all accounts.
+
+Example for a second account on the same server that only receives SMTP TLS reports:
+
+    -e IMAP_USER_2=tlsrpt@mymailserver.com \
+    -e IMAP_PASSWORD_2=myothersecurepassword \
+    -e IMAP_FOLDER_TLS_2=INBOX \
+
+If one of the accounts cannot be fetched, the whole update fails and the previous data is kept.
 
 ### IMAP with STARTTLS
 By default the IMAP client will attempt to use a TLS encrypted connection using port 993.
