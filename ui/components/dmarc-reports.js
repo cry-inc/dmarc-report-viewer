@@ -8,12 +8,16 @@ export class DmarcReports extends LitElement {
     static properties = {
         params: { type: Object },
         reports: { type: Array },
+        domains: { type: Array },
+        orgs: { type: Array },
     };
 
     constructor() {
         super();
         this.params = {};
         this.reports = [];
+        this.domains = [];
+        this.orgs = [];
     }
 
     updated(changedProperties) {
@@ -63,7 +67,11 @@ export class DmarcReports extends LitElement {
         const response = await fetch(url);
         const data = await response.json();
         this.reports = data.reports;
+        this.domains = data.domains;
+        this.orgs = data.orgs;
         this.reports.sort((a, b) => b.date_begin - a.date_begin);
+        this.domains.sort();
+        this.orgs.sort();
     }
 
     render() {
@@ -99,6 +107,26 @@ export class DmarcReports extends LitElement {
                         { value: "false", displayName: "No", selected: this.params.flagged_dmarc === "false" },
                     ]}"
                     .onChange="${(value) => setHashQueryParams("#/dmarc-reports", "flagged_dmarc", value)}"></drv-dropdown-select>
+                <drv-dropdown-select title="Domain"
+                    .items="${[
+                        { value: "", displayName: "All", selected: !this.params.domain },
+                        ...this.domains.map(domain => ({
+                            value: domain,
+                            displayName: domain,
+                            selected: this.params.domain === domain,
+                        })),
+                    ]}"
+                    .onChange="${(value) => setHashQueryParams("#/dmarc-reports", "domain", value)}"></drv-dropdown-select>
+                <drv-dropdown-select title="Org"
+                    .items="${[
+                        { value: "", displayName: "All", selected: !this.params.org },
+                        ...this.orgs.map(org => ({
+                            value: org,
+                            displayName: org,
+                            selected: this.params.org === org,
+                        })),
+                    ]}"
+                    .onChange="${(value) => setHashQueryParams("#/dmarc-reports", "org", value)}"></drv-dropdown-select>
                 <drv-dropdown-select title="Time" .tooltip="${timeFilterTooltip(this.params.after, this.params.before)}"
                     .items="${[
                         { value: "", displayName: "All", selected: ![3, 7, 30, 180, 365].includes(Number(this.params.days)) && !(this.params.before || this.params.after) },
