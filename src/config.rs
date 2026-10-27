@@ -118,8 +118,42 @@ pub struct Configuration {
 
     /// Password for the HTTP server basic auth login.
     /// Use empty string to disable (not recommended).
-    #[arg(long, env)]
+    /// Not required and not allowed if OIDC authentication is configured.
+    #[arg(
+        long,
+        env,
+        default_value = "",
+        hide_default_value = true,
+        required_unless_present = "oidc_issuer_url"
+    )]
     pub http_server_password: String,
+
+    /// Issuer URL of an OpenID Connect provider.
+    /// Replaces the basic auth login with an OIDC login, both cannot be combined.
+    /// The discovery document must be available below this URL
+    /// at `/.well-known/openid-configuration`.
+    #[arg(
+        long,
+        env,
+        requires = "oidc_client_id",
+        requires = "oidc_client_secret",
+        requires = "oidc_redirect_uri"
+    )]
+    pub oidc_issuer_url: Option<String>,
+
+    /// Client ID registered at the OIDC provider, required for OIDC authentication
+    #[arg(long, env, requires = "oidc_issuer_url")]
+    pub oidc_client_id: Option<String>,
+
+    /// Client secret registered at the OIDC provider, required for OIDC authentication
+    #[arg(long, env, requires = "oidc_issuer_url")]
+    pub oidc_client_secret: Option<String>,
+
+    /// Redirect URI registered at the OIDC provider, required for OIDC authentication.
+    /// Must be the public URL of this application followed by `/oidc/callback`.
+    /// Example value: https://dmarc.myserver.org/oidc/callback
+    #[arg(long, env, requires = "oidc_issuer_url")]
+    pub oidc_redirect_uri: Option<String>,
 
     /// Enable automatic HTTPS encryption using Let's Encrypt certificates.
     /// This will replace the HTTP protocol on the configured HTTP port with HTTPS.
@@ -248,6 +282,10 @@ impl Configuration {
         info!("HTTP Port: {}", self.http_server_port);
         info!("HTTP User: {}", self.http_server_user);
 
+        info!("OIDC Issuer URL: {:?}", self.oidc_issuer_url);
+        info!("OIDC Client ID: {:?}", self.oidc_client_id);
+        info!("OIDC Redirect URI: {:?}", self.oidc_redirect_uri);
+
         info!("HTTPS Enabled: {}", self.https_auto_cert);
         info!("HTTPS Domain: {:?}", self.https_auto_cert_domain);
         info!("HTTPS Mail: {:?}", self.https_auto_cert_mail);
@@ -299,5 +337,48 @@ impl ImapBodyRequest {
             ImapBodyRequest::Rfc822 => String::from("RFC822"),
             ImapBodyRequest::Body => String::from("BODY[]"),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const IMAP_ARGS: [&str; 7] = [
+        "app",
+        "--imap-host",
+        "host",
+        "--imap-user",
+        "user",
+        "--imap-password",
+        "password",
+    ];
+
+    const OIDC_ARGS: [&str; 8] = [
+        "--oidc-issuer-url",
+        "https://idp.example.org",
+        "--oidc-client-id",
+        "client",
+        "--oidc-client-secret",
+        "secret",
+        "--oidc-redirect-uri",
+        "https://dmarc.example.org/oidc/callback",
+    ];
+
+    fn parse(args: &[&str]) -> Result<Configuration, clap::Error> {
+        Configuration::try_parse_from(IMAP_ARGS.iter().chain(args))
+    }
+
+    #[test]
+    fn test_auth_arguments() {
+        // Either the basic auth password or the complete OIDC settings are required
+        assert!(parse(&[]).is_err());
+        assert!(parse(&["--http-server-password", ""]).is_ok());
+        assert!(parse(&OIDC_ARGS[..2]).is_err());
+        assert!(parse(&OIDC_ARGS[2..]).is_err());
+
+        let config = parse(&OIDC_ARGS).expect("Failed to parse arguments");
+        assert!(config.http_server_password.is_empty());
+        assert!(config.oidc_issuer_url.is_some());
     }
 }
