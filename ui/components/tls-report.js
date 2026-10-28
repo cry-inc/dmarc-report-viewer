@@ -190,11 +190,9 @@ export class TlsReport extends LitElement {
                             <tr>
                                 <td class="name">Sending MTA IP</td>
                                 <td>
-                                    ${this.renderIfDefined(failureDetails["sending-mta-ip"])}
                                     ${failureDetails["sending-mta-ip"] ? html`
-                                        <button @click="${() => ipDialog(failureDetails["sending-mta-ip"])}" class="button sm help print-hide" title="Search DNS hostname for IP and geolocate it">DNS and Location</button>
-                                        <a class="button sm help print-hide" title="Look up WHOIS record for IP and show in new tab" target="blank" href="ips/${failureDetails["sending-mta-ip"]}/whois">WHOIS</a>
-                                    ` : nothing}
+                                        <a href="#" @click=${(event) => { event.preventDefault(); ipDialog(failureDetails["sending-mta-ip"]); }} title="Show IP details">${failureDetails["sending-mta-ip"]}</a>
+                                    ` : html`<span class="faded">n/a</span>`}
                                 </td>
                             </tr>
                         </tbody>
@@ -215,9 +213,7 @@ export class TlsReport extends LitElement {
                                 <tr>
                                     <td class="name">Receiving IP</td>
                                     <td>
-                                        ${failureDetails["receiving-ip"]}
-                                        <button @click="${() => ipDialog(failureDetails["receiving-ip"])}" class="button sm help print-hide" title="Search DNS hostname for IP and geolocate it">DNS and Location</button>
-                                        <a class="button sm help print-hide" title="Look up WHOIS record for IP and show in new tab" target="blank" href="ips/${failureDetails["receiving-ip"]}/whois">WHOIS</a>
+                                        <a href="#" @click=${(event) => { event.preventDefault(); ipDialog(failureDetails["receiving-ip"]); }} title="Show IP details">${failureDetails["receiving-ip"]}</a>
                                     </td>
                                 </tr>
                             </tbody>

@@ -248,9 +248,7 @@ export class DmarcReport extends LitElement {
                     <tr>
                         <td class="name">Source IP</td>
                         <td>
-                            ${record.row.source_ip}
-                            <button @click="${() => ipDialog(record.row.source_ip)}" class="button sm help print-hide" title="Search DNS hostname for IP and geolocate it">DNS and Location</button>
-                            <a class="button sm help print-hide" title="Look up WHOIS record for IP and show in new tab" target="blank" href="ips/${record.row.source_ip}/whois">WHOIS</a>
+                            <a href="#" @click=${(event) => { event.preventDefault(); ipDialog(record.row.source_ip); }} title="Show IP details">${record.row.source_ip}</a>
                         </td>
                     </tr>
                     <tr>

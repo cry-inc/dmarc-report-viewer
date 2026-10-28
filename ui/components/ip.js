@@ -20,6 +20,7 @@ class IpDialog extends LitElement {
         .dialog-actions {
             display: flex;
             justify-content: center;
+            gap: 8px;
             margin-top: 20px;
         }
 
@@ -114,6 +115,7 @@ class IpDialog extends LitElement {
                     </tbody>
                 </table>
                 <div class="dialog-actions">
+                    <a class="button" title="Look up WHOIS record for IP and show in new tab" target="_blank" href="ips/${this.ip}/whois">Open WHOIS</a>
                     <button class="button" type="button" @click=${this.close}>Close</button>
                 </div>
             </dialog>
