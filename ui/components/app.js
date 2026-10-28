@@ -65,17 +65,13 @@ export class App extends LitElement {
     async onHashChange() {
         let hash = document.location.hash;
 
-        // Split off and parse query params behind route
+        // Parse hash query params with standard form-query decoding (+ means space).
         const sep = hash.indexOf("?");
         this.params = {};
         if (sep != -1) {
-            const param = hash.substring(sep + 1).split("&");
-            param.forEach((param) => {
-                const keyValue = param.split("=");
-                if (keyValue.length === 2) {
-                    this.params[keyValue[0]] = keyValue[1];
-                }
-            });
+            for (const [key, value] of new URLSearchParams(hash.substring(sep + 1))) {
+                this.params[key] = value;
+            }
             hash = hash.substring(0, sep);
         }
 
