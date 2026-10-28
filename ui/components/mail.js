@@ -36,10 +36,12 @@ export class Mail extends LitElement {
                 this.mail = await response.json();
             });
             fetch("dmarc-reports?id=" + this.id).then(async (response) => {
-                this.reportsDmarc = await response.json();
+                const data = await response.json();
+                this.reportsDmarc = data.reports;
             });
             fetch("tls-reports?id=" + this.id).then(async (response) => {
-                this.reportsTls = await response.json();
+                const data = await response.json();
+                this.reportsTls = data.reports;
             });
             fetch("mails/" + this.id + "/errors").then(async (response) => {
                 this.errors = await response.json();
