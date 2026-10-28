@@ -9,15 +9,15 @@ use axum::http::header;
 use axum::response::IntoResponse;
 use std::net::IpAddr;
 use std::sync::Arc;
-use tokio::sync::Mutex;
+use tokio::sync::RwLock;
 
 pub async fn dns_single_handler(
-    State(state): State<Arc<Mutex<AppState>>>,
+    State(state): State<Arc<RwLock<AppState>>>,
     Path(ip): Path<IpAddr>,
 ) -> impl IntoResponse {
     // First get DNS client from state and then send a new query...
     let dns_client = {
-        let locked = state.lock().await;
+        let locked = state.read().await;
         locked.dns_client.clone()
     };
     let result = dns_client.host_from_ip(ip).await;
@@ -47,7 +47,7 @@ pub async fn dns_single_handler(
 }
 
 pub async fn dns_batch_handler(
-    State(state): State<Arc<Mutex<AppState>>>,
+    State(state): State<Arc<RwLock<AppState>>>,
     Json(ips): Json<Vec<IpAddr>>,
 ) -> impl IntoResponse {
     // Check number of IPs
@@ -62,7 +62,7 @@ pub async fn dns_batch_handler(
 
     // Get DNS client from state
     let dns_client = {
-        let locked = state.lock().await;
+        let locked = state.read().await;
         locked.dns_client.clone()
     };
 
@@ -107,12 +107,12 @@ pub async fn dns_batch_handler(
 }
 
 pub async fn to_location_handler(
-    State(state): State<Arc<Mutex<AppState>>>,
+    State(state): State<Arc<RwLock<AppState>>>,
     Path(ip): Path<IpAddr>,
 ) -> impl IntoResponse {
     // Check cache
     let cached = {
-        let app = state.lock().await;
+        let app = state.read().await;
         app.ip_location_cache.get(&ip).cloned()
     };
 
@@ -131,7 +131,7 @@ pub async fn to_location_handler(
 
         // Cache any positive result
         if let Some(location) = result {
-            let mut app = state.lock().await;
+            let mut app = state.write().await;
             app.ip_location_cache.insert(ip, location.clone());
             Some(location)
         } else {

@@ -6,13 +6,13 @@ use hyper::Method;
 use std::collections::HashMap;
 use std::str::FromStr;
 use std::sync::Arc;
-use tokio::sync::Mutex;
+use tokio::sync::RwLock;
 use tracing::debug;
 
 pub async fn mail_web_hook(
     config: &Configuration,
     mail_id: &str,
-    state: &Arc<Mutex<AppState>>,
+    state: &Arc<RwLock<AppState>>,
 ) -> Result<()> {
     let mail_details = get_mail_details(mail_id, state)
         .await
@@ -87,9 +87,9 @@ fn inject_mail_details(
 
 async fn get_mail_details(
     mail_id: &str,
-    state: &Arc<Mutex<AppState>>,
+    state: &Arc<RwLock<AppState>>,
 ) -> Result<HashMap<&'static str, String>> {
-    let locked_state = state.lock().await;
+    let locked_state = state.read().await;
     let mail = locked_state
         .mails
         .get(mail_id)

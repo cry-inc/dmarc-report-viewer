@@ -31,10 +31,10 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 use subtle::ConstantTimeEq;
 use tokio::signal;
-use tokio::sync::Mutex;
+use tokio::sync::RwLock;
 use tracing::{error, info, warn};
 
-pub async fn run_http_server(config: &Configuration, state: Arc<Mutex<AppState>>) -> Result<()> {
+pub async fn run_http_server(config: &Configuration, state: Arc<RwLock<AppState>>) -> Result<()> {
     if config.http_server_password.is_empty() {
         warn!("Detected empty password: Basic Authentication will be disabled")
     }

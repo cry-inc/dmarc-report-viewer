@@ -12,14 +12,14 @@ use chrono::Local;
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::sync::Arc;
 use std::time::{Duration, Instant, SystemTime};
-use tokio::sync::Mutex;
+use tokio::sync::RwLock;
 use tokio::sync::mpsc::Receiver;
 use tokio::task::JoinHandle;
 use tracing::{debug, error, info, trace, warn};
 
 pub fn start_bg_task(
     config: Configuration,
-    state: Arc<Mutex<AppState>>,
+    state: Arc<RwLock<AppState>>,
     mut stop_signal: Receiver<()>,
 ) -> JoinHandle<()> {
     tokio::spawn(async move {
@@ -66,7 +66,7 @@ pub fn start_bg_task(
             // Calculate next update time
             let next = Local::now() + duration;
             {
-                let mut guard = state.lock().await;
+                let mut guard = state.write().await;
                 guard.next_update = Some(next.timestamp().max(0) as u64);
             }
             info!("Next update is planned for {next}");
@@ -82,7 +82,7 @@ pub fn start_bg_task(
 /// Executes a background update and returns the IDs of all new mails
 async fn bg_update(
     config: &Configuration,
-    state: &Arc<Mutex<AppState>>,
+    state: &Arc<RwLock<AppState>>,
     start: &Instant,
 ) -> Result<Vec<String>> {
     let mut mails = BTreeMap::new();
@@ -287,7 +287,7 @@ async fn bg_update(
         .as_secs();
 
     let new_mails = {
-        let mut locked_state = state.lock().await;
+        let mut locked_state = state.write().await;
 
         // Remember the IDs of all current mails from before the update
         let old_mails: HashSet<String> = locked_state.mails.keys().cloned().collect();

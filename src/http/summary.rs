@@ -7,7 +7,7 @@ use axum::response::IntoResponse;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashMap};
 use std::sync::Arc;
-use tokio::sync::Mutex;
+use tokio::sync::RwLock;
 
 #[derive(Deserialize, Debug)]
 pub struct SummaryFilters {
@@ -35,11 +35,11 @@ impl SummaryFilters {
 }
 
 pub async fn handler(
-    State(state): State<Arc<Mutex<AppState>>>,
+    State(state): State<Arc<RwLock<AppState>>>,
     mut filters: Query<SummaryFilters>,
 ) -> impl IntoResponse {
     filters.url_decode();
-    let guard = state.lock().await;
+    let guard = state.read().await;
     let summary = Summary::new(
         guard.mails.len(),
         Reports {

@@ -7,13 +7,13 @@ use axum::http::header;
 use axum::response::IntoResponse;
 use serde::Deserialize;
 use std::sync::Arc;
-use tokio::sync::Mutex;
+use tokio::sync::RwLock;
 
 pub async fn single_handler(
-    State(state): State<Arc<Mutex<AppState>>>,
+    State(state): State<Arc<RwLock<AppState>>>,
     Path(id): Path<String>,
 ) -> impl IntoResponse {
-    let lock = state.lock().await;
+    let lock = state.read().await;
     if let Some(mail) = lock.mails.get(&id) {
         let mail_json = serde_json::to_string(mail).expect("Failed to serialize JSON");
         (
@@ -31,10 +31,10 @@ pub async fn single_handler(
 }
 
 pub async fn errors_handler(
-    State(state): State<Arc<Mutex<AppState>>>,
+    State(state): State<Arc<RwLock<AppState>>>,
     Path(id): Path<String>,
 ) -> impl IntoResponse {
-    let lock = state.lock().await;
+    let lock = state.read().await;
     if !lock.mails.contains_key(&id) {
         return (
             StatusCode::NOT_FOUND,
@@ -89,13 +89,13 @@ impl MailFilters {
 }
 
 pub async fn list_handler(
-    State(state): State<Arc<Mutex<AppState>>>,
+    State(state): State<Arc<RwLock<AppState>>>,
     mut filters: Query<MailFilters>,
 ) -> impl IntoResponse {
     // Remove URL encoding from strings in filters
     filters.url_decode();
 
-    let lock = state.lock().await;
+    let lock = state.read().await;
     let mails: Vec<&Mail> = lock
         .mails
         .values()

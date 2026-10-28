@@ -13,7 +13,7 @@ use std::collections::HashMap;
 use std::collections::HashSet;
 use std::net::IpAddr;
 use std::sync::Arc;
-use tokio::sync::Mutex;
+use tokio::sync::RwLock;
 
 #[derive(Serialize, PartialEq, Eq, Hash)]
 enum Issue {
@@ -58,10 +58,10 @@ struct Source {
     details: SourceDetails,
 }
 
-pub async fn handler(State(state): State<Arc<Mutex<AppState>>>) -> impl IntoResponse {
+pub async fn handler(State(state): State<Arc<RwLock<AppState>>>) -> impl IntoResponse {
     let mut ip_map = HashMap::new();
     {
-        let locked_state = state.lock().await;
+        let locked_state = state.read().await;
 
         // Get source IPs from DMARC reports
         for report in locked_state.dmarc_reports.values() {

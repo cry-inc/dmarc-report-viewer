@@ -16,7 +16,7 @@ use std::collections::HashSet;
 use std::net::IpAddr;
 use std::str::FromStr;
 use std::sync::Arc;
-use tokio::sync::Mutex;
+use tokio::sync::RwLock;
 
 #[derive(Serialize)]
 struct ReportHeader {
@@ -131,7 +131,7 @@ struct ReportListResponse {
 }
 
 pub async fn list_handler(
-    State(state): State<Arc<Mutex<AppState>>>,
+    State(state): State<Arc<RwLock<AppState>>>,
     mut filters: Query<ReportFilters>,
 ) -> impl IntoResponse {
     // Remove URL encoding from strings in filters
@@ -140,7 +140,7 @@ pub async fn list_handler(
     // Parse IP once to speed up filters
     let ip_filter = filters.ip.as_deref().and_then(|s| IpAddr::from_str(s).ok());
 
-    let state = state.lock().await;
+    let state = state.read().await;
     let domains = state
         .tls_reports
         .values()
@@ -249,10 +249,10 @@ pub async fn list_handler(
 }
 
 pub async fn single_handler(
-    State(state): State<Arc<Mutex<AppState>>>,
+    State(state): State<Arc<RwLock<AppState>>>,
     Path(id): Path<String>,
 ) -> impl IntoResponse {
-    let lock = state.lock().await;
+    let lock = state.read().await;
     if let Some(rwi) = lock.tls_reports.get(&id) {
         let report_json = serde_json::to_string(rwi).expect("Failed to serialize JSON");
         (
@@ -270,10 +270,10 @@ pub async fn single_handler(
 }
 
 pub async fn json_handler(
-    State(state): State<Arc<Mutex<AppState>>>,
+    State(state): State<Arc<RwLock<AppState>>>,
     Path(id): Path<String>,
 ) -> impl IntoResponse {
-    let lock = state.lock().await;
+    let lock = state.read().await;
     if let Some(rwi) = lock.tls_reports.get(&id) {
         let report_json = serde_json::to_string(&rwi.report).expect("Failed to serialize JSON");
         (

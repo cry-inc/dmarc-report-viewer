@@ -28,7 +28,7 @@ use anyhow::{Context, Result};
 use config::Configuration;
 use std::sync::Arc;
 use std::time::Duration;
-use tokio::sync::Mutex;
+use tokio::sync::RwLock;
 use tokio::sync::mpsc::channel;
 use tracing::info;
 
@@ -70,7 +70,7 @@ async fn main() -> Result<()> {
     let dns_client = DnsClient::new(config.dns_server, timeout);
 
     // Prepare shared application state
-    let state = Arc::new(Mutex::new(AppState::new(dns_client)));
+    let state = Arc::new(RwLock::new(AppState::new(dns_client)));
 
     // Start background task
     let (stop_sender, stop_receiver) = channel(1);

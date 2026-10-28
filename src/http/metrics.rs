@@ -4,10 +4,10 @@ use axum::response::IntoResponse;
 use std::collections::BTreeMap;
 use std::sync::Arc;
 use std::time::SystemTime;
-use tokio::sync::Mutex;
+use tokio::sync::RwLock;
 
-pub async fn handler(State(state): State<Arc<Mutex<AppState>>>) -> impl IntoResponse {
-    let lock = state.lock().await;
+pub async fn handler(State(state): State<Arc<RwLock<AppState>>>) -> impl IntoResponse {
+    let lock = state.read().await;
 
     let mails = lock.mails.len();
     let dmarc_reports = lock.dmarc_reports.len();
