@@ -1,5 +1,6 @@
 import { LitElement, html } from "lit";
 import { globalStyle } from "../style.js";
+import { clearHashQuery, hasFilters, setHashQueryParams } from "../utils.js";
 import { ipDialog } from "./ip.js";
 
 export class Sources extends LitElement {
@@ -8,13 +9,14 @@ export class Sources extends LitElement {
     static properties = {
         params: { type: Object },
         sources: { type: Array },
+        domains: { type: Array },
     };
 
     constructor() {
         super();
         this.params = {};
         this.sources = [];
-        this.filtered = false;
+        this.domains = [];
     }
 
     updated(changedProperties) {
@@ -25,20 +27,20 @@ export class Sources extends LitElement {
 
     async updateSources() {
         const sourcesResponse = await fetch("sources");
-        this.filtered = false;
         this.sources = await sourcesResponse.json();
+        this.domains = [...new Set(this.sources.map(source => source.domain))].sort();
+
         if (this.params.domain) {
             const lcDomain = this.params.domain.toLowerCase();
             this.sources = this.sources.filter(s => s.domain.toLowerCase() === lcDomain);
-            this.filtered = true;
         }
-        if (this.params.issues) {
+        if (this.params.issues === "true") {
             this.sources = this.sources.filter(s => s.issues.length > 0);
-            this.filtered = true;
+        } else if (this.params.issues === "false") {
+            this.sources = this.sources.filter(s => s.issues.length === 0);
         }
         if (this.params.type) {
             this.sources = this.sources.filter(s => s.types.includes(this.params.type));
-            this.filtered = true;
         }
 
         const chunkSize = 100;
@@ -133,12 +135,32 @@ export class Sources extends LitElement {
         return html`
             <h1>Mail Sources</h1>
             <div>
-                ${this.filtered ?
-                    html`Filter active! <a class="ml button" href="#/sources">Show all Sources</a>` :
-                    html`Filters: <a class="ml button" href="#/sources?issues=true">Only Sources with Issues</a>
-                    <a class="ml button" href="#/sources?type=Dmarc">Only Sources from DMARC Reports</a>
-                    <a class="ml button" href="#/sources?type=Tls">Only Sources from SMTP TLS Reports</a>`
-                }
+                Filters:
+                <drv-dropdown-select class="ml" title="Issues"
+                    .items="${[
+                        { value: "", displayName: "All", selected: !["true", "false"].includes(this.params.issues) },
+                        { value: "true", displayName: "Yes", selected: this.params.issues === "true" },
+                        { value: "false", displayName: "No", selected: this.params.issues === "false" },
+                    ]}"
+                    .onChange="${(value) => setHashQueryParams("#/sources", "issues", value)}"></drv-dropdown-select>
+                <drv-dropdown-select title="Type"
+                    .items="${[
+                        { value: "", displayName: "All", selected: !this.params.type },
+                        { value: "Dmarc", displayName: "DMARC", selected: this.params.type === "Dmarc" },
+                        { value: "Tls", displayName: "SMTP TLS", selected: this.params.type === "Tls" },
+                    ]}"
+                    .onChange="${(value) => setHashQueryParams("#/sources", "type", value)}"></drv-dropdown-select>
+                <drv-dropdown-select title="Domain"
+                    .items="${[
+                        { value: "", displayName: "All", selected: !this.params.domain },
+                        ...this.domains.map(domain => ({
+                            value: domain,
+                            displayName: domain,
+                            selected: this.params.domain === domain,
+                        })),
+                    ]}"
+                    .onChange="${(value) => setHashQueryParams("#/sources", "domain", value)}"></drv-dropdown-select>
+                <button class="button" ?disabled="${!hasFilters()}" @click="${clearHashQuery}">Clear</button>
             </div>
             <table>
                 <tr>
@@ -154,7 +176,7 @@ export class Sources extends LitElement {
                         <td><a href="#" @click=${(e) => { e.preventDefault(); ipDialog(source.ip); }}>${source.ip}</a></td>
                         <td class="md-hidden">${this.prepareDnsName(source.dns)}</td>
                         <td>${source.count}</td>
-                        <td class="sm-hidden"><a href="#/sources?domain=${encodeURIComponent(source.domain)}">${source.domain}</a></td>
+                        <td class="sm-hidden"><a href="#/sources" @click=${(e) => { e.preventDefault(); setHashQueryParams("#/sources", "domain", source.domain); }}>${source.domain}</a></td>
                         <td class="sm-hidden">${this.prepareTypesBadges(source)}</td>
                         <td class="xs-hidden">${this.prepareIssueBadges(source.issues)}</td>
                     </tr>`
