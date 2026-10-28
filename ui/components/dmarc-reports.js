@@ -140,7 +140,7 @@ export class DmarcReports extends LitElement {
                     .onChange="${(value) => value === "custom" ? openCustomTimeDialog(this.params.before, this.params.after, "#/dmarc-reports") : setHashQueryParams("#/dmarc-reports", "days", value)}"></drv-dropdown-select>
                 <button class="button" ?disabled="${!hasFilters()}" @click="${clearHashQuery}">Clear</button>
             </div>
-            <drv-dmarc-report-table .reports="${this.reports}"></drv-dmarc-report-table>
+            <drv-dmarc-report-table .reports="${this.reports}" .filterCallback="${(filter, value) => setHashQueryParams("#/dmarc-reports", filter, value)}"></drv-dmarc-report-table>
         `;
     }
 }

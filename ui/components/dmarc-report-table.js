@@ -6,6 +6,7 @@ export class DmarcReportTable extends LitElement {
 
     static properties = {
         reports: { type: Array },
+        filterCallback: { attribute: false },
     };
 
     constructor() {
@@ -20,6 +21,14 @@ export class DmarcReportTable extends LitElement {
         } else {
             return id.substring(0, limit) + "...";
         }
+    }
+
+    renderFilterLink(filter, value) {
+        const href = `#/dmarc-reports?${filter}=${encodeURIComponent(value)}`;
+        return html`<a href="${href}" @click="${this.filterCallback ? (e) => {
+            e.preventDefault();
+            this.filterCallback(filter, value);
+        } : undefined}">${value}</a>`;
     }
 
     renderProblemBadges(dkim, spf, dmarc) {
@@ -51,8 +60,8 @@ export class DmarcReportTable extends LitElement {
                 ${this.reports.length !== 0 ? this.reports.map((report) =>
                     html`<tr>
                             <td><a href="#/dmarc-reports/${report.hash}" title="${report.id}">${this.prepareId(report.id)}</a></td>
-                            <td class="xs-hidden"><a href="#/dmarc-reports?org=${encodeURIComponent(report.org)}">${report.org}</a></td>
-                            <td class="sm-hidden"><a href="#/dmarc-reports?domain=${encodeURIComponent(report.domain)}">${report.domain}</a></td>
+                            <td class="xs-hidden">${this.renderFilterLink("org", report.org)}</td>
+                            <td class="sm-hidden">${this.renderFilterLink("domain", report.domain)}</td>
                             <td>${this.renderProblemBadges(report.flagged_dkim, report.flagged_spf, report.flagged_dmarc)}</td>
                             <td class="sm-hidden">${report.records}</td>
                             <td class="md-hidden">${new Date(report.date_begin * 1000).toLocaleString()}</td>
