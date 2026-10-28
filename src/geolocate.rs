@@ -9,18 +9,18 @@ use std::net::IpAddr;
 #[serde(rename_all = "camelCase")]
 pub struct Location {
     #[serde(rename = "as")]
-    pub autonomous_system: String,
-    pub country: String,
-    pub city: String,
-    pub country_code: String,
-    pub hosting: bool,
-    pub isp: String,
-    pub lat: f64,
-    pub lon: f64,
-    pub org: String,
-    pub proxy: bool,
-    pub region_name: String,
-    pub timezone: String,
+    pub autonomous_system: Option<String>,
+    pub country: Option<String>,
+    pub city: Option<String>,
+    pub country_code: Option<String>,
+    pub hosting: Option<bool>,
+    pub isp: Option<String>,
+    pub lat: Option<f64>,
+    pub lon: Option<f64>,
+    pub org: Option<String>,
+    pub proxy: Option<bool>,
+    pub region_name: Option<String>,
+    pub timezone: Option<String>,
 }
 
 impl Location {

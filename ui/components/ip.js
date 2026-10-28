@@ -83,7 +83,7 @@ class IpDialog extends LitElement {
         if (this.location === undefined) {
             return html`<span class="faded">loading...</span>`;
         }
-        if (!this.location || this.location.lat === undefined || this.location.lon === undefined) {
+        if (!this.location || this.location.lat == null || this.location.lon == null) {
             return html`<span class="faded">n/a</span>`;
         }
         const { lat, lon } = this.location;
