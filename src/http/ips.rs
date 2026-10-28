@@ -1,3 +1,4 @@
+use crate::dns_client::DnsClient;
 use crate::geolocate::Location;
 use crate::state::AppState;
 use crate::whois::WhoIsIp;
@@ -51,12 +52,14 @@ pub async fn dns_batch_handler(
     Json(ips): Json<Vec<IpAddr>>,
 ) -> impl IntoResponse {
     // Check number of IPs
-    const MAX_IP_COUNT: usize = 100;
-    if ips.len() > MAX_IP_COUNT {
+    if ips.len() > DnsClient::MAX_PARALLEL_REQUESTS {
         return (
             StatusCode::BAD_REQUEST,
             [(header::CONTENT_TYPE, "text/plain")],
-            format!("Requests can only contain up to {MAX_IP_COUNT} IPs"),
+            format!(
+                "Requests can only contain up to {} IPs",
+                DnsClient::MAX_PARALLEL_REQUESTS
+            ),
         );
     }
 

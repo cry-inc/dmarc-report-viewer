@@ -5,24 +5,35 @@ use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
 use std::sync::atomic::{AtomicU16, Ordering};
 use std::time::Duration;
 use tokio::net::UdpSocket;
+use tokio::sync::Semaphore;
 use tokio::time::timeout;
 
 pub struct DnsClient {
     server: SocketAddr,
     next_id: AtomicU16,
     timeout: Duration,
+    request_semaphore: Semaphore,
 }
 
 impl DnsClient {
+    pub const MAX_PARALLEL_REQUESTS: usize = 100;
+
     pub fn new(server: SocketAddr, timeout: Duration) -> Self {
         Self {
             server,
             next_id: AtomicU16::new(1),
             timeout,
+            request_semaphore: Semaphore::new(Self::MAX_PARALLEL_REQUESTS),
         }
     }
 
     pub async fn host_from_ip(&self, ip: IpAddr) -> Result<Option<String>> {
+        let _permit = self
+            .request_semaphore
+            .acquire()
+            .await
+            .context("Failed to acquire DNS request permit")?;
+
         // Create a unique ID for the query
         let id = self.next_id.fetch_add(1, Ordering::Relaxed);
 
