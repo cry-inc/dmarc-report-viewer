@@ -130,7 +130,7 @@ export class TlsReports extends LitElement {
                     .onChange="${(value) => value === "custom" ? openCustomTimeDialog(this.params.before, this.params.after, "#/tls-reports") : setHashQueryParams("#/tls-reports", "days", value)}"></drv-dropdown-select>
                 <button class="button" ?disabled="${!hasFilters()}" @click="${clearHashQuery}">Clear</button>
             </div>
-            <drv-tls-report-table .reports="${this.reports}"></drv-tls-report-table>
+            <drv-tls-report-table .reports="${this.reports}" .filterCallback="${(filter, value) => setHashQueryParams("#/tls-reports", filter, value)}"></drv-tls-report-table>
         `;
     }
 }

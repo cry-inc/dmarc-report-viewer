@@ -7,6 +7,7 @@ export class TlsReportTable extends LitElement {
 
     static properties = {
         reports: { type: Array },
+        filterCallback: { attribute: false },
     };
 
     constructor() {
@@ -38,13 +39,19 @@ export class TlsReportTable extends LitElement {
         return join(badges, html` `);
     }
 
+    renderFilterLink(filter, value) {
+        const href = `#/tls-reports?${filter}=${encodeURIComponent(value)}`;
+        return html`<a href="${href}" @click="${this.filterCallback ? (e) => {
+            e.preventDefault();
+            this.filterCallback(filter, value);
+        } : undefined}">${value}</a>`;
+    }
+
     renderDomains(domains) {
         if (domains.length === 0) {
             return html`<span class="faded">No domains</span>`;
         }
-        const links = domains.map(
-            d => html`<a href="#/tls-reports?domain=${encodeURIComponent(d)}">${d}</a>`
-        );
+        const links = domains.map(domain => this.renderFilterLink("domain", domain));
         return join(links, html`, `);
     }
 
@@ -63,7 +70,7 @@ export class TlsReportTable extends LitElement {
                 ${this.reports.length !== 0 ? this.reports.map((report) =>
                     html`<tr>
                             <td><a href="#/tls-reports/${report.hash}" title="${report.id}">${this.prepareId(report.id)}</a></td>
-                            <td class="xs-hidden"><a href="#/tls-reports?org=${encodeURIComponent(report.org)}">${report.org}</a></td>
+                            <td class="xs-hidden">${this.renderFilterLink("org", report.org)}</td>
                             <td class="sm-hidden">${this.renderDomains(report.domains)}</td>
                             <td>${this.renderProblemBadges(report.flagged_sts, report.flagged_tlsa)}</td>
                             <td class="sm-hidden">${report.records}</td>
