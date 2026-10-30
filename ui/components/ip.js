@@ -19,9 +19,15 @@ class IpDialog extends LitElement {
 
         .dialog-actions {
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             gap: 8px;
             margin-top: 20px;
+        }
+
+        .dialog-actions .button {
+            box-sizing: border-box;
+            width: 100%;
+            text-align: center;
         }
 
         td.name {
@@ -87,7 +93,7 @@ class IpDialog extends LitElement {
             return html`<span class="faded">n/a</span>`;
         }
         const { lat, lon } = this.location;
-        return html`<a target="_blank" title="Show on OpenStreetMap" href="https://www.openstreetmap.org/#map=8/${lat}/${lon}">${lat}, ${lon}</a>`;
+        return html`<a target="_blank" title="Show on OpenStreetMap in new tab" href="https://www.openstreetmap.org/#map=8/${lat}/${lon}">${lat}, ${lon}</a>`;
     }
 
     renderLocationProperty(property) {
@@ -115,7 +121,9 @@ class IpDialog extends LitElement {
                     </tbody>
                 </table>
                 <div class="dialog-actions">
-                    <a class="button" title="Look up WHOIS record for IP and show in new tab" target="_blank" href="ips/${this.ip}/whois">Open WHOIS</a>
+                    <a class="button" href="#/dmarc-reports?ip=${encodeURIComponent(this.ip)}" @click=${() => this.close()}>DMARC reports for this IP</a>
+                    <a class="button" href="#/tls-reports?ip=${encodeURIComponent(this.ip)}" @click=${() => this.close()}>SMTP TLS reports for this IP</a>
+                    <a class="button mb" title="Look up WHOIS record for IP and show in new tab" target="_blank" href="ips/${this.ip}/whois">Show WHOIS record</a>
                     <button class="button" type="button" @click=${this.close}>Close</button>
                 </div>
             </dialog>
