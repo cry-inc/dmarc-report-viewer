@@ -1,4 +1,4 @@
-import { LitElement, html } from "lit";
+import { LitElement, html, nothing } from "lit";
 import { globalStyle } from "../style.js";
 import { clearHashQuery, hasFilters, openCustomTimeDialog, setHashQueryParams, timeFilterTooltip } from "../utils.js";
 
@@ -93,6 +93,14 @@ export class Mails extends LitElement {
                         { value: "false", displayName: "No", selected: this.params.errors === "false" },
                     ]}"
                     .onChange="${(value) => setHashQueryParams("#/mails", "errors", value)}"></drv-dropdown-select>
+                ${this.params.sender ? html`
+                    <drv-dropdown-select title="Sender"
+                        .items="${[
+                            { value: "", displayName: "All", selected: false },
+                            { value: this.params.sender, displayName: this.params.sender, selected: true },
+                        ]}"
+                        .onChange="${(value) => setHashQueryParams("#/mails", "sender", value)}"></drv-dropdown-select>
+                ` : nothing}
                 <drv-dropdown-select title="Time" .tooltip="${timeFilterTooltip(this.params.after, this.params.before)}"
                     .items="${[
                         { value: "", displayName: "All", selected: ![3, 7, 30, 180, 365].includes(Number(this.params.days)) && !(this.params.before || this.params.after) },
