@@ -27,6 +27,7 @@ struct ReportHeader {
     date_begin: DateTime<Utc>,
     date_end: DateTime<Utc>,
     records: usize,
+    failures: usize,
     flagged_sts: bool,
     flagged_tlsa: bool,
     flagged: bool,
@@ -52,6 +53,11 @@ impl ReportHeader {
             date_begin: report.date_range.start_datetime,
             date_end: report.date_range.end_datetime,
             records: report.policies.len(),
+            failures: report
+                .policies
+                .iter()
+                .map(|p| p.summary.total_failure_session_count)
+                .sum(),
             flagged: flagged_sts || flagged_tlsa,
             flagged_sts,
             flagged_tlsa,

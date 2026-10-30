@@ -62,8 +62,9 @@ export class TlsReportTable extends LitElement {
                     <th class="help" title="Report ID, might be incomplete! Check details for full report ID.">ID</th>
                     <th class="xs-hidden">Organization</th>
                     <th class="sm-hidden">Domains</th>
-                    <th class="help" title="Reports with MTA-STS or TLSA problems are highlighted in red">Problems</th>
-                    <th class="sm-hidden">Policies</th>
+                    <th>Problems</th>
+                    <th class="lg-hidden help" title="Number of policies in the report">Policies</th>
+                    <th class="lg-hidden help" title="Sum of all failure counts for all policies in the report">Failures</th>
                     <th class="md-hidden">Begin</th>
                     <th class="md-hidden">End</th>
                 </tr>
@@ -73,7 +74,8 @@ export class TlsReportTable extends LitElement {
                             <td class="xs-hidden">${this.renderFilterLink("org", report.org)}</td>
                             <td class="sm-hidden">${this.renderDomains(report.domains)}</td>
                             <td>${this.renderProblemBadges(report.flagged_sts, report.flagged_tlsa)}</td>
-                            <td class="sm-hidden">${report.records}</td>
+                            <td class="lg-hidden">${report.records}</td>
+                            <td class="lg-hidden">${report.failures === 0 ? html`<span class="faded">${report.failures}</span>` : report.failures}</td>
                             <td class="md-hidden">${new Date(report.date_begin).toLocaleString()}</td>
                             <td class="md-hidden">${new Date(report.date_end).toLocaleString()}</td>
                         </tr>`
