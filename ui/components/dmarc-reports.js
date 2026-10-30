@@ -1,4 +1,4 @@
-import { LitElement, html } from "lit";
+import { LitElement, html, nothing } from "lit";
 import { globalStyle } from "../style.js";
 import { clearHashQuery, hasFilters, openCustomTimeDialog, setHashQueryParams, timeFilterTooltip } from "../utils.js";
 
@@ -138,6 +138,14 @@ export class DmarcReports extends LitElement {
                         { value: "custom", displayName: "Custom...", selected: Boolean(this.params.before || this.params.after) },
                     ]}"
                     .onChange="${(value) => value === "custom" ? openCustomTimeDialog(this.params.before, this.params.after, "#/dmarc-reports") : setHashQueryParams("#/dmarc-reports", "days", value)}"></drv-dropdown-select>
+                ${this.params.ip ? html`
+                    <drv-dropdown-select title="IP"
+                        .items="${[
+                            { value: "", displayName: "All", selected: false },
+                            { value: this.params.ip, displayName: this.params.ip, selected: true },
+                        ]}"
+                        .onChange="${(value) => setHashQueryParams("#/dmarc-reports", "ip", value)}"></drv-dropdown-select>
+                ` : nothing}
                 <button class="button" ?disabled="${!hasFilters()}" @click="${clearHashQuery}">Clear</button>
             </div>
             <drv-dmarc-report-table .reports="${this.reports}" .filterCallback="${(filter, value) => setHashQueryParams("#/dmarc-reports", filter, value)}"></drv-dmarc-report-table>
