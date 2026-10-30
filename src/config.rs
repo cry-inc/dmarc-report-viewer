@@ -248,10 +248,10 @@ impl Configuration {
         info!("HTTP Port: {}", self.http_server_port);
         info!("HTTP User: {}", self.http_server_user);
 
-        info!("HTTPS Enabled: {}", self.https_auto_cert);
-        info!("HTTPS Domain: {:?}", self.https_auto_cert_domain);
-        info!("HTTPS Mail: {:?}", self.https_auto_cert_mail);
-        info!("HTTPS Cache Dir: {:?}", self.https_auto_cert_cache);
+        info!("HTTPS Cert. Enabled: {}", self.https_auto_cert);
+        info!("HTTPS Cert. Domain: {:?}", self.https_auto_cert_domain);
+        info!("HTTPS Cert. Mail: {:?}", self.https_auto_cert_mail);
+        info!("HTTPS Cert. Cache Dir: {:?}", self.https_auto_cert_cache);
 
         info!(
             "Disable Duplicate Filter: {}",
@@ -265,7 +265,7 @@ impl Configuration {
         info!(
             "Mail Web Hook Headers: {}",
             if self.mail_web_hook_headers.is_some() {
-                "Hidden"
+                "***"
             } else {
                 "None"
             }
@@ -273,7 +273,7 @@ impl Configuration {
         info!(
             "Mail Web Hook Body: {}",
             if self.mail_web_hook_body.is_some() {
-                "Hidden"
+                "***"
             } else {
                 "None"
             }
