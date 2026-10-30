@@ -1,6 +1,6 @@
 import { LitElement, html, nothing } from "lit";
 import { globalStyle } from "../style.js";
-import { clearHashQuery, hasFilters, openCustomTimeDialog, setHashQueryParams, timeFilterTooltip } from "../utils.js";
+import { clearHashQuery, downloadFile, hasFilters, openCustomTimeDialog, setHashQueryParams, timeFilterTooltip } from "../utils.js";
 
 export class TlsReports extends LitElement {
     static styles = [globalStyle];
@@ -71,6 +71,18 @@ export class TlsReports extends LitElement {
         this.orgs.sort();
     }
 
+    async exportReports() {
+        const reports = await Promise.all(this.reports.map(async (report) => {
+            const response = await fetch(`tls-reports/${encodeURIComponent(report.hash)}/json`);
+            if (!response.ok) {
+                throw new Error(`Failed to export report ${report.hash}: ${response.status}`);
+            }
+            return response.json();
+        }));
+
+        downloadFile("tls-reports.json", JSON.stringify(reports, null, 2), "application/json");
+    }
+
     render() {
         return html`
             <h1>SMTP TLS Reports</h1>
@@ -137,6 +149,7 @@ export class TlsReports extends LitElement {
                         .onChange="${(value) => setHashQueryParams("#/tls-reports", "ip", value)}"></drv-dropdown-select>
                 ` : nothing}
                 <button class="button" ?disabled="${!hasFilters()}" @click="${clearHashQuery}">Clear</button>
+                <button class="button" title="Export all currently listed reports as JSON file" @click="${this.exportReports}">⬇️</button>
             </div>
             <drv-tls-report-table .reports="${this.reports}" .filterCallback="${(filter, value) => setHashQueryParams("#/tls-reports", filter, value)}"></drv-tls-report-table>
         `;

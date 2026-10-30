@@ -4,6 +4,19 @@ export function join(elements, joiner) {
     return elements.flatMap(x => [joiner, x]).slice(1);
 }
 
+/// Download some data in memory as a file
+export function downloadFile(fileName, fileContent, mimeType) {
+    const blob = new Blob([fileContent], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+}
+
 // Returns true if the current hash URL has query parameters active.
 export function hasFilters() {
     return Boolean(document.location.hash.split("?")[1]);
