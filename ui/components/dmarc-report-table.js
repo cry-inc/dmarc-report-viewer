@@ -52,8 +52,9 @@ export class DmarcReportTable extends LitElement {
                     <th class="help" title="Report ID, might be incomplete! Check details for full report ID.">ID</th>
                     <th class="xs-hidden">Organization</th>
                     <th class="sm-hidden">Domain</th>
-                    <th class="help" title="Reports with SPF or DKIM problems are highlighted in red">Problems</th>
-                    <th class="sm-hidden">Records</th>
+                    <th>Problems</th>
+                    <th class="lg-hidden help" title="Number of records in the report">Records</th>
+                    <th class="lg-hidden help" title="Sum of all record counts in the report">Count</th>
                     <th class="md-hidden">Begin</th>
                     <th class="md-hidden">End</th>
                 </tr>
@@ -63,7 +64,8 @@ export class DmarcReportTable extends LitElement {
                             <td class="xs-hidden">${this.renderFilterLink("org", report.org)}</td>
                             <td class="sm-hidden">${this.renderFilterLink("domain", report.domain)}</td>
                             <td>${this.renderProblemBadges(report.flagged_dkim, report.flagged_spf, report.flagged_dmarc)}</td>
-                            <td class="sm-hidden">${report.records}</td>
+                            <td class="lg-hidden">${report.records}</td>
+                            <td class="lg-hidden">${report.count}</td>
                             <td class="md-hidden">${new Date(report.date_begin * 1000).toLocaleString()}</td>
                             <td class="md-hidden">${new Date(report.date_end * 1000).toLocaleString()}</td>
                         </tr>`
