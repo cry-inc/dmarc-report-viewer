@@ -75,7 +75,7 @@ pub async fn handler(State(state): State<Arc<RwLock<AppState>>>) -> impl IntoRes
                 });
 
                 // Update count
-                details.count += record.row.count;
+                details.count += 1;
 
                 // Detect any issues
                 detect_dmarc_issues(record, &mut details.issues);
@@ -107,7 +107,7 @@ pub async fn handler(State(state): State<Arc<RwLock<AppState>>>) -> impl IntoRes
                     });
 
                     // Update count
-                    details.count += failure.failed_session_count;
+                    details.count += 1;
 
                     // Add issue type
                     details.issues.insert(match failure.result_type {

@@ -166,7 +166,7 @@ export class Sources extends LitElement {
                 <tr>
                     <th>IP Address</th>
                     <th class="md-hidden">DNS Name</th>
-                    <th class="help" title="Number of records from reports for this IP">Count</th>
+                    <th class="help" title="How often this IP was mentioned in a DMARC or SMTP TLS report">Count</th>
                     <th class="sm-hidden">Domain</th>
                     <th class="sm-hidden help" title="Report Types">Types</th>
                     <th class="xs-hidden help" title="Issues detected in reports from this IP">Issues</th>
