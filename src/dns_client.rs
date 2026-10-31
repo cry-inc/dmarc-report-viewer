@@ -146,10 +146,14 @@ impl DnsClient {
 
         // Read response data from the socket
         let mut response = vec![0; 1024];
-        let len = timeout(self.timeout, socket.recv(&mut response))
+        let (len, peer) = timeout(self.timeout, socket.recv_from(&mut response))
             .await
             .context("Timeout while reading response")?
             .context("Failed to read response")?;
+        ensure!(
+            peer == self.server,
+            "Received DNS response from unexpected server"
+        );
         response.truncate(len);
 
         Ok(response)
