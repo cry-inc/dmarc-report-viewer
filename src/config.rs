@@ -278,6 +278,8 @@ impl Configuration {
                 "None"
             }
         );
+        info!("DNS Server: {}", self.dns_server);
+        info!("DNS Timeout: {}", self.dns_timeout);
     }
 }
 
