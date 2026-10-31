@@ -139,6 +139,15 @@ By default the application requires you to set an password to secure access via 
 If you want to use other access controls (e.g. via reverse proxy),
 you can disable basic authentication by setting an empty string as password.
 
+### DNS Server
+The app uses a lightweight asynchronous DNS client to look up hostnames for IPs.
+Currently this requires the configuration of a DNS server.
+By default the public free DNS server 1.1.1.1 is used.
+When looking up lots of IPs on the mail sources UI page, using another DNS server can greatly speed up the process.
+You can for example use the DNS server of your own provider or data center.
+The closer the DNS server is to the machine running the app, the faster it will be.
+You can use the ENV var `DNS_SERVER="<IP of DNS server>:53"` to set a custom DNS server.
+
 ### Health Checks
 The service provides an health check endpoint at `/health` that always returns an empty HTTP 200 OK response.
 The Docker image also contains a HEALTHCHECK statement and allows containers to check themselves.
