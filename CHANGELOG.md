@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.0] - 2026-10-31
+* Security: Limit maximum number of parallel DNS requests triggered by Web UI.
+* Security: Check peer address for DNS responses.
+* Fix: Added logging of missing DNS configuration values.
+* Fix: Count on mail sources page now shows the number of instances the IP was reported.
+* Fix: 500 Internal server error for some IP info requests is now gone.
+* Change: Removed IP details from DMARC and SMTP TLS report details and replaced with new IP dialog.
+* Feature: Greatly improved filtering options for summary charts, mails, DMARC and SMTP TLS reports.
+* Feature: Allow custom time span filtering for summary charts, mails, DMARC and SMTP TLS reports (see issues #82 and #32).
+* Feature: App uses now RwLocks instead of Mutex for app state and DNS cache to allow more parallel read operations.
+* Feature: Show failure count sum in SMTP TLS report list.
+* Feature: Show record count sum in DMARC report list.
+* Feature: Added JSON bulk export of filtered DMARC and SMPT TLS reports (see issue #92).
+* Feature: Added new IP dialog with all available information about an IP.
+  It also allows to open filtered lists of all DMARC or SMTP TLS reports for that IP (see issues #81 and #56).
+* Updated Cargo dependencies.
+
 ## [2.6.2] - 2026-10-21
 * Fix: Recognize more types of zipped XML attachments with DMARC reports (see issue #101).
 * Updated Cargo dependencies.
