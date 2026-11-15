@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.1] - 2026-11-15
+* Fix: Do not flag SPF `None` and `Neutral` results as problematic (see issue #102).
+* Updated Cargo dependencies.
+
 ## [2.7.0] - 2026-10-31
 * Security: Limit maximum number of parallel DNS requests triggered by Web UI.
 * Security: Check peer address for DNS responses.
