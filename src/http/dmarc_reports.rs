@@ -77,12 +77,11 @@ impl ReportHeader {
             {
                 dkim_flagged = true;
             }
-            if record
-                .auth_results
-                .spf
-                .iter()
-                .any(|x| x.result != SpfResultType::Pass)
-            {
+            if record.auth_results.spf.iter().any(|x| {
+                x.result != SpfResultType::Pass
+                    && x.result != SpfResultType::None
+                    && x.result != SpfResultType::Neutral
+            }) {
                 spf_flagged = true;
             }
             let dkim_eval_pass = matches!(
