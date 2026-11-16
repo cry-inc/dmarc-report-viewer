@@ -1,7 +1,4 @@
-use crate::dmarc::DkimResultType;
-use crate::dmarc::DmarcResultType;
 use crate::dmarc::Report;
-use crate::dmarc::SpfResultType;
 use crate::state::AppState;
 use axum::Json;
 use axum::extract::Path;
@@ -59,38 +56,19 @@ impl ReportHeader {
         let mut spf_flagged = false;
         let mut dmarc_flagged = false;
         for record in &report.record {
-            if let Some(dkim) = &record.row.policy_evaluated.dkim
-                && *dkim != DmarcResultType::Pass
-            {
+            if record.has_dkim_policy_issue() {
                 dkim_flagged = true;
             }
-            if let Some(spf) = &record.row.policy_evaluated.spf
-                && *spf != DmarcResultType::Pass
-            {
+            if record.has_spf_policy_issue() {
                 spf_flagged = true;
             }
-            // One passing signature is enough, mails can carry multiple
-            // signatures (e.g. ed25519 + RSA) and receivers may not support all.
-            if let Some(dkim) = &record.auth_results.dkim
-                && !dkim.is_empty()
-                && dkim.iter().all(|x| x.result != DkimResultType::Pass)
-            {
+            if record.has_dkim_auth_issue() {
                 dkim_flagged = true;
             }
-            if record.auth_results.spf.iter().any(|x| {
-                x.result != SpfResultType::Pass
-                    && x.result != SpfResultType::None
-                    && x.result != SpfResultType::Neutral
-            }) {
+            if record.has_spf_auth_issue() {
                 spf_flagged = true;
             }
-            let dkim_eval_pass = matches!(
-                record.row.policy_evaluated.dkim,
-                Some(DmarcResultType::Pass)
-            );
-            let spf_eval_pass =
-                matches!(record.row.policy_evaluated.spf, Some(DmarcResultType::Pass));
-            if !dkim_eval_pass && !spf_eval_pass {
+            if record.has_dmarc_issue() {
                 dmarc_flagged = true;
             }
         }

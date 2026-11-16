@@ -1,7 +1,4 @@
-use crate::dmarc::DkimResultType;
-use crate::dmarc::DmarcResultType;
 use crate::dmarc::RecordType;
-use crate::dmarc::SpfResultType;
 use crate::state::AppState;
 use crate::tls::FailureResultType;
 use axum::extract::State;
@@ -150,27 +147,16 @@ pub async fn handler(State(state): State<Arc<RwLock<AppState>>>) -> impl IntoRes
 }
 
 fn detect_dmarc_issues(record: &RecordType, issues: &mut HashSet<Issue>) {
-    if let Some(dkim) = &record.row.policy_evaluated.dkim
-        && *dkim != DmarcResultType::Pass
-    {
+    if record.has_dkim_policy_issue() {
         issues.insert(Issue::DkimPolicy);
     }
-    if let Some(spf) = &record.row.policy_evaluated.spf
-        && *spf != DmarcResultType::Pass
-    {
+    if record.has_spf_policy_issue() {
         issues.insert(Issue::SpfPolicy);
     }
-    if let Some(dkim) = &record.auth_results.dkim
-        && dkim.iter().any(|x| x.result != DkimResultType::Pass)
-    {
+    if record.has_dkim_auth_issue() {
         issues.insert(Issue::DkimAuth);
     }
-    if record
-        .auth_results
-        .spf
-        .iter()
-        .any(|x| x.result != SpfResultType::Pass)
-    {
+    if record.has_spf_auth_issue() {
         issues.insert(Issue::SpfAuth);
     }
 }
