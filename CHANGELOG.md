@@ -2,8 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.2] - 2026-11-16
+* Fix: Do not flag SPF `None` and `Neutral` results as problematic in mail sources (see issue #102).
+
 ## [2.7.1] - 2026-11-15
-* Fix: Do not flag SPF `None` and `Neutral` results as problematic (see issue #102).
+* Fix: Do not flag SPF `None` and `Neutral` results as problematic in DMARC reports (see issue #102).
 * Updated Cargo dependencies.
 
 ## [2.7.0] - 2026-10-31

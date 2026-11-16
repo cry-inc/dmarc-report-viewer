@@ -623,7 +623,7 @@ dependencies = [
 
 [[package]]
 name = "dmarc-report-viewer"
-version = "2.7.1"
+version = "2.7.2"
 dependencies = [
  "anyhow",
  "async-imap",
